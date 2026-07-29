@@ -183,6 +183,7 @@ const diaryRouter = t.router({
         where.id = { in: links.map(l => l.diaryId) };
       }
       const diaries = await prisma.diaries.findMany({
+        where,
         orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
         include: {
           tags: { include: { tag: true } },
