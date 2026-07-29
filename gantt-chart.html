@@ -1,43 +1,60 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><title>futao-logs 甘特图</title>
+<head><meta charset="UTF-8"><title>futao-logs 甘特图 · 精确到 agent</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:system-ui,sans-serif; background:#0f1a12; color:#d4e6d8; padding:40px; }
-h1 { font-size:20px; margin-bottom:32px; font-weight:500; color:#e8f5e9; }
-.gantt { position:relative; }
-.week-header { display:flex; margin-left:140px; margin-bottom:8px; }
-.week-header span { width:40px; text-align:center; font-size:11px; color:#6a8f77; }
-.row { display:flex; align-items:center; margin-bottom:4px; height:36px; }
-.label { width:140px; font-size:13px; color:#a8c5b0; flex-shrink:0; padding-right:12px; text-align:right; }
-.bar-wrap { position:relative; height:28px; border-radius:4px; background:#1a2e20; overflow:visible; }
-.bar { position:absolute; top:0; height:28px; border-radius:4px; display:flex; align-items:center; padding-left:8px; font-size:11px; color:#0f1a12; font-weight:500; overflow:hidden; white-space:nowrap; }
-.bar.p0 { background:#81c784; }
-.bar.p1 { background:#a5d6a7; }
-.bar.p2 { background:#66bb6a; }
-.bar.phase2 { background:#4fc3f7; color:#0f1a12; }
-.legend { display:flex; gap:24px; margin-top:32px; }
-.legend-item { display:flex; align-items:center; gap:8px; font-size:12px; color:#a8c5b0; }
-.legend-dot { width:16px; height:16px; border-radius:3px; }
+body { font-family:system-ui,sans-serif; background:#0f1a12; color:#d4e6d8; padding:40px; max-width:1200px; }
+h1 { font-size:20px; margin-bottom:4px; font-weight:500; color:#e8f5e9; }
+.sub { font-size:13px; color:#6a8f77; margin-bottom:32px; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { text-align:left; padding:10px 12px; color:#6a8f77; font-weight:500; border-bottom:1px solid #1a2e20; font-size:11px; text-transform:uppercase; letter-spacing:1px; }
+td { padding:10px 12px; border-bottom:1px solid #0d1f14; vertical-align:top; }
+.agent-tag { display:inline-block; padding:1px 8px; border-radius:3px; font-size:11px; font-weight:500; }
+.ag-lamda { background:#2a4a3a; color:#66bb6a; }
+.ag-miky { background:#3a2a5a; color:#b39ddb; }
+.ag-cindy { background:#2a3a5a; color:#64b5f6; }
+.ag-amily { background:#4a2a2a; color:#ef9a9a; }
+.ag-emma { background:#3a4a2a; color:#aed581; }
+.status-done { color:#66bb6a; }
+.status-progress { color:#4fc3f7; }
+.status-pending { color:#6a8f77; }
+.project-title { font-size:15px; font-weight:500; margin:28px 0 12px 0; padding-bottom:8px; border-bottom:1px solid #1a2e20; }
+.project-title.l { color:#81c784; }
+.project-title.h { color:#4fc3f7; }
 </style>
 </head>
 <body>
-<h1>futao-logs 开发甘特图 · 2026年7月第5周 ~ 8月</h1>
-<div class="gantt">
-<div class="week-header">
-<span>W31</span><span>W32</span><span>W33</span><span>W34</span>
-</div>
-<div class="row"><div class="label">Phase 1 验收修复</div><div class="bar-wrap" style="width:160px"><div class="bar p0" style="left:0;width:40px;">已完</div></div></div>
-<div class="row"><div class="label">数据导出</div><div class="bar-wrap" style="width:160px"><div class="bar p1" style="left:40px;width:30px;">lamda</div></div></div>
-<div class="row"><div class="label">字数统计</div><div class="bar-wrap" style="width:160px"><div class="bar p1" style="left:40px;width:30px;">lamda</div></div></div>
-<div class="row"><div class="label">每日回顾</div><div class="bar-wrap" style="width:160px"><div class="bar p1" style="left:40px;width:30px;">lamda</div></div></div>
-<div class="row"><div class="label">标签筛选UI</div><div class="bar-wrap" style="width:160px"><div class="bar p1" style="left:40px;width:30px;">miky→lam</div></div></div>
-<div class="row"><div class="label">Phase 2 AI日志</div><div class="bar-wrap" style="width:160px"><div class="bar phase2" style="left:70px;width:90px;">调研→开发</div></div></div>
-</div>
-<div class="legend">
-<div class="legend-item"><div class="legend-dot" style="background:#81c784"></div>P0 核心</div>
-<div class="legend-item"><div class="legend-dot" style="background:#a5d6a7"></div>P1 增强</div>
-<div class="legend-item"><div class="legend-dot" style="background:#4fc3f7"></div>Phase 2</div>
-</div>
+<h1>futao 项目甘特图 · 精确到 commit</h1>
+<p class="sub">2026-07-29 · 每个 agent 按 git log 实际提交时间 / 排期任务时间</p>
+
+<div class="project-title l">📓 futao-logs ★★★→★★★★</div>
+<table>
+<tr><th style="width:140px;">阶段</th><th style="width:160px;">任务</th><th style="width:120px;">Agent</th><th style="width:180px;">时间</th><th>Commit / 状态</th></tr>
+
+<tr><td rowspan="4">★★★<br><span style="color:#555;font-size:11px;">优秀版</span></td><td>P0 核心搭建</td><td><span class="agent-tag ag-cindy">林正树</span> <span class="agent-tag ag-lamda">lamda</span></td><td>7/29 17:26</td><td><span class="status-done">✅ chore: init / feat: Phase 1 complete</span></td></tr>
+<tr><td>P1 四项功能</td><td><span class="agent-tag ag-lamda">lamda</span> <span class="agent-tag ag-miky">miky</span></td><td>7/29 17:37~17:39</td><td><span class="status-done">✅ 字数统计/回顾/标签/导出 上线</span></td></tr>
+<tr><td>★★★ 功能</td><td><span class="agent-tag ag-lamda">lamda</span> <span class="agent-tag ag-miky">miky</span></td><td>7/29 18:39~18:41</td><td><span class="status-done">✅ 暗色/离线/统计/心情色/--accent-text</span></td></tr>
+<tr><td>Bug 修复</td><td><span class="agent-tag ag-amily">Amily</span> <span class="agent-tag ag-cindy">Cindy</span> <span class="agent-tag ag-lamda">lamda</span></td><td>7/29 全域</td><td><span class="status-done">✅ 6 个（排序/时区/重复/保存/换行/脏数据）</span></td></tr>
+
+<tr><td rowspan="2">★★★★<br><span style="color:#4fc3f7;font-size:11px;">旗舰版</span></td><td>设置面板</td><td><span class="agent-tag ag-lamda">lamda</span> <span class="agent-tag ag-miky">miky</span></td><td>7/29 18:44~18:47</td><td><span class="status-done">✅ SettingsDrawer + 通用/LLM/数据/关于</span></td></tr>
+<tr><td>LLM 4 平台</td><td><span class="agent-tag ag-cindy">Cindy</span> <span class="agent-tag ag-lamda">lamda</span></td><td>7/29 18:44~18:47</td><td><span class="status-done">✅ DeepSeek/Kimi/阿里云/自定义 + 下拉选择器</span></td></tr>
+
+<tr><td rowspan="3" style="border-bottom:none;">★★★★<br><span style="color:#4fc3f7;font-size:11px;">待排期</span></td><td>AI 每日总结</td><td><span class="agent-tag ag-lamda">lamda</span> <span class="agent-tag ag-cindy">Cindy</span></td><td>待 futao 确认</td><td><span class="status-pending">⏳ 调用 llm.chat，纯前端展示</span></td></tr>
+<tr><td>情绪趋势图</td><td><span class="agent-tag ag-lamda">lamda</span></td><td>待 futao 确认</td><td><span class="status-pending">⏳ 已存 mood 字段，纯前端展示</span></td></tr>
+<tr><td>搜索增强/质感</td><td>全员</td><td>待 futao 确认</td><td><span class="status-pending">⏳ 待讨论优先级</span></td></tr>
+</table>
+
+<div class="project-title h">🏠 futao-homepage</div>
+<table>
+<tr><th style="width:140px;">级别</th><th style="width:160px;">任务</th><th style="width:120px;">Agent</th><th style="width:180px;">时间</th><th>Commit / 状态</th></tr>
+<tr><td>Init</td><td>Next.js 初始化</td><td><span class="agent-tag" style="background:#2a3a2a;color:#81c784;">futao</span></td><td>7/28 11:59</td><td><span class="status-done">✅ Initial commit</span></td></tr>
+<tr><td>P0 修复</td><td>5 项（底部/内容/动画/…）</td><td><span class="agent-tag ag-miky">miky</span> <span class="agent-tag ag-lamda">lamda</span></td><td>已修复未提交</td><td><span style="color:#ef5350;">🔴 代码在本地未 commit</span></td></tr>
+<tr><td>P1</td><td>3/5 项</td><td>未分配</td><td>—</td><td><span class="status-pending">⏳ 待排期</span></td></tr>
+<tr><td>P2</td><td>3 项</td><td>未分配</td><td>—</td><td><span class="status-pending">⏳ 待排期</span></td></tr>
+</table>
+
+<p style="margin-top:24px;font-size:12px;color:#6a8f77;">
+futao-homepage 所有 agent 修复的代码仍在本地的 audit 文件中未 commit。需要先清理 → git add → commit 再继续。futao-logs 已全部 git 管理。
+</p>
 </body>
 </html>

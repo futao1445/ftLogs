@@ -4,6 +4,7 @@ import { useState } from 'react';
 import SearchBar from '../search/SearchBar';
 import ThemeToggle from './ThemeToggle';
 import OfflineBanner from './OfflineBanner';
+import SettingsDrawer from '../settings/SettingsDrawer';
 
 type Tab = 'diary' | 'calendar' | 'search';
 
@@ -24,10 +25,15 @@ export default function PageShell({
   onSearchChange,
   children,
 }: PageShellProps) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
       {/* Offline banner */}
       <OfflineBanner />
+
+      {/* Settings Drawer */}
+      <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       {/* Top Navigation */}
       <nav
@@ -73,6 +79,21 @@ export default function PageShell({
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Gear — settings entry */}
+              <button
+                onClick={() => setSettingsOpen(true)}
+                className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-150 cursor-pointer"
+                style={{ color: 'var(--text-tertiary)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.background = 'transparent'; }}
+                title="设置"
+                aria-label="设置"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+              </button>
               <ThemeToggle />
               <button
                 onClick={onNewDiary}

@@ -372,6 +372,85 @@ const appRouter = t.router({
   tag: tagRouter,
   config: configRouter,
   export: exportRouter,
+  llm: t.router({
+    test: t.procedure
+      .input(z.object({
+        apiUrl: z.string(),
+        apiKey: z.string(),
+        model: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const start = Date.now();
+        try {
+          const res = await fetch(`${input.apiUrl.replace(/\/+$/, '')}/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${input.apiKey}`,
+            },
+            body: JSON.stringify({
+              model: input.model,
+              messages: [{ role: 'user', content: 'Reply with just "ok".' }],
+              max_tokens: 10,
+            }),
+            signal: AbortSignal.timeout(15000),
+          });
+          if (!res.ok) {
+            const body = await res.text().catch(() => '');
+            return { success: false, error: `HTTP ${res.status}: ${body.slice(0, 200)}`, latency: Date.now() - start };
+          }
+          return { success: true, model: input.model, latency: Date.now() - start };
+        } catch (e) {
+          return { success: false, error: e.message || 'Connection failed', latency: Date.now() - start };
+        }
+      }),
+    chat: t.procedure
+      .input(z.object({
+        messages: z.array(z.object({ role: z.string(), content: z.string() })),
+        provider: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        // 确定使用的 provider
+        const readCfg = (key) => prisma.config.findUnique({ where: { key } }).then(c => {
+          if (!c) return null;
+          try { return JSON.parse(c.value); } catch { return c.value; }
+        }).catch(() => null);
+        const activeProvider = input.provider || await readCfg('llm_provider_active') || 'custom';
+        // 根据 provider 读取对应配置
+        const KNOWN_URLS = {
+          deepseek: 'https://api.deepseek.com',
+          kimi: 'https://api.moonshot.cn/v1',
+          aliyun: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+        };
+        const [apiUrl, apiKey, model] = await Promise.all([
+          KNOWN_URLS[activeProvider]
+            ? Promise.resolve(KNOWN_URLS[activeProvider])
+            : readCfg(`llm_${activeProvider}_api_url`).then(v => v || 'https://api.openai.com/v1'),
+          readCfg(`llm_${activeProvider}_api_key`),
+          readCfg(`llm_${activeProvider}_model`).then(v => v || 'gpt-4o-mini'),
+        ]);
+        if (!apiKey) return { success: false, error: 'LLM 未配置，请先在设置中选择平台并保存 API Key' };
+        try {
+          const res = await fetch(`${apiUrl.replace(/\/+$/, '')}/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({ model, messages: input.messages, max_tokens: 2048 }),
+            signal: AbortSignal.timeout(30000),
+          });
+          if (!res.ok) {
+            const body = await res.text().catch(() => '');
+            return { success: false, error: `HTTP ${res.status}: ${body.slice(0, 200)}` };
+          }
+          const json = await res.json();
+          return { success: true, content: json.choices?.[0]?.message?.content || '' };
+        } catch (e) {
+          return { success: false, error: e.message || 'LLM 请求失败' };
+        }
+      }),
+  }),
 });
 
 // ═══════════════════════════════════════════

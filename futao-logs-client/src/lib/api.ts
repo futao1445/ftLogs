@@ -55,6 +55,9 @@ export const api = {
   exportMarkdown: (input: { ids?: number[]; bookId?: number } = {}) =>
     tRPCMutation<{ filePath: string; diaryCount: number }>('export.markdown', input),
 
+  exportJson: (input: { ids?: number[] } = {}) =>
+    tRPCMutation<{ filePath: string; diaryCount: number }>('export.json', input),
+
   // ── File ──
   uploadFile: async (file: File): Promise<FileUploadResult> => {
     const formData = new FormData();
@@ -63,4 +66,25 @@ export const api = {
     if (!res.ok) throw new Error('Upload failed');
     return res.json();
   },
+
+  // ── Config ──
+  configGet: (key: string) =>
+    tRPCQuery<any>('config.get', { key }),
+
+  configSet: (key: string, value: any) =>
+    tRPCMutation<{ success: boolean }>('config.set', { key, value }),
+
+  configGetAll: () =>
+    tRPCQuery<Record<string, any>>('config.getAll', {}),
+
+  // ── LLM ──
+  llmTest: (input: { apiUrl: string; apiKey: string; model: string }) =>
+    tRPCMutation<{ success: boolean; model?: string; latency?: number; error?: string }>('llm.test', input),
+
+  llmChat: (messages: { role: string; content: string }[]) =>
+    tRPCMutation<{ success: boolean; content?: string; error?: string }>('llm.chat', { messages }),
+
+  // ── Export history ──
+  exportHistory: () =>
+    tRPCQuery<{ format: string; status: string; filePath: string; diaryCount: number; createdAt: string }[]>('export.history', {}),
 };
