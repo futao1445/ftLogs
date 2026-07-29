@@ -318,10 +318,11 @@ export default function DiaryEditor({ diary, onSave, onClose }: DiaryEditorProps
                   }}
                 />
                 <div
-                  className="text-xs mt-1.5"
+                  className="text-xs mt-1.5 flex items-center justify-between"
                   style={{ color: 'var(--text-tertiary)' }}
                 >
-                  **加粗** *斜体* ~~删除线~~ - 列表项
+                  <span>**加粗** *斜体* ~~删除线~~ - 列表项</span>
+                  <span className="font-mono">已写 {Array.from(content).length} 字</span>
                 </div>
               </div>
 

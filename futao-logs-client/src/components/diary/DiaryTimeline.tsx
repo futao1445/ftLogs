@@ -1,7 +1,10 @@
 'use client';
 
-import { type Diary, type TimelineGroup } from '../../lib/types';
+import { type Diary, type TimelineGroup, type Tag } from '../../lib/types';
 import DiaryCard from './DiaryCard';
+import OnThisDay from '../common/OnThisDay';
+import TagFilter from '../common/TagFilter';
+import ExportButton from '../common/ExportButton';
 
 /* ─── Props ─── */
 
@@ -15,6 +18,11 @@ interface DiaryTimelineProps {
   onNew?: () => void;
   totalCount?: number;
   streak?: number;
+  onThisDay?: { id: number; preview: string; year: number } | null;
+  onViewOnThisDay?: (id: number) => void;
+  tags?: Tag[];
+  selectedTagId?: number | null;
+  onTagChange?: (tagId: number | null) => void;
 }
 
 /* ─── Date / time helpers ─── */
@@ -173,6 +181,11 @@ export default function DiaryTimeline({
   onNew,
   totalCount = 0,
   streak = 0,
+  onThisDay,
+  onViewOnThisDay,
+  tags = [],
+  selectedTagId = null,
+  onTagChange,
 }: DiaryTimelineProps) {
   /* ── Loading (initial) ── */
   if (loading && groups.length === 0) {
@@ -181,7 +194,7 @@ export default function DiaryTimeline({
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* ═══ Page header — today's date + new-diary button ═══ */}
+      {/* ═══ Page header — today's date + export + new-diary button ═══ */}
       <header className="flex items-center justify-between mb-2">
         <h1
           className="text-lg font-medium tracking-wide"
@@ -190,42 +203,45 @@ export default function DiaryTimeline({
           ◈ {todayLabel()}
         </h1>
 
-        {onNew && (
-          <button
-            onClick={onNew}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
-            style={{ background: 'var(--accent)', color: '#0f1a12' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--accent-hover)';
-              e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'var(--accent)';
-              e.currentTarget.style.boxShadow = 'none';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
-            <svg
-              className="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
+        <div className="flex items-center gap-2">
+          <ExportButton />
+          {onNew && (
+            <button
+              onClick={onNew}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
+              style={{ background: 'var(--accent)', color: '#0f1a12' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--accent-hover)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--accent)';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
             >
-              <path d="M12 5v14" />
-              <path d="M5 12h14" />
-            </svg>
-            <span className="hidden sm:inline">新日记</span>
-          </button>
-        )}
+              <svg
+                className="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              >
+                <path d="M12 5v14" />
+                <path d="M5 12h14" />
+              </svg>
+              <span className="hidden sm:inline">新日记</span>
+            </button>
+          )}
+        </div>
       </header>
 
       {/* ═══ Stats bar ═══ */}
       {(totalCount > 0 || streak > 0) && (
         <div
-          className="flex items-center gap-4 mb-6 text-xs"
+          className="flex items-center gap-4 mb-4 text-xs"
           style={{ color: 'var(--text-tertiary)' }}
         >
           {totalCount > 0 && (
@@ -247,12 +263,27 @@ export default function DiaryTimeline({
         </div>
       )}
 
+      {/* ═══ Tag filter ═══ */}
+      {tags.length > 0 && (
+        <div className="mb-4">
+          <TagFilter tags={tags} selectedTagId={selectedTagId} onChange={onTagChange || (() => {})} />
+        </div>
+      )}
+
       {/* ═══ Empty state ═══ */}
       {!loading && groups.length === 0 && <TimelineEmpty onNew={onNew} />}
 
       {/* ═══ Timeline ═══ */}
       {groups.length > 0 && (
         <div className="relative timeline-line">
+          {/* On This Day card — shown at top of first group when available */}
+          {onThisDay && (
+            <section className="mb-6">
+              <div style={{ paddingLeft: 32 }}>
+                <OnThisDay diary={onThisDay} onView={onViewOnThisDay || (() => {})} />
+              </div>
+            </section>
+          )}
           {groups.map((group) => {
             const isFirstGroup = groups.indexOf(group) === 0;
             const now = new Date();

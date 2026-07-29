@@ -174,10 +174,15 @@ const diaryRouter = t.router({
 
   // ─── 时间线 ──────────────────────────
   timeline: t.procedure
-    .input(z.object({ page: z.number().default(1), size: z.number().default(10) }))
+    .input(z.object({ page: z.number().default(1), size: z.number().default(10), tagId: z.number().nullable().default(null).optional() }))
     .query(async ({ input }) => {
+      const { page, size, tagId } = input;
+      const where = { isArchived: false };
+      if (tagId) {
+        const links = await prisma.diaries_tags.findMany({ where: { tagId } });
+        where.id = { in: links.map(l => l.diaryId) };
+      }
       const diaries = await prisma.diaries.findMany({
-        where: { isArchived: false },
         orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
         include: {
           tags: { include: { tag: true } },
@@ -208,6 +213,33 @@ const diaryRouter = t.router({
         size: input.size,
         totalPages: Math.ceil(total / input.size),
       };
+    }),
+
+  // ─── 历史上的今天 ─────────────────────
+  onThisDay: t.procedure
+    .input(z.object({ month: z.number(), day: z.number() }))
+    .query(async ({ input }) => {
+      const diaries = await prisma.diaries.findMany({
+        where: { isArchived: false },
+        orderBy: { date: 'desc' },
+        select: { id: true, date: true, content: true },
+      });
+      const now = new Date();
+      const matches = [];
+      for (const d of diaries) {
+        const dDate = new Date(d.date);
+        if (dDate.getUTCMonth() + 1 === input.month && dDate.getUTCDate() === input.day) {
+          const year = dDate.getUTCFullYear();
+          if (year !== now.getFullYear()) {
+            matches.push({
+              id: d.id,
+              year,
+              preview: d.content.replace(/[#*`\[\]]/g, '').substring(0, 60),
+            });
+          }
+        }
+      }
+      return matches.length > 0 ? matches[0] : null;
     }),
 });
 

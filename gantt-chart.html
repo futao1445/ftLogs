@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>futao-logs 甘特图</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:system-ui,sans-serif; background:#0f1a12; color:#d4e6d8; padding:40px; }
+h1 { font-size:20px; margin-bottom:32px; font-weight:500; color:#e8f5e9; }
+.gantt { position:relative; }
+.week-header { display:flex; margin-left:140px; margin-bottom:8px; }
+.week-header span { width:40px; text-align:center; font-size:11px; color:#6a8f77; }
+.row { display:flex; align-items:center; margin-bottom:4px; height:36px; }
+.label { width:140px; font-size:13px; color:#a8c5b0; flex-shrink:0; padding-right:12px; text-align:right; }
+.bar-wrap { position:relative; height:28px; border-radius:4px; background:#1a2e20; overflow:visible; }
+.bar { position:absolute; top:0; height:28px; border-radius:4px; display:flex; align-items:center; padding-left:8px; font-size:11px; color:#0f1a12; font-weight:500; overflow:hidden; white-space:nowrap; }
+.bar.p0 { background:#81c784; }
+.bar.p1 { background:#a5d6a7; }
+.bar.p2 { background:#66bb6a; }
+.bar.phase2 { background:#4fc3f7; color:#0f1a12; }
+.legend { display:flex; gap:24px; margin-top:32px; }
+.legend-item { display:flex; align-items:center; gap:8px; font-size:12px; color:#a8c5b0; }
+.legend-dot { width:16px; height:16px; border-radius:3px; }
+</style>
+</head>
+<body>
+<h1>futao-logs 开发甘特图 · 2026年7月第5周 ~ 8月</h1>
+<div class="gantt">
+<div class="week-header">
+<span>W31</span><span>W32</span><span>W33</span><span>W34</span>
+</div>
+<div class="row"><div class="label">Phase 1 验收修复</div><div class="bar-wrap" style="width:160px"><div class="bar p0" style="left:0;width:40px;">已完</div></div></div>
+<div class="row"><div class="label">数据导出</div><div class="bar-wrap" style="width:160px"><div class="bar p1" style="left:40px;width:30px;">lamda</div></div></div>
+<div class="row"><div class="label">字数统计</div><div class="bar-wrap" style="width:160px"><div class="bar p1" style="left:40px;width:30px;">lamda</div></div></div>
+<div class="row"><div class="label">每日回顾</div><div class="bar-wrap" style="width:160px"><div class="bar p1" style="left:40px;width:30px;">lamda</div></div></div>
+<div class="row"><div class="label">标签筛选UI</div><div class="bar-wrap" style="width:160px"><div class="bar p1" style="left:40px;width:30px;">miky→lam</div></div></div>
+<div class="row"><div class="label">Phase 2 AI日志</div><div class="bar-wrap" style="width:160px"><div class="bar phase2" style="left:70px;width:90px;">调研→开发</div></div></div>
+</div>
+<div class="legend">
+<div class="legend-item"><div class="legend-dot" style="background:#81c784"></div>P0 核心</div>
+<div class="legend-item"><div class="legend-dot" style="background:#a5d6a7"></div>P1 增强</div>
+<div class="legend-item"><div class="legend-dot" style="background:#4fc3f7"></div>Phase 2</div>
+</div>
+</body>
+</html>

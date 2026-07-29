@@ -38,8 +38,11 @@ export const api = {
   diaryCalendar: (year: number, month: number) =>
     tRPCQuery<CalendarResult>('diary.calendar', { year, month }),
 
-  diaryTimeline: (page = 1, size = 10) =>
-    tRPCQuery<TimelineResult>('diary.timeline', { page, size }),
+  diaryTimeline: (page = 1, size = 10, tagId?: number | null) =>
+    tRPCQuery<TimelineResult>('diary.timeline', { page, size, tagId }),
+
+  diaryOnThisDay: (month: number, day: number) =>
+    tRPCQuery<{ id: number; year: number; preview: string } | null>('diary.onThisDay', { month, day }),
 
   // ── Tag ──
   tagList: () =>
@@ -47,6 +50,10 @@ export const api = {
 
   tagUpsert: (input: { id?: number; name: string; color?: string }) =>
     tRPCMutation<Tag>('tag.upsert', input),
+
+  // ── Export ──
+  exportMarkdown: (input: { ids?: number[]; bookId?: number } = {}) =>
+    tRPCMutation<{ filePath: string; diaryCount: number }>('export.markdown', input),
 
   // ── File ──
   uploadFile: async (file: File): Promise<FileUploadResult> => {

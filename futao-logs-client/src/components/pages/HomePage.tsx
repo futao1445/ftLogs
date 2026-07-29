@@ -33,11 +33,18 @@ export default function HomePage() {
   // Editor
   const [editingDiary, setEditingDiary] = useState<Diary | null | 'new'>(null);
 
+  // On This Day
+  const [onThisDay, setOnThisDay] = useState<{ id: number; preview: string; year: number } | null>(null);
+
+  // Tag filter
+  const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
+
   // ─── Load timeline ───
-  const loadTimeline = useCallback(async (p: number) => {
+  const loadTimeline = useCallback(async (p: number, tagId?: number | null) => {
     setLoading(true);
     try {
-      const result = await api.diaryTimeline(p, 10);
+      const tagFilter = tagId !== undefined ? tagId : selectedTagId;
+      const result = await api.diaryTimeline(p, 10, tagFilter);
       if (p === 1) {
         setGroups(result.items);
       } else {
@@ -49,6 +56,19 @@ export default function HomePage() {
       console.error('Failed to load timeline', e);
     } finally {
       setLoading(false);
+    }
+  }, [selectedTagId]);
+
+  // ─── Load On This Day ───
+  const loadOnThisDay = useCallback(async () => {
+    try {
+      const now = new Date();
+      const m = now.getMonth() + 1;
+      const d = now.getDate();
+      const result = await api.diaryOnThisDay(m, d);
+      setOnThisDay(result);
+    } catch {
+      setOnThisDay(null);
     }
   }, []);
 
@@ -96,7 +116,8 @@ export default function HomePage() {
   useEffect(() => {
     loadTimeline(1);
     loadTags();
-  }, [loadTimeline, loadTags]);
+    loadOnThisDay();
+  }, [loadTimeline, loadTags, loadOnThisDay]);
 
   useEffect(() => {
     if (activeTab === 'calendar') loadCalendar(calYear, calMonth);
@@ -126,6 +147,7 @@ export default function HomePage() {
 
     setEditingDiary(null);
     loadTimeline(1);
+    loadOnThisDay();
     if (activeTab === 'calendar') loadCalendar(calYear, calMonth);
   };
 
@@ -141,7 +163,11 @@ export default function HomePage() {
     }
   };
 
-  // ─── Calculate streak & total ───
+  // ─── Tag filter handler ───
+  const handleTagChange = useCallback((tagId: number | null) => {
+    setSelectedTagId(tagId);
+    loadTimeline(1, tagId);
+  }, [loadTimeline]);
   const totalCount = groups.reduce((sum, g) => sum + g.count, 0);
   const streak = (() => {
     if (groups.length === 0) return 0;
@@ -186,6 +212,16 @@ export default function HomePage() {
           onLoadMore={() => loadTimeline(page + 1)}
           totalCount={totalCount}
           streak={streak}
+          onThisDay={onThisDay}
+          onViewOnThisDay={(id) => {
+            api.diaryDetail(id).then((d) => {
+              if (d) setEditingDiary(d);
+            });
+          }}
+          tags={allTags}
+          selectedTagId={selectedTagId}
+          onTagChange={handleTagChange}
+          onNew={() => setEditingDiary('new')}
         />
       )}
 
