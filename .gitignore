@@ -1,15 +1,9 @@
-# Dependencies
+﻿# Dependencies
 node_modules/
-
-# Runtime
-*.pid
-*.seed
-*.pid.lock
 
 # Environment
 .env
 .env.local
-.env.*.local
 
 # Build outputs
 dist/
@@ -31,12 +25,8 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# Migration backups
-prisma/migrations/
-
-# Uploads & exports (runtime generated)
+# Runtime generated
 uploads/
 exports/
-
-# Git
-*.orig
+*.db
+*.db-journal
