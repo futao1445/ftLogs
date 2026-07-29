@@ -394,7 +394,7 @@ export default function DiaryEditor({ diary, onSave, onClose }: DiaryEditorProps
                         className="absolute top-0.5 right-0.5 w-5 h-5 flex items-center justify-center rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-150 cursor-pointer"
                         style={{
                           background: 'rgba(0,0,0,0.6)',
-                          color: '#fff',
+                          color: 'var(--accent-text)',
                         }}
                         aria-label="移除图片"
                       >
@@ -451,7 +451,7 @@ export default function DiaryEditor({ diary, onSave, onClose }: DiaryEditorProps
                           className="text-xs px-3 py-1 rounded-full transition-all duration-150 cursor-pointer"
                           style={{
                             background: sel ? tagColor : 'var(--accent-soft)',
-                            color: sel ? '#fff' : 'var(--accent)',
+                            color: sel ? 'var(--accent-text)' : 'var(--accent)',
                             opacity: sel ? 1 : 0.65,
                           }}
                           aria-pressed={sel}
