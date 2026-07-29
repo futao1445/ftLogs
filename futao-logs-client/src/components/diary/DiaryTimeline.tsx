@@ -150,7 +150,7 @@ function TimelineEmpty({ onNew }: { onNew?: () => void }) {
         <button
           onClick={onNew}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-          style={{ background: 'var(--accent)', color: '#0f1a12' }}
+          style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'var(--accent-hover)';
           }}
@@ -209,7 +209,7 @@ export default function DiaryTimeline({
             <button
               onClick={onNew}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
-              style={{ background: 'var(--accent)', color: '#0f1a12' }}
+              style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'var(--accent-hover)';
                 e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)';

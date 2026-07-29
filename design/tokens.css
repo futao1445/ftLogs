@@ -22,6 +22,7 @@
   --accent-hover: #6ee7a0;       /* hover 加深 */
   --accent-soft: rgba(74, 222, 128, 0.10);   /* 选中/激活背景 */
   --accent-border: rgba(74, 222, 128, 0.15);  /* 边框 */
+  --accent-text: #0f1a12;                      /* 主色上的正文色（暗色模式浅底色 */
 
   /* ─── 强调色 ─── */
   --gold: #fbbf24;               /* 金色点缀（心情选择高亮等） */
@@ -76,6 +77,7 @@
   --accent-hover: #15803d;
   --accent-soft: rgba(22, 163, 74, 0.08);
   --accent-border: rgba(22, 163, 74, 0.12);
+  --accent-text: #ffffff;
 
   --border-default: rgba(0, 0, 0, 0.06);
   --border-hover: rgba(0, 0, 0, 0.10);

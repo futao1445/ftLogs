@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import SearchBar from '../search/SearchBar';
+import ThemeToggle from './ThemeToggle';
+import OfflineBanner from './OfflineBanner';
 
 type Tab = 'diary' | 'calendar' | 'search';
 
@@ -24,6 +26,9 @@ export default function PageShell({
 }: PageShellProps) {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
+      {/* Offline banner */}
+      <OfflineBanner />
+
       {/* Top Navigation */}
       <nav
         className="sticky top-0 z-30 backdrop-blur-md"
@@ -67,19 +72,22 @@ export default function PageShell({
               />
             </div>
 
-            <button
-              onClick={onNewDiary}
-              className="flex items-center gap-1.5 text-sm px-4 py-1.5 rounded-full transition-all duration-150"
-              style={{
-                background: 'var(--accent)',
-                color: '#0f1a12',
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 5v14" /><path d="M5 12h14" />
-              </svg>
-              <span className="text-xs font-medium">写日记</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <button
+                onClick={onNewDiary}
+                className="flex items-center gap-1.5 text-sm px-4 py-1.5 rounded-full transition-all duration-150"
+                style={{
+                  background: 'var(--accent)',
+                  color: 'var(--accent-text)',
+                }}
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5v14" /><path d="M5 12h14" />
+                </svg>
+                <span className="text-xs font-medium">写日记</span>
+              </button>
+            </div>
           </div>
         </div>
       </nav>
