@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// 日记条目
+model diaries {
+  id        Int      @id @default(autoincrement())
+  content   String   @default("")
+  date      DateTime @default(now())
+  mood      String?  @default("")
+  weather   String?  @default("")
+  isTop     Boolean  @default(false)
+  isArchived Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments attachments[]
+  tags        diaries_tags[]
+  bookId      Int?
+  book        noteBooks? @relation(fields: [bookId], references: [id])
+
+  @@index([date])
+  @@index([createdAt])
+}
+
+/// 日记本
+model noteBooks {
+  id          Int      @id @default(autoincrement())
+  name        String   @default("")
+  icon        String   @default("")
+  description String   @default("")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  diaries diaries[]
+}
+
+/// 标签
+model tags {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @default("")
+  color     String   @default("") // hex color: #ff6b6b
+  icon      String   @default("")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  diaries diaries_tags[]
+}
+
+/// 日记-标签 关联
+model diaries_tags {
+  diaryId Int
+  tagId   Int
+
+  diary diaries @relation(fields: [diaryId], references: [id], onDelete: Cascade)
+  tag   tags    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([diaryId, tagId])
+}
+
+/// 附件
+model attachments {
+  id        Int      @id @default(autoincrement())
+  name      String   @default("")
+  path      String   @default("")
+  size      Int      @default(0)
+  type      String   @default("")
+  diaryId   Int?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  diary diaries? @relation(fields: [diaryId], references: [id], onDelete: Cascade)
+
+  @@index([diaryId])
+}
+
+/// 导出记录
+model exports {
+  id         Int      @id @default(autoincrement())
+  format     String   @default("markdown")
+  status     String   @default("pending") // pending / done / failed
+  filePath   String?
+  diaryCount Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+/// 应用配置
+model config {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique @default("")
+  value     String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
