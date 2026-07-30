@@ -1,19 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import SearchBar from '../search/SearchBar';
 import ThemeToggle from './ThemeToggle';
 import OfflineBanner from './OfflineBanner';
 import SettingsDrawer from '../settings/SettingsDrawer';
 
-type Tab = 'diary' | 'calendar' | 'search';
+type Tab = 'diary' | 'calendar' | 'search' | 'summary';
 
 interface PageShellProps {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
   onNewDiary: () => void;
-  searchValue?: string;
-  onSearchChange?: (v: string) => void;
   children: React.ReactNode;
 }
 
@@ -21,8 +18,6 @@ export default function PageShell({
   activeTab,
   onTabChange,
   onNewDiary,
-  searchValue = '',
-  onSearchChange,
   children,
 }: PageShellProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -76,6 +71,17 @@ export default function PageShell({
                 }
                 label="搜索"
               />
+              <TabButton
+                active={activeTab === 'summary'}
+                onClick={() => onTabChange('summary')}
+                icon={
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z" />
+                    <path d="M18 16l-1 3 3 1-3 1 1 3-1.5-2.5L13 21l1-3-3-1 3-1-1-3 1.5 2.5L18 16z" />
+                  </svg>
+                }
+                label="AI 总结"
+              />
             </div>
 
             <div className="flex items-center gap-2">
@@ -112,13 +118,6 @@ export default function PageShell({
           </div>
         </div>
       </nav>
-
-      {/* Search bar (shown when search tab or when searching) */}
-      {(activeTab === 'search') && onSearchChange && (
-        <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4 pb-2">
-          <SearchBar value={searchValue} onChange={onSearchChange} />
-        </div>
-      )}
 
       {/* Main content */}
       <main className="flex-1">

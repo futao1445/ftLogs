@@ -1,0 +1,493 @@
+﻿require('dotenv').config();
+const express = require('express');
+const { initTRPC } = require('@trpc/server');
+const { createExpressMiddleware } = require('@trpc/server/adapters/express');
+const { z } = require('zod');
+const { PrismaClient } = require('@prisma/client');
+const fs = require('fs');
+const path = require('path');
+const busboy = require('busboy');
+
+const prisma = new PrismaClient();
+const t = initTRPC.create();
+
+const PORT = parseInt(process.env.PORT || '1111', 10);
+const uploadDir = path.resolve(process.cwd(), process.env.UPLOAD_DIR || './uploads');
+const exportDir = path.resolve(process.cwd(), 'exports');
+
+// 确保上传和导出目录存在
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+if (!fs.existsSync(exportDir)) fs.mkdirSync(exportDir, { recursive: true });
+
+// ═══════════════════════════════════════════
+// 日记 API
+// ═══════════════════════════════════════════
+
+const diaryRouter = t.router({
+  // ─── 日记列表 ────────────────────────
+  list: t.procedure
+    .input(z.object({
+      page: z.number().default(1),
+      size: z.number().default(30),
+      orderBy: z.enum(['asc', 'desc']).default('desc'),
+      searchText: z.string().default('').optional(),
+      tagId: z.number().nullable().default(null).optional(),
+      bookId: z.number().nullable().default(null).optional(),
+      isArchived: z.boolean().nullable().default(false).optional(),
+      startDate: z.string().nullable().default(null).optional(),
+      endDate: z.string().nullable().default(null).optional(),
+    }))
+    .query(async ({ input }) => {
+      const { page, size, orderBy, searchText, tagId, bookId, isArchived, startDate, endDate } = input;
+      const where = {};
+      if (isArchived !== null) where.isArchived = isArchived;
+      if (searchText && searchText.trim()) where.content = { contains: searchText };
+      if (tagId) {
+        const links = await prisma.diaries_tags.findMany({ where: { tagId } });
+        where.id = { in: links.map(l => l.diaryId) };
+      }
+      if (bookId) where.bookId = bookId;
+      if (startDate && endDate) where.date = { gte: new Date(startDate), lte: new Date(endDate) };
+
+      const items = await prisma.diaries.findMany({
+        where,
+        orderBy: [{ isTop: 'desc' }, { date: orderBy }, { createdAt: orderBy }],
+        skip: (page - 1) * size,
+        take: size,
+        include: {
+          tags: { include: { tag: true } },
+          attachments: { orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] },
+        },
+      });
+      const total = await prisma.diaries.count({ where });
+      return { items, total, page, size, totalPages: Math.ceil(total / size) };
+    }),
+
+  // ─── 单条日记 ────────────────────────
+  detail: t.procedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => prisma.diaries.findFirst({
+      where: { id: input.id },
+      include: { tags: { include: { tag: true } }, attachments: true },
+    })),
+
+  // ─── 创建/更新日记 ───────────────────
+  upsert: t.procedure
+    .input(z.object({
+      content: z.string().default(''),
+      date: z.string().optional(),
+      mood: z.string().nullable().optional(),
+      weather: z.string().nullable().optional(),
+      isTop: z.boolean().nullable().default(null),
+      isArchived: z.boolean().nullable().default(null),
+      bookId: z.number().nullable().optional(),
+      tags: z.array(z.number()).optional(),
+      id: z.number().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { id, content, date, mood, weather, isTop, isArchived, bookId, tags } = input;
+      if (id) {
+        const updateData = {};
+        if (content !== undefined) updateData.content = content;
+        if (date !== undefined) {
+          const d = new Date(date);
+          updateData.date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+        }
+        if (mood !== undefined) updateData.mood = mood;
+        if (weather !== undefined) updateData.weather = weather;
+        if (isTop !== null) updateData.isTop = isTop;
+        if (isArchived !== null) updateData.isArchived = isArchived;
+        if (bookId !== undefined) updateData.bookId = bookId;
+        await prisma.diaries.update({ where: { id }, data: updateData });
+        if (tags !== undefined) {
+          await prisma.diaries_tags.deleteMany({ where: { diaryId: id } });
+          if (tags.length) {
+            await prisma.diaries_tags.createMany({ data: tags.map(t => ({ diaryId: id, tagId: t })) });
+          }
+        }
+        return prisma.diaries.findFirst({
+          where: { id },
+          include: { tags: { include: { tag: true } }, attachments: true },
+        });
+      }
+      // 创建新日记
+      const diary = await prisma.diaries.create({
+        data: {
+          content: content || '',
+          date: (() => { const d = date ? new Date(date) : new Date(); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); })(),
+          mood: mood || null,
+          weather: weather || null,
+          isTop: isTop ?? false,
+          isArchived: isArchived ?? false,
+          bookId: bookId || null,
+        },
+      });
+      if (tags && tags.length) {
+        await prisma.diaries_tags.createMany({
+          data: tags.map(t => ({ diaryId: diary.id, tagId: t })),
+        });
+      }
+      return prisma.diaries.findFirst({
+        where: { id: diary.id },
+        include: { tags: { include: { tag: true } }, attachments: true },
+      });
+    }),
+
+  // ─── 删除日记 ────────────────────────
+  delete: t.procedure
+    .input(z.object({ ids: z.array(z.number()) }))
+    .mutation(async ({ input }) => {
+      await prisma.diaries.deleteMany({ where: { id: { in: input.ids } } });
+      return { success: true };
+    }),
+
+  // ─── 日历查询 ────────────────────────
+  calendar: t.procedure
+    .input(z.object({ year: z.number(), month: z.number() }))
+    .query(async ({ input }) => {
+      const startDate = new Date(input.year, input.month - 1, 1);
+      const endDate = new Date(input.year, input.month, 0, 23, 59, 59);
+      const diaries = await prisma.diaries.findMany({
+        where: { isArchived: false, date: { gte: startDate, lte: endDate } },
+        select: { id: true, date: true, content: true, mood: true },
+        orderBy: { date: 'asc' },
+      });
+      const dateMap = {};
+      for (const d of diaries) {
+        const k = d.date.toISOString().split('T')[0];
+        if (!dateMap[k]) dateMap[k] = { count: 0, items: [] };
+        dateMap[k].count++;
+        dateMap[k].items.push({
+          id: d.id,
+          preview: d.content.replace(/[#*`\[\]]/g, '').substring(0, 60),
+          mood: d.mood,
+        });
+      }
+      return {
+        year: input.year, month: input.month, days: Object.entries(dateMap).map(([date, data]) => ({
+          date,
+          count: data.count,
+          previews: data.items.slice(0, 3),
+        })),
+      };
+    }),
+
+  // ─── 时间线 ──────────────────────────
+  timeline: t.procedure
+    .input(z.object({ page: z.number().default(1), size: z.number().default(10), tagId: z.number().nullable().default(null).optional() }))
+    .query(async ({ input }) => {
+      const { page, size, tagId } = input;
+      const where = { isArchived: false };
+      if (tagId) {
+        const links = await prisma.diaries_tags.findMany({ where: { tagId } });
+        where.id = { in: links.map(l => l.diaryId) };
+      }
+      const diaries = await prisma.diaries.findMany({
+        where,
+        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+        include: {
+          tags: { include: { tag: true } },
+          attachments: { orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] },
+        },
+      });
+      const groups = {};
+      for (const d of diaries) {
+        const k = d.date.toISOString().split('T')[0];
+        if (!groups[k]) groups[k] = [];
+        groups[k].push(d);
+      }
+      // 每天内按 createdAt 倒序（最新在前）
+      for (const k of Object.keys(groups)) {
+        groups[k].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      }
+      const sortedDates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+      const total = sortedDates.length;
+      const start = (input.page - 1) * input.size;
+      return {
+        items: sortedDates.slice(start, start + input.size).map(d => ({
+          date: d,
+          diaries: groups[d],
+          count: groups[d].length,
+        })),
+        total,
+        page: input.page,
+        size: input.size,
+        totalPages: Math.ceil(total / input.size),
+      };
+    }),
+
+  // ─── 历史上的今天 ─────────────────────
+  onThisDay: t.procedure
+    .input(z.object({ month: z.number(), day: z.number() }))
+    .query(async ({ input }) => {
+      const diaries = await prisma.diaries.findMany({
+        where: { isArchived: false },
+        orderBy: { date: 'desc' },
+        select: { id: true, date: true, content: true },
+      });
+      const now = new Date();
+      const matches = [];
+      for (const d of diaries) {
+        const dDate = new Date(d.date);
+        if (dDate.getUTCMonth() + 1 === input.month && dDate.getUTCDate() === input.day) {
+          const year = dDate.getUTCFullYear();
+          if (year !== now.getFullYear()) {
+            matches.push({
+              id: d.id,
+              year,
+              preview: d.content.replace(/[#*`\[\]]/g, '').substring(0, 60),
+            });
+          }
+        }
+      }
+      return matches.length > 0 ? matches[0] : null;
+    }),
+});
+
+// ═══════════════════════════════════════════
+// 标签 API
+// ═══════════════════════════════════════════
+
+const tagRouter = t.router({
+  list: t.procedure
+    .input(z.object({ searchText: z.string().default('').optional() }))
+    .query(async ({ input }) => prisma.tags.findMany({
+      where: input.searchText ? { name: { contains: input.searchText } } : {},
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      include: { _count: { select: { diaries: true } } },
+    })),
+  upsert: t.procedure
+    .input(z.object({
+      id: z.number().optional(),
+      name: z.string(),
+      color: z.string().default(''),
+      icon: z.string().default(''),
+    }))
+    .mutation(async ({ input }) => {
+      const { id, name, color, icon } = input;
+      if (id) return prisma.tags.update({ where: { id }, data: { name, color, icon } });
+      return prisma.tags.create({ data: { name, color, icon } });
+    }),
+  delete: t.procedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await prisma.tags.delete({ where: { id: input.id } });
+      return { success: true };
+    }),
+});
+
+// ═══════════════════════════════════════════
+// 配置 API
+// ═══════════════════════════════════════════
+
+const configRouter = t.router({
+  get: t.procedure
+    .input(z.object({ key: z.string() }))
+    .query(async ({ input }) => {
+      const c = await prisma.config.findUnique({ where: { key: input.key } });
+      if (!c) return null;
+      try { return JSON.parse(c.value); } catch { return c.value; }
+    }),
+  getAll: t.procedure.query(async () => {
+    const configs = await prisma.config.findMany();
+    const r = {};
+    for (const c of configs) {
+      try { r[c.key] = JSON.parse(c.value); } catch { r[c.key] = c.value; }
+    }
+    return r;
+  }),
+  set: t.procedure
+    .input(z.object({ key: z.string(), value: z.any() }))
+    .mutation(async ({ input }) => {
+      const v = typeof input.value === 'string' ? input.value : JSON.stringify(input.value);
+      await prisma.config.upsert({
+        where: { key: input.key },
+        update: { value: v },
+        create: { key: input.key, value: v },
+      });
+      return { success: true };
+    }),
+});
+
+// ═══════════════════════════════════════════
+// 导出 API
+// ═══════════════════════════════════════════
+
+const exportRouter = t.router({
+  markdown: t.procedure
+    .input(z.object({ ids: z.array(z.number()).optional(), bookId: z.number().optional() }))
+    .mutation(async ({ input }) => {
+      const where = { isArchived: false };
+      if (input.ids?.length) where.id = { in: input.ids };
+      if (input.bookId) where.bookId = input.bookId;
+      const diaries = await prisma.diaries.findMany({
+        where, orderBy: { date: 'desc' },
+        include: { tags: { include: { tag: true } }, attachments: true },
+      });
+      let md = `# Futao Logs 导出\n\n导出时间：${new Date().toLocaleString()}\n日记数量：${diaries.length}\n\n---\n\n`;
+      for (const d of diaries) {
+        const ds = d.date.toISOString().split('T')[0];
+        const ts = d.tags.map(t => t.tag.name).join(', ');
+        md += `## ${ds}\n\n`;
+        if (ts) md += `标签：${ts}\n\n`;
+        if (d.mood) md += `心情：${d.mood}\n\n`;
+        md += `${d.content}\n\n---\n\n`;
+      }
+      const fn = `futao-logs-${Date.now()}.md`;
+      fs.writeFileSync(path.join(exportDir, fn), md, 'utf-8');
+      await prisma.exports.create({
+        data: { format: 'markdown', status: 'done', filePath: `/exports/${fn}`, diaryCount: diaries.length },
+      });
+      return { filePath: `/exports/${fn}`, diaryCount: diaries.length };
+    }),
+
+  json: t.procedure
+    .input(z.object({ ids: z.array(z.number()).optional() }))
+    .mutation(async ({ input }) => {
+      const where = {};
+      if (input.ids?.length) where.id = { in: input.ids };
+      const diaries = await prisma.diaries.findMany({
+        where, orderBy: { date: 'desc' },
+        include: { tags: { include: { tag: true } }, attachments: true },
+      });
+      const fn = `futao-logs-${Date.now()}.json`;
+      fs.writeFileSync(path.join(exportDir, fn), JSON.stringify(diaries, null, 2), 'utf-8');
+      await prisma.exports.create({
+        data: { format: 'json', status: 'done', filePath: `/exports/${fn}`, diaryCount: diaries.length },
+      });
+      return { filePath: `/exports/${fn}`, diaryCount: diaries.length };
+    }),
+
+  history: t.procedure.query(async () =>
+    prisma.exports.findMany({ orderBy: { createdAt: 'desc' }, take: 20 }),
+  ),
+});
+
+// ═══════════════════════════════════════════
+// 汇总路由
+// ═══════════════════════════════════════════
+
+const appRouter = t.router({
+  diary: diaryRouter,
+  tag: tagRouter,
+  config: configRouter,
+  export: exportRouter,
+  llm: t.router({
+    test: t.procedure
+      .input(z.object({
+        apiUrl: z.string(),
+        apiKey: z.string(),
+        model: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const start = Date.now();
+        try {
+          const res = await fetch(`${input.apiUrl.replace(/\/+$/, '')}/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${input.apiKey}`,
+            },
+            body: JSON.stringify({
+              model: input.model,
+              messages: [{ role: 'user', content: 'Reply with just "ok".' }],
+              max_tokens: 10,
+            }),
+            signal: AbortSignal.timeout(15000),
+          });
+          if (!res.ok) {
+            const body = await res.text().catch(() => '');
+            return { success: false, error: `HTTP ${res.status}: ${body.slice(0, 200)}`, latency: Date.now() - start };
+          }
+          return { success: true, model: input.model, latency: Date.now() - start };
+        } catch (e) {
+          return { success: false, error: e.message || 'Connection failed', latency: Date.now() - start };
+        }
+      }),
+    chat: t.procedure
+      .input(z.object({
+        messages: z.array(z.object({ role: z.string(), content: z.string() })),
+        provider: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        // 确定使用的 provider
+        const readCfg = (key) => prisma.config.findUnique({ where: { key } }).then(c => {
+          if (!c) return null;
+          try { return JSON.parse(c.value); } catch { return c.value; }
+        }).catch(() => null);
+        const activeProvider = input.provider || await readCfg('llm_provider_active') || 'custom';
+        // 根据 provider 读取对应配置
+        const KNOWN_URLS = {
+          deepseek: 'https://api.deepseek.com',
+          kimi: 'https://api.moonshot.cn/v1',
+          aliyun: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+        };
+        const [apiUrl, apiKey, model] = await Promise.all([
+          KNOWN_URLS[activeProvider]
+            ? Promise.resolve(KNOWN_URLS[activeProvider])
+            : readCfg(`llm_${activeProvider}_api_url`).then(v => v || 'https://api.openai.com/v1'),
+          readCfg(`llm_${activeProvider}_api_key`),
+          readCfg(`llm_${activeProvider}_model`).then(v => v || 'gpt-4o-mini'),
+        ]);
+        if (!apiKey) return { success: false, error: 'LLM 未配置，请先在设置中选择平台并保存 API Key' };
+        try {
+          const res = await fetch(`${apiUrl.replace(/\/+$/, '')}/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({ model, messages: input.messages, max_tokens: 2048 }),
+            signal: AbortSignal.timeout(30000),
+          });
+          if (!res.ok) {
+            const body = await res.text().catch(() => '');
+            return { success: false, error: `HTTP ${res.status}: ${body.slice(0, 200)}` };
+          }
+          const json = await res.json();
+          return { success: true, content: json.choices?.[0]?.message?.content || '' };
+        } catch (e) {
+          return { success: false, error: e.message || 'LLM 请求失败' };
+        }
+      }),
+  }),
+});
+
+// ═══════════════════════════════════════════
+// Express 服务器
+// ═══════════════════════════════════════════
+
+const app = express();
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use('/api/trpc', createExpressMiddleware({ router: appRouter, createContext: () => ({}) }));
+
+// 文件上传
+app.post('/api/file/upload', (req, res) => {
+  const bb = busboy({ headers: req.headers });
+  const files = [];
+  bb.on('file', (fieldname, file, info) => {
+    const ext = path.extname(info.filename) || '.bin';
+    const uniqueName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+    const savePath = path.join(uploadDir, uniqueName);
+    file.pipe(fs.createWriteStream(savePath));
+    files.push({ filename: info.filename, filepath: `/uploads/${uniqueName}` });
+  });
+  bb.on('close', () => res.json({ files }));
+  req.pipe(bb);
+});
+
+// 静态文件
+app.use('/uploads', express.static(uploadDir));
+app.use('/exports', express.static(exportDir));
+
+// 健康检查
+app.get('/health', (req, res) => res.json({ status: 'ok', app: 'futao-logs' }));
+
+// 启动
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`📝 Futao Logs running on http://localhost:${PORT}`);
+  console.log(`   API: http://localhost:${PORT}/api/trpc`);
+  console.log(`   Uploads: ${uploadDir}`);
+  console.log(`   Exports: ${exportDir}`);
+});

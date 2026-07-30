@@ -5,6 +5,7 @@ import DiaryCard from './DiaryCard';
 import OnThisDay from '../common/OnThisDay';
 import TagFilter from '../common/TagFilter';
 import ExportButton from '../common/ExportButton';
+import AISummaryCard from '../common/AISummaryCard';
 
 /* ─── Props ─── */
 
@@ -276,6 +277,11 @@ export default function DiaryTimeline({
       {/* ═══ Timeline ═══ */}
       {groups.length > 0 && (
         <div className="relative timeline-line">
+          {/* AI Summary Card — shown at top */}
+          <section className="mb-6">
+            <AISummaryCard />
+          </section>
+
           {/* On This Day card — shown at top of first group when available */}
           {onThisDay && (
             <section className="mb-6">

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Diary } from '../../lib/types';
+import { api } from '../../lib/api';
 
 // ─── Props ───
 interface DiaryEditorProps {
@@ -61,6 +62,11 @@ export default function DiaryEditor({ diary, onSave, onClose }: DiaryEditorProps
   const previewUrlsRef = useRef<Map<File, string>>(new Map());
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+
+  // ─── AI Polish state ───
+  const [polishing, setPolishing] = useState(false);
+  const [polishResult, setPolishResult] = useState<'success' | 'error' | null>(null);
+  const [polishPrevContent, setPolishPrevContent] = useState('');
 
   // ─── Lock body scroll ───
   useEffect(() => {
@@ -148,6 +154,42 @@ export default function DiaryEditor({ diary, onSave, onClose }: DiaryEditorProps
       setLoading(false);
     }
   }, [content, date, mood, selectedTagIds, newFiles, onSave]);
+
+  // ─── AI Polish ───
+  const handlePolish = useCallback(async () => {
+    if (!content.trim()) return;
+    setPolishing(true);
+    setPolishResult(null);
+    setPolishPrevContent(content);
+    try {
+      const result = await api.llmChat([
+        { role: 'system', content: '你是一个日记润色助手。优化语法、保持原意和风格，修复错别字和标点。直接返回润色后的文本，不要添加任何说明。' },
+        { role: 'user', content },
+      ]);
+      if (result.success && result.content) {
+        setContent(result.content);
+        setPolishResult('success');
+        setTimeout(() => setPolishResult(null), 5000);
+      } else {
+        setPolishResult('error');
+        setTimeout(() => setPolishResult(null), 3000);
+      }
+    } catch {
+      setPolishResult('error');
+      setTimeout(() => setPolishResult(null), 3000);
+    } finally {
+      setPolishing(false);
+    }
+  }, [content]);
+
+  // ─── Undo polish ───
+  const undoPolish = useCallback(() => {
+    if (polishPrevContent) {
+      setContent(polishPrevContent);
+      setPolishPrevContent('');
+      setPolishResult(null);
+    }
+  }, [polishPrevContent]);
 
   // ─── Backdrop click ───
   const handleBackdrop = useCallback(
@@ -322,8 +364,78 @@ export default function DiaryEditor({ diary, onSave, onClose }: DiaryEditorProps
                   style={{ color: 'var(--text-tertiary)' }}
                 >
                   <span>**加粗** *斜体* ~~删除线~~ - 列表项</span>
-                  <span className="font-mono">已写 {Array.from(content).length} 字</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono">已写 {Array.from(content).length} 字</span>
+                    {/* AI Polish button */}
+                    <button
+                      onClick={handlePolish}
+                      disabled={polishing || !content.trim()}
+                      className="flex items-center gap-1 rounded-lg text-xs transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed select-none sm:px-2.5 sm:py-1 px-1 py-1"
+                      style={{
+                        color: 'var(--accent)',
+                        background: 'var(--accent-soft)',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!polishing && content.trim()) {
+                          e.currentTarget.style.background = 'var(--accent-border)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'var(--accent-soft)';
+                      }}
+                      title="AI 润色"
+                      aria-label="AI 润色"
+                    >
+                      {polishing ? (
+                        <>
+                          <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          <span className="hidden sm:inline">润色中...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                            <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/>
+                            <path d="M18 16l-1 3 3 1-3 1 1 3-1.5-2.5L13 21l1-3-3-1 3-1-1-3 1.5 2.5L18 16z"/>
+                          </svg>
+                          <span className="hidden sm:inline">润色</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
+
+                {/* Polish result toast */}
+                <AnimatePresence>
+                  {polishResult && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg text-xs"
+                      style={{
+                        background: polishResult === 'success' ? 'var(--accent-soft)' : 'rgba(239, 68, 68, 0.08)',
+                        color: polishResult === 'success' ? 'var(--accent)' : '#ef4444',
+                      }}
+                    >
+                      {polishResult === 'success' ? (
+                        <>
+                          <span>✅ 已润色</span>
+                          <button
+                            onClick={undoPolish}
+                            className="ml-auto underline cursor-pointer hover:opacity-80"
+                          >
+                            [撤销]
+                          </button>
+                        </>
+                      ) : (
+                        <span>❌ 润色失败，请重试</span>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* ── Image upload area ── */}

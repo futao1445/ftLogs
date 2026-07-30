@@ -99,3 +99,32 @@ export interface DiaryListInput {
 export interface FileUploadResult {
   files: { filename: string; filepath: string }[];
 }
+
+/* ─── RAG / Semantic Search ─── */
+
+export interface SemanticSearchResult {
+  diary: Diary;
+  score: number;
+  matchedContent?: string;
+  matchedDate?: string;
+}
+
+export interface GraphEntity {
+  id: number;
+  type: 'person' | 'event' | 'place' | 'emotion' | 'topic';
+  name: string;
+  diaryIds: string;
+}
+
+export interface GraphRelation {
+  id: number;
+  sourceId: number;
+  targetId: number;
+  relation: string;
+  weight: number;
+}
+
+export interface GraphData {
+  nodes: { id: number; type: string; name: string; diaryCount: number }[];
+  edges: { source: number; target: number; relation: string; weight: number }[];
+}

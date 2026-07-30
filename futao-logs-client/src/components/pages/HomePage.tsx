@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../../lib/api';
 import type { Diary, TimelineGroup, Tag, CalendarDay } from '../../lib/types';
 import PageShell from '../common/PageShell';
@@ -8,10 +8,13 @@ import DiaryTimeline from '../diary/DiaryTimeline';
 import DiaryEditor from '../diary/DiaryEditor';
 import CalendarView from '../calendar/CalendarView';
 import DiaryCard from '../diary/DiaryCard';
+import MoodChart from '../common/MoodChart';
+import AISummaryTab from '../ai-summary/AISummaryTab';
+import SearchView from '../search/SearchView';
 
 export default function HomePage() {
   // Tab state
-  const [activeTab, setActiveTab] = useState<'diary' | 'calendar' | 'search'>('diary');
+  const [activeTab, setActiveTab] = useState<'diary' | 'calendar' | 'search' | 'summary'>('diary');
 
   // Data
   const [groups, setGroups] = useState<TimelineGroup[]>([]);
@@ -190,16 +193,27 @@ export default function HomePage() {
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
+  // ─── Mood chart data from calendar days ───
+  const moodChartData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const day of calDays) {
+      for (const preview of day.previews) {
+        if (preview.mood) {
+          counts[preview.mood] = (counts[preview.mood] || 0) + 1;
+        }
+      }
+    }
+    return Object.entries(counts).map(([mood, count]) => ({ mood, count }));
+  }, [calDays]);
+  const totalMoodCount = moodChartData.reduce((s, d) => s + d.count, 0);
+
   return (
     <PageShell
       activeTab={activeTab}
-      onTabChange={(tab: 'diary' | 'calendar' | 'search') => {
+      onTabChange={(tab: 'diary' | 'calendar' | 'search' | 'summary') => {
         setActiveTab(tab);
-        if (tab === 'search') setSearchQuery('');
       }}
       onNewDiary={() => setEditingDiary('new')}
-      searchValue={searchQuery}
-      onSearchChange={setSearchQuery}
     >
       {/* ─── Timeline Tab ─── */}
       {activeTab === 'diary' && (
@@ -228,6 +242,14 @@ export default function HomePage() {
       {/* ─── Calendar Tab ─── */}
       {activeTab === 'calendar' && (
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Mood chart at top of calendar view */}
+          <div className="mb-6">
+            <MoodChart
+              data={moodChartData}
+              totalCount={totalMoodCount}
+            />
+          </div>
+
           <CalendarView
             year={calYear}
             month={calMonth}
@@ -280,28 +302,11 @@ export default function HomePage() {
 
       {/* ─── Search Tab ─── */}
       {activeTab === 'search' && (
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3">
-          {searching && (
-            <p className="text-sm text-center py-8" style={{ color: 'var(--text-tertiary)' }}>
-              搜索中...
-            </p>
-          )}
-          {!searching && searchQuery && searchResults.length === 0 && (
-            <p className="text-sm text-center py-8" style={{ color: 'var(--text-tertiary)' }}>
-              没找到匹配的日记
-            </p>
-          )}
-          {!searching &&
-            searchResults.map((d) => (
-              <DiaryCard key={d.id} diary={d} onEdit={() => setEditingDiary(d)} onDelete={handleDelete} />
-            ))}
-          {!searchQuery && !searching && (
-            <p className="text-sm text-center py-8" style={{ color: 'var(--text-tertiary)' }}>
-              输入关键词搜索日记内容
-            </p>
-          )}
-        </div>
+        <SearchView onEditDiary={(d) => setEditingDiary(d)} onDeleteDiary={handleDelete} />
       )}
+
+      {/* ─── AI Summary Tab ─── */}
+      {activeTab === 'summary' && <AISummaryTab />}
 
       {/* ─── Editor Modal ─── */}
       {editingDiary && (

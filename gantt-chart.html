@@ -1,60 +1,142 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><title>futao-logs 甘特图 · 精确到 agent</title>
+<head><meta charset="UTF-8"><title>futao-logs 甘特图 · 完整路线图</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:system-ui,sans-serif; background:#0f1a12; color:#d4e6d8; padding:40px; max-width:1200px; }
+body { font-family:system-ui,sans-serif; background:#0f1a12; color:#d4e6d8; padding:40px; max-width:1000px; }
 h1 { font-size:20px; margin-bottom:4px; font-weight:500; color:#e8f5e9; }
 .sub { font-size:13px; color:#6a8f77; margin-bottom:32px; }
+.phase { margin-bottom:40px; }
+.phase-header { display:flex; align-items:center; gap:12px; margin-bottom:16px; padding:10px 14px; border-radius:8px; }
+.phase-1 { background:#1a3a22; border-left:4px solid #66bb6a; }
+.phase-2 { background:#1a2a3a; border-left:4px solid #4fc3f7; }
+.phase-3 { background:#2a2a1a; border-left:4px solid #ffd54f; }
+.phase-4 { background:#3a1a3a; border-left:4px solid #ce93d8; }
+.phase-5 { background:#2a1a1a; border-left:4px solid #ef9a9a; }
+.phase-6 { background:#1a2a2a; border-left:4px solid #81d4fa; }
+.phase-title { font-size:17px; font-weight:600; }
+.phase-meta { font-size:12px; opacity:0.7; }
+.phase-desc { font-size:12px; margin-top:2px; opacity:0.6; }
+.phase-milestone { font-size:12px; margin-top:4px; }
 table { width:100%; border-collapse:collapse; font-size:13px; }
-th { text-align:left; padding:10px 12px; color:#6a8f77; font-weight:500; border-bottom:1px solid #1a2e20; font-size:11px; text-transform:uppercase; letter-spacing:1px; }
-td { padding:10px 12px; border-bottom:1px solid #0d1f14; vertical-align:top; }
-.agent-tag { display:inline-block; padding:1px 8px; border-radius:3px; font-size:11px; font-weight:500; }
-.ag-lamda { background:#2a4a3a; color:#66bb6a; }
-.ag-miky { background:#3a2a5a; color:#b39ddb; }
-.ag-cindy { background:#2a3a5a; color:#64b5f6; }
-.ag-amily { background:#4a2a2a; color:#ef9a9a; }
-.ag-emma { background:#3a4a2a; color:#aed581; }
-.status-done { color:#66bb6a; }
-.status-progress { color:#4fc3f7; }
-.status-pending { color:#6a8f77; }
-.project-title { font-size:15px; font-weight:500; margin:28px 0 12px 0; padding-bottom:8px; border-bottom:1px solid #1a2e20; }
-.project-title.l { color:#81c784; }
-.project-title.h { color:#4fc3f7; }
+th { text-align:left; padding:8px 12px; color:#6a8f77; font-weight:400; border-bottom:1px solid #1a2e20; font-size:12px; }
+td { padding:8px 12px; border-bottom:1px solid #0d1f14; }
+.tag { display:inline-block; padding:1px 6px; border-radius:3px; font-size:11px; }
+.tag-done { background:#1a3a22; color:#66bb6a; }
+.tag-wip { background:#1a2a3a; color:#4fc3f7; }
+.tag-plan { background:#2a2a2a; color:#6a8f77; }
+.col-check { width:32px; text-align:center; }
+.col-assign { width:130px; }
+.col-date { width:170px; }
 </style>
 </head>
 <body>
-<h1>futao 项目甘特图 · 精确到 commit</h1>
-<p class="sub">2026-07-29 · 每个 agent 按 git log 实际提交时间 / 排期任务时间</p>
+<h1>futao-logs 项目甘特图</h1>
+<p class="sub">基于麻也龙太×力齐早早调研→需求文档V1.1路线图 · 更新 2026-07-29</p>
 
-<div class="project-title l">📓 futao-logs ★★★→★★★★</div>
+<!-- Phase 1: ★★★ 基础版（原⭐极简卡片日志本 + 原⭐⭐AI辅助→合并） -->
+<div class="phase">
+<div class="phase-header phase-1">
+<div>
+<div class="phase-title">Phase 1 — 卡片日志 + AI 辅助</div>
+<div class="phase-meta">7/29 17:26~18:47 · 历时约1.5h</div>
+<div class="phase-desc">基于力齐早早调研（Blinko方案复用评分9/10 + 组件组合备选）</div>
+<div class="phase-milestone">【里程碑 ⭐⭐⭐】P0 全部 + P1 四项 + 在线/离线 + AI LLM配置</div>
+</div>
+<span style="margin-left:auto;font-size:14px;color:#66bb6a;font-weight:600;">✅ 已完成</span>
+</div>
+
 <table>
-<tr><th style="width:140px;">阶段</th><th style="width:160px;">任务</th><th style="width:120px;">Agent</th><th style="width:180px;">时间</th><th>Commit / 状态</th></tr>
-
-<tr><td rowspan="4">★★★<br><span style="color:#555;font-size:11px;">优秀版</span></td><td>P0 核心搭建</td><td><span class="agent-tag ag-cindy">林正树</span> <span class="agent-tag ag-lamda">lamda</span></td><td>7/29 17:26</td><td><span class="status-done">✅ chore: init / feat: Phase 1 complete</span></td></tr>
-<tr><td>P1 四项功能</td><td><span class="agent-tag ag-lamda">lamda</span> <span class="agent-tag ag-miky">miky</span></td><td>7/29 17:37~17:39</td><td><span class="status-done">✅ 字数统计/回顾/标签/导出 上线</span></td></tr>
-<tr><td>★★★ 功能</td><td><span class="agent-tag ag-lamda">lamda</span> <span class="agent-tag ag-miky">miky</span></td><td>7/29 18:39~18:41</td><td><span class="status-done">✅ 暗色/离线/统计/心情色/--accent-text</span></td></tr>
-<tr><td>Bug 修复</td><td><span class="agent-tag ag-amily">Amily</span> <span class="agent-tag ag-cindy">Cindy</span> <span class="agent-tag ag-lamda">lamda</span></td><td>7/29 全域</td><td><span class="status-done">✅ 6 个（排序/时区/重复/保存/换行/脏数据）</span></td></tr>
-
-<tr><td rowspan="2">★★★★<br><span style="color:#4fc3f7;font-size:11px;">旗舰版</span></td><td>设置面板</td><td><span class="agent-tag ag-lamda">lamda</span> <span class="agent-tag ag-miky">miky</span></td><td>7/29 18:44~18:47</td><td><span class="status-done">✅ SettingsDrawer + 通用/LLM/数据/关于</span></td></tr>
-<tr><td>LLM 4 平台</td><td><span class="agent-tag ag-cindy">Cindy</span> <span class="agent-tag ag-lamda">lamda</span></td><td>7/29 18:44~18:47</td><td><span class="status-done">✅ DeepSeek/Kimi/阿里云/自定义 + 下拉选择器</span></td></tr>
-
-<tr><td rowspan="3" style="border-bottom:none;">★★★★<br><span style="color:#4fc3f7;font-size:11px;">待排期</span></td><td>AI 每日总结</td><td><span class="agent-tag ag-lamda">lamda</span> <span class="agent-tag ag-cindy">Cindy</span></td><td>待 futao 确认</td><td><span class="status-pending">⏳ 调用 llm.chat，纯前端展示</span></td></tr>
-<tr><td>情绪趋势图</td><td><span class="agent-tag ag-lamda">lamda</span></td><td>待 futao 确认</td><td><span class="status-pending">⏳ 已存 mood 字段，纯前端展示</span></td></tr>
-<tr><td>搜索增强/质感</td><td>全员</td><td>待 futao 确认</td><td><span class="status-pending">⏳ 待讨论优先级</span></td></tr>
+<tr><th class="col-check"></th><th>任务项（麻也龙太需求文档V1.1 §5）</th><th class="col-assign">负责人</th><th class="col-date">完成</th><th>状态</th></tr>
+<tr><td>✅</td><td>F1 卡片日记·F2 Markdown·F3 图文·F4 日历·F5 时间线·F6 本地存储·F7 搜索</td><td>林正树/lamda</td><td>7/29</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>✅</td><td>F8 标签·F9 日记本·F10 每日回顾·F11 导出·F12 字数统计</td><td>lamda/miky</td><td>7/29</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>✅</td><td>暗色模式·离线提示·统计栏·心情色·6项bug修复</td><td>lamda/miky/Amily/Cindy</td><td>7/29</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>✅</td><td>LLM 4平台配置·设置面板（龙太需求§6 Phase2前置）</td><td>lamda/Cindy/miky</td><td>7/29</td><td><span class="tag tag-done">完成</span></td></tr>
 </table>
+<p style="margin-top:8px;font-size:12px;color:#6a8f77;">→ 等 futao 验收后关闭</p>
+</div>
 
-<div class="project-title h">🏠 futao-homepage</div>
+<!-- Phase 2: ★★★★ -->
+<div class="phase">
+<div class="phase-header phase-2">
+<div>
+<div class="phase-title">Phase 2 — AI 深度集成</div>
+<div class="phase-meta">7/29 19:20~24:00 · 历时约5h</div>
+<div class="phase-desc">麻也龙太需求§6：AI自动总结·每日分析·情绪指数·日记润色·N日回顾</div>
+<div class="phase-milestone">【里程碑 ⭐⭐⭐⭐】AI 每日总结 + 情绪趋势 + 智能搜索</div>
+</div>
+<span style="margin-left:auto;font-size:14px;color:#66bb6a;font-weight:600;">✅ 已完成，待 futao 验收</span>
+</div>
+
 <table>
-<tr><th style="width:140px;">级别</th><th style="width:160px;">任务</th><th style="width:120px;">Agent</th><th style="width:180px;">时间</th><th>Commit / 状态</th></tr>
-<tr><td>Init</td><td>Next.js 初始化</td><td><span class="agent-tag" style="background:#2a3a2a;color:#81c784;">futao</span></td><td>7/28 11:59</td><td><span class="status-done">✅ Initial commit</span></td></tr>
-<tr><td>P0 修复</td><td>5 项（底部/内容/动画/…）</td><td><span class="agent-tag ag-miky">miky</span> <span class="agent-tag ag-lamda">lamda</span></td><td>已修复未提交</td><td><span style="color:#ef5350;">🔴 代码在本地未 commit</span></td></tr>
-<tr><td>P1</td><td>3/5 项</td><td>未分配</td><td>—</td><td><span class="status-pending">⏳ 待排期</span></td></tr>
-<tr><td>P2</td><td>3 项</td><td>未分配</td><td>—</td><td><span class="status-pending">⏳ 待排期</span></td></tr>
+<tr><th class="col-check"></th><th>任务项（麻也龙太需求文档§6 Phase2描述）</th><th class="col-assign">负责人</th><th class="col-date">预计</th><th>状态</th></tr>
+<tr><td>✅</td><td>AI 分级总结体系：日/周/月/年四级+保存+编辑+重写</td><td>lamda + Cindy</td><td>7/29 19:54</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>✅</td><td>AI 润色提示：写日记时可选 AI 辅助润色（保留）</td><td>lamda</td><td>7/29 19:30</td><td><span class="tag tag-done">完成</span></td></tr>
 </table>
+<p style="margin-top:8px;font-size:12px;color:#4fc3f7;">⚠️ 因 futao 需求变化：AI 总结改为手动触发分级体系 + 独立 Tab，之前自动总结栏 P0 已废弃重构中</p>
+</table>
+</div>
 
-<p style="margin-top:24px;font-size:12px;color:#6a8f77;">
-futao-homepage 所有 agent 修复的代码仍在本地的 audit 文件中未 commit。需要先清理 → git add → commit 再继续。futao-logs 已全部 git 管理。
+<!-- Phase 3: ★★★★★ -->
+<div class="phase">
+<div class="phase-header phase-3">
+<div>
+<div class="phase-title">Phase 3 — 知识库（RAG）</div>
+<div class="phase-meta">龙太×早早调研已完成：Blinko已内置RAG引擎 · 力齐早早推荐方案B</div>
+<div class="phase-desc">麻也龙太需求§6：向量化存储·语义搜索·关系发现·知识图谱</div>
+<div class="phase-milestone">【里程碑 ⭐⭐⭐⭐⭐】语义搜索 + 知识图谱</div>
+</div>
+<span style="margin-left:auto;font-size:14px;color:#4fc3f7;font-weight:600;">🔄 进行中（7/29 20:42 启动）</span>
+</div>
+
+<table>
+<tr><th class="col-check"></th><th>任务项</th><th class="col-assign">负责人</th><th class="col-date">预计</th><th>状态</th></tr>
+<tr><td>✅</td><td>调研完成：Blinko 方案复用评分 9/10，内置 RAG</td><td>力齐早早</td><td>7/29</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>🔄</td><td>后端 RAG 基础：sqlite-vec + embeddings + 语义搜索路由</td><td>Cindy/林正树</td><td>7/29 20:42~</td><td><span class="tag tag-wip">进行中</span></td></tr>
+<tr><td>🔄</td><td>前端语义搜索 UI</td><td>lamda</td><td>后端完成后</td><td><span class="tag tag-plan">待排期</span></td></tr>
+<tr><td>📋</td><td>实体提取 + 知识图谱后端</td><td>Cindy/林正树</td><td>搜索完成后</td><td><span class="tag tag-plan">待排期</span></td></tr>
+<tr><td>📋</td><td>前端知识图谱可视化</td><td>lamda</td><td>图谱后端完成后</td><td><span class="tag tag-plan">待排期</span></td></tr>
+</table>
+</div>
+
+<!-- Phase 4-6 预览 -->
+<div class="phase">
+<div class="phase-header phase-4">
+<div>
+<div class="phase-title">Phase 4 — 长期记忆</div>
+<div class="phase-meta">待定</div>
+<div class="phase-desc">麻也龙太需求§6：AI识别长期模式·自动提炼重要事件·周期性回顾推送</div>
+</div>
+<span style="margin-left:auto;font-size:14px;color:#ce93d8;font-weight:600;">⏳ 待排期</span>
+</div>
+</div>
+
+<div class="phase">
+<div class="phase-header phase-5">
+<div>
+<div class="phase-title">Phase 5 — 基础桌宠</div>
+<div class="phase-meta">待定</div>
+<div class="phase-desc">麻也龙太需求§6：陪伴型桌面宠物·放桌面·与日志联动</div>
+</div>
+<span style="margin-left:auto;font-size:14px;color:#ef9a9a;font-weight:600;">⏳ 待排期</span>
+</div>
+</div>
+
+<div class="phase">
+<div class="phase-header phase-6">
+<div>
+<div class="phase-title">Phase 6 — AI 增强桌宠</div>
+<div class="phase-meta">待定</div>
+<div class="phase-desc">麻也龙太需求§6：AI增强→了解生活·能聊天互动·三者联动（日记+AI+桌宠）</div>
+</div>
+<span style="margin-left:auto;font-size:14px;color:#81d4fa;font-weight:600;">⏳ 待排期</span>
+</div>
+</div>
+
+<hr style="border-color:#1a2e20;margin:32px 0;">
+<p style="font-size:12px;color:#6a8f77;">
+路线图来源：麻也龙太（需求分析）· 力齐早早（数据调研）— 需求文档V1.1 + 三份调研报告<br>
+🏠 futao-homepage — 独立项目，P0 修复完成未commit，P1/P2 待验收后启动
 </p>
 </body>
 </html>

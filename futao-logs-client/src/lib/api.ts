@@ -1,4 +1,4 @@
-import type { Diary, DiaryListInput, DiaryListResult, DiaryUpsertInput, TimelineResult, CalendarResult, Tag, FileUploadResult } from './types';
+import type { Diary, DiaryListInput, DiaryListResult, DiaryUpsertInput, TimelineResult, CalendarResult, Tag, FileUploadResult, GraphData, GraphEntity } from './types';
 
 const API_BASE = '/api/trpc';
 
@@ -83,6 +83,75 @@ export const api = {
 
   llmChat: (messages: { role: string; content: string }[]) =>
     tRPCMutation<{ success: boolean; content?: string; error?: string }>('llm.chat', { messages }),
+
+  llmModels: (input: { provider?: string; apiKey?: string; apiUrl?: string } = {}) =>
+    tRPCQuery<{ models: { id: string; ownedBy: string }[]; error?: string }>('llm.models', input),
+
+  llmSummarize: (input: { date?: string } = {}) =>
+    tRPCMutation<{ summary: string; keywords: string[]; diaryCount: number; error?: string }>('llm.summarize', input),
+
+  // ── Summary ──
+  summaryGenerate: (input: { type: 'day' | 'week' | 'month' | 'year'; date?: string; feedback?: string }) =>
+    tRPCMutation<{
+      success: boolean;
+      summary?: string;
+      analysis?: { body?: string; mind?: string; psychology?: string; growth?: string };
+      advice?: string;
+      keywords?: string[];
+      version?: number;
+      periodKey?: string;
+      error?: string;
+    }>('summary.generate', input),
+
+  summaryGet: (type: string, periodKey: string) =>
+    tRPCQuery<{
+      id: number; type: string; periodKey: string; content: string;
+      analysis: string; advice: string; keywords: string; version: number;
+      feedback: string; createdAt: string;
+    } | null>('summary.get', { type, periodKey }),
+
+  summaryList: (types?: string[]) =>
+    tRPCQuery<{
+      id: number; type: string; periodKey: string; content: string;
+      analysis: string; advice: string; version: number; createdAt: string;
+    }[]>('summary.list', types?.length ? { types } : {}),
+
+  summaryDelete: (type: string, periodKey: string) =>
+    tRPCMutation<{ success: boolean }>('summary.delete', { type, periodKey }),
+
+  summaryUpdate: (input: { type: string; periodKey: string; content?: string; analysis?: string; advice?: string; keywords?: string }) =>
+    tRPCMutation<{ success: boolean; error?: string }>('summary.update', input),
+
+  // ── RAG / Semantic Search ──
+  ragIndexAll: (force = false) =>
+    tRPCMutation<{ success: boolean; total: number; indexed: number; errors: number; message?: string }>('rag.indexAll', { force }),
+
+  ragIndexDiary: (diaryId: number) =>
+    tRPCMutation<{ success: boolean; dimensions?: number; error?: string }>('rag.indexDiary', { diaryId }),
+
+  ragSearch: (query: string, limit = 10, minScore = 0.5) =>
+    tRPCQuery<{
+      items: { diary: any; score: number }[];
+      query: string;
+      error?: string;
+    }>('rag.search', { query, limit, minScore }),
+
+  ragExtractEntities: (options: { diaryId?: number; diaryIds?: number[] } = {}) =>
+    tRPCMutation<{ success: boolean; total: number; extracted: number; errors: number; message?: string }>('rag.extractEntities', options),
+
+  ragGraph: (type?: string) =>
+    tRPCQuery<{
+      nodes: { id: number; type: string; name: string; diaryCount: number }[];
+      edges: { source: number; target: number; weight: number; relation: string }[];
+    }>('rag.graph', type ? { type } : {}),
+
+  ragEntityDetail: (id: number) =>
+    tRPCQuery<{
+      entity: any;
+      diaries: any[];
+      relatedEntities: any[];
+      relations: any[];
+    } | null>('rag.entityDetail', { id }),
 
   // ── Export history ──
   exportHistory: () =>

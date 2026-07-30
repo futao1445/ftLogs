@@ -9,16 +9,18 @@ type Provider = 'deepseek' | 'kimi' | 'aliyun' | 'custom';
 interface ProviderConfig {
   label: string;
   baseUrl: string;
-  models: string[];
-  customName?: string;
-  customBaseUrl?: string;
+}
+
+interface ModelItem {
+  id: string;
+  ownedBy: string;
 }
 
 const PROVIDER_MAP: Record<Provider, ProviderConfig> = {
-  deepseek: { label: 'DeepSeek', baseUrl: 'https://api.deepseek.com', models: ['deepseek-chat', 'deepseek-reasoner'] },
-  kimi: { label: 'Kimi', baseUrl: 'https://api.moonshot.cn/v1', models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'] },
-  aliyun: { label: '阿里云', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', models: ['qwen-plus', 'qwen-max', 'qwen-turbo'] },
-  custom: { label: '自定义', baseUrl: '', models: [] },
+  deepseek: { label: 'DeepSeek', baseUrl: 'https://api.deepseek.com' },
+  kimi: { label: 'Kimi', baseUrl: 'https://api.moonshot.cn/v1' },
+  aliyun: { label: '阿里云', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1' },
+  custom: { label: '自定义', baseUrl: '' },
 };
 
 /* ─── Config key helpers ─── */
@@ -37,11 +39,10 @@ function extractConfig(all: Record<string, any>, p: Provider) {
   }
   return {
     apiKey: all[cfgKey(p, 'api_key')] || '',
-    model: all[cfgKey(p, 'model')] || PROVIDER_MAP[p].models[0],
+    model: all[cfgKey(p, 'model')] || '',
   };
 }
 
-/* ─── Component ─── */
 export default function LLMConfigSection() {
   const [provider, setProvider] = useState<Provider>('deepseek');
   const [apiKey, setApiKey] = useState('');
@@ -49,18 +50,50 @@ export default function LLMConfigSection() {
   const [customName, setCustomName] = useState('');   // custom only
   const [customUrl, setCustomUrl] = useState('');       // custom only
   const [customModelInput, setCustomModelInput] = useState('');
+
+  const [models, setModels] = useState<ModelItem[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelsError, setModelsError] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // ── Fetch model list ──
+  const fetchModels = useCallback(async (p: Provider, key: string) => {
+    if (!key || p === 'custom') {
+      setModels([]);
+      setModelsError('');
+      return;
+    }
+    setModelsLoading(true);
+    setModelsError('');
+    try {
+      const result = await api.llmModels({
+        provider: p,
+        apiKey: key,
+      });
+      if (result.error) {
+        setModelsError(result.error);
+        setModels([]);
+      } else {
+        setModels(result.models || []);
+        setModelsError('');
+      }
+    } catch {
+      setModelsError('获取模型列表失败');
+      setModels([]);
+    } finally {
+      setModelsLoading(false);
+    }
+  }, []);
+
   // ── Load saved config on mount ──
   useEffect(() => {
     (async () => {
       try {
         const all = await api.configGetAll();
-        // Read which provider is active
         const active = all.llm_provider_active || 'deepseek';
         setProvider(active as Provider);
         const cfg = extractConfig(all, active as Provider);
@@ -71,22 +104,22 @@ export default function LLMConfigSection() {
           setModel('');
           setCustomModelInput(cfg.model);
         } else {
-          setModel(cfg.model || PROVIDER_MAP[active as Provider].models[0]);
-          setCustomName('');
-          setCustomUrl('');
-          setCustomModelInput('');
+          setModel(cfg.model);
+          await fetchModels(active as Provider, cfg.apiKey);
         }
       } catch { /* use defaults */ } finally {
         setLoaded(true);
       }
     })();
-  }, []);
+  }, [fetchModels]);
 
   // ── Switch provider ──
   const switchProvider = useCallback(async (p: Provider) => {
     setProvider(p);
     setTestResult(null);
     setSaved(false);
+    setModels([]);
+    setModelsError('');
     try {
       const all = await api.configGetAll();
       const cfg = extractConfig(all, p);
@@ -97,20 +130,21 @@ export default function LLMConfigSection() {
         setModel('');
         setCustomModelInput(cfg.model);
       } else {
-        setModel(cfg.model || PROVIDER_MAP[p].models[0]);
+        setModel(cfg.model);
         setCustomName('');
         setCustomUrl('');
         setCustomModelInput('');
+        await fetchModels(p, cfg.apiKey);
       }
     } catch {
       setApiKey('');
       if (p === 'custom') {
         setCustomName(''); setCustomUrl(''); setCustomModelInput('');
       } else {
-        setModel(PROVIDER_MAP[p].models[0]);
+        setModel('');
       }
     }
-  }, []);
+  }, [fetchModels]);
 
   // ── Test connection ──
   const handleTest = useCallback(async () => {
@@ -126,7 +160,7 @@ export default function LLMConfigSection() {
     setTestResult(null);
     try {
       const testUrl = provider === 'custom' ? customUrl : info.baseUrl;
-      const testModel = provider === 'custom' ? (customModelInput || 'gpt-4o-mini') : (model || info.models[0]);
+      const testModel = provider === 'custom' ? (customModelInput || 'gpt-4o-mini') : (model || models[0]?.id || 'gpt-4o-mini');
       const result = await api.llmTest({
         apiUrl: testUrl.replace(/\/+$/, ''),
         apiKey,
@@ -142,15 +176,13 @@ export default function LLMConfigSection() {
     } finally {
       setTesting(false);
     }
-  }, [provider, apiKey, model, customUrl, customModelInput]);
+  }, [provider, apiKey, model, customUrl, customModelInput, models]);
 
   // ── Save ──
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      // Save active provider
       await api.configSet('llm_provider_active', provider);
-      // Save provider-specific config
       if (provider === 'custom') {
         await Promise.all([
           api.configSet(cfgKey(provider, 'name'), customName),
@@ -174,6 +206,7 @@ export default function LLMConfigSection() {
   if (!loaded) return null;
 
   const info = PROVIDER_MAP[provider];
+  const hasKey = provider === 'custom' ? !!apiKey && !!customUrl : !!apiKey;
 
   return (
     <div className="space-y-4">
@@ -269,7 +302,30 @@ export default function LLMConfigSection() {
         />
       </Field>
 
-      {/* Model */}
+      {/* 获取模型列表按钮（非自定义平台） */}
+      {provider !== 'custom' && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fetchModels(provider, apiKey)}
+            disabled={!apiKey || modelsLoading}
+            className="px-3 py-1.5 rounded-lg text-xs transition-all duration-150 cursor-pointer disabled:opacity-50"
+            style={{
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-default)',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border-hover)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-default)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+          >
+            {modelsLoading ? '获取中...' : models.length > 0 ? `📋 ${models.length} 个模型` : '📋 获取模型列表'}
+          </button>
+          {modelsError && (
+            <span className="text-xs" style={{ color: '#ef4444' }}>获取失败，点击重试</span>
+          )}
+        </div>
+      )}
+
+      {/* Model — dynamic from API */}
       <Field label="模型">
         {provider === 'custom' ? (
           <input
@@ -286,11 +342,85 @@ export default function LLMConfigSection() {
             onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
             onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-default)'; }}
           />
+        ) : modelsLoading ? (
+          <div
+            className="w-full h-10 px-3 rounded-lg text-sm flex items-center"
+            style={{
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-tertiary)',
+              border: '1px solid var(--border-default)',
+            }}
+          >
+            加载模型列表...
+          </div>
+        ) : modelsError ? (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={model}
+              onChange={(e) => { setModel(e.target.value); setTestResult(null); setSaved(false); }}
+              placeholder="手动输入模型名"
+              className="flex-1 h-10 px-3 rounded-lg text-sm outline-none transition-colors duration-150"
+              style={{
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-default)',
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-default)'; }}
+            />
+            <button
+              onClick={() => fetchModels(provider, apiKey)}
+              className="px-2 py-1 rounded-lg text-xs whitespace-nowrap"
+              style={{
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border-default)',
+              }}
+              title="重新获取"
+            >
+              刷新
+            </button>
+          </div>
+        ) : models.length > 0 ? (
+          <div className="flex gap-2">
+            <select
+              value={model && models.some(m => m.id === model) ? model : ''}
+              onChange={(e) => { setModel(e.target.value); setTestResult(null); setSaved(false); }}
+              className="flex-1 h-10 px-3 rounded-lg text-sm outline-none transition-colors duration-150 cursor-pointer"
+              style={{
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-default)',
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-default)'; }}
+            >
+              <option value="">-- 选择模型 --</option>
+              {models.map((m) => (
+                <option key={m.id} value={m.id}>{m.id}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => fetchModels(provider, apiKey)}
+              className="px-2 py-1 rounded-lg text-xs whitespace-nowrap"
+              style={{
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border-default)',
+              }}
+              title="重新获取模型列表"
+            >
+              刷新
+            </button>
+          </div>
         ) : (
-          <select
+          <input
+            type="text"
             value={model}
             onChange={(e) => { setModel(e.target.value); setTestResult(null); setSaved(false); }}
-            className="w-full h-10 px-3 rounded-lg text-sm outline-none transition-colors duration-150 cursor-pointer"
+            placeholder="保存 API Key 后自动获取模型列表"
+            className="w-full h-10 px-3 rounded-lg text-sm outline-none transition-colors duration-150"
             style={{
               background: 'var(--bg-secondary)',
               color: 'var(--text-primary)',
@@ -298,11 +428,7 @@ export default function LLMConfigSection() {
             }}
             onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
             onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-default)'; }}
-          >
-            {info.models.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
+          />
         )}
       </Field>
 
