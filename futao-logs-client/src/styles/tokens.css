@@ -1,49 +1,53 @@
 /* ═══════════════════════════════════════════
    卡片日记 — 设计 Token & 视觉规范
-   基于方向稿方案 A「雨林暖调」
-   2026-07-29 | miky
+   基于方案 B「池塘涟漪」· NIGHT POND
+   2026-07-31 | miky + lamda 落地
+   硬规则：只用 10 色、月金仅触发瞬间、弹簧曲线
    ═══════════════════════════════════════════ */
 
 :root {
-  /* ─── 背景色 ─── */
-  --bg-primary: #0f1a12;
-  --bg-secondary: #16231a;
-  --bg-tertiary: #1c2b21;
-  --bg-elevated: #1e3025;
+  /* ─── 背景色（池塘蓝阶）─── */
+  --bg-primary: #0c1626;        /* 1 深海夜 · 页面底色 60% */
+  --bg-secondary: #172a45;      /* 2 中层水 · 卡片底层 12% */
+  --bg-tertiary: #21395c;       /* 3 近水面 · 卡片中层 10% */
+  --bg-elevated: #21395c;       /* 近水面 · 浮起层 */
 
-  /* ─── 文字 ─── */
-  --text-primary: rgba(255, 255, 255, 0.88);
-  --text-secondary: rgba(167, 201, 185, 0.65);
-  --text-tertiary: rgba(167, 201, 185, 0.35);
-  --text-placeholder: rgba(167, 201, 185, 0.18);
+  /* ─── 文字（两档，对比度过 AA）─── */
+  --text-primary: #e2ecfa;      /* 8 浪花白 · 正文 */
+  --text-secondary: #8fa6c4;    /* 9 晨雾 · 次级文字 */
+  --text-tertiary: rgba(143, 166, 196, 0.55);
+  --text-placeholder: rgba(143, 166, 196, 0.35);
 
-  /* ─── 主色 ─── */
-  --accent: #4ade80;
-  --accent-hover: #6ee7a0;
-  --accent-soft: rgba(74, 222, 128, 0.10);
-  --accent-border: rgba(74, 222, 128, 0.15);
-  --accent-text: #0f1a12;
+  /* ─── 主色（水光蓝）─── */
+  --accent: #6fb4ff;            /* 6 水光蓝 · 主交互 3% */
+  --accent-hover: #a8d0ff;      /* 7 波光 · 高光/AI */
+  --accent-soft: rgba(111, 180, 255, 0.10);
+  --accent-border: rgba(111, 180, 255, 0.18);
+  --accent-text: #0a1626;
 
-  /* ─── 强调色 ─── */
-  --gold: #fbbf24;
-  --gold-soft: rgba(251, 191, 36, 0.12);
+  /* ─── 强调色（月金 · 仅触发瞬间）─── */
+  --gold: #ffd9a0;              /* 10 月金 · 触发霎那 0.5% */
+  --gold-soft: rgba(255, 217, 160, 0.14);
 
-  /* ─── 边框 ─── */
-  --border-default: rgba(74, 222, 128, 0.06);
-  --border-hover: rgba(74, 222, 128, 0.12);
-  --border-active: rgba(74, 222, 128, 0.20);
+  /* ─── 边框（水界线）─── */
+  --border-default: rgba(45, 74, 117, 0.45);   /* 4 水界线 4% */
+  --border-hover: rgba(74, 106, 148, 0.55);    /* 5 玻璃雾 */
+  --border-active: rgba(111, 180, 255, 0.35);
 
-  /* ─── 阴影 ─── */
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.5);
+  /* ─── 玻璃雾 · 前景玻璃基色 ─── */
+  --glass-mist: #4a6a94;        /* 5 玻璃雾 · 前景玻璃 5% */
+
+  /* ─── 阴影（深水层）─── */
+  --shadow-card: 0 1px 3px rgba(2, 8, 20, 0.4);
+  --shadow-card-hover: 0 4px 12px rgba(2, 8, 20, 0.5);
+  --shadow-modal: 0 8px 32px rgba(2, 8, 20, 0.6);
 
   /* ─── 圆角 ─── */
   --radius-card: 12px;
   --radius-sm: 8px;
   --radius-full: 9999px;
 
-  /* ─── 间距 ─── */
+  /* ─── 间距（宽空白，拥挤是廉价感的第一来源）─── */
   --space-card-padding: 16px;
   --space-card-gap: 12px;
   --space-section: 24px;
@@ -57,33 +61,42 @@
   --font-size-base: 15px;
   --font-size-lg: 18px;
   --font-size-xl: 24px;
+
+  /* ─── 弹簧动画（水的性格）─── */
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --spring-soft: cubic-bezier(0.22, 1.28, 0.42, 1);
 }
 
 /* ═══════════════════════════════════════════
-   亮色模式
+   亮色模式（池塘涟漪 · 晨光）
    ═══════════════════════════════════════════ */
 [data-theme="light"] {
-  --bg-primary: #f5f2ed;
+  --bg-primary: #e8eef7;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #f0ede8;
+  --bg-tertiary: #dfe8f4;
   --bg-elevated: #ffffff;
 
-  --text-primary: rgba(15, 25, 20, 0.88);
-  --text-secondary: rgba(80, 100, 90, 0.65);
-  --text-tertiary: rgba(80, 100, 90, 0.35);
-  --text-placeholder: rgba(80, 100, 90, 0.18);
+  --text-primary: rgba(12, 22, 38, 0.88);
+  --text-secondary: rgba(74, 106, 148, 0.75);
+  --text-tertiary: rgba(74, 106, 148, 0.45);
+  --text-placeholder: rgba(74, 106, 148, 0.3);
 
-  --accent: #16a34a;
-  --accent-hover: #15803d;
-  --accent-soft: rgba(22, 163, 74, 0.08);
-  --accent-border: rgba(22, 163, 74, 0.12);
+  --accent: #4a90e2;
+  --accent-hover: #2d7bd6;
+  --accent-soft: rgba(74, 144, 226, 0.10);
+  --accent-border: rgba(74, 144, 226, 0.2);
   --accent-text: #ffffff;
 
-  --border-default: rgba(0, 0, 0, 0.06);
-  --border-hover: rgba(0, 0, 0, 0.10);
-  --border-active: rgba(22, 163, 74, 0.18);
+  --gold: #b8860b;
+  --gold-soft: rgba(184, 134, 11, 0.14);
 
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --border-default: rgba(74, 106, 148, 0.2);
+  --border-hover: rgba(74, 106, 148, 0.35);
+  --border-active: rgba(74, 144, 226, 0.45);
+  --glass-mist: #ffffff;
+
+  --shadow-card: 0 1px 3px rgba(12, 22, 38, 0.08);
+  --shadow-card-hover: 0 4px 12px rgba(12, 22, 38, 0.1);
+  --shadow-modal: 0 8px 32px rgba(12, 22, 38, 0.14);
 }
+
