@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NIGHT POND · 池塘涟漪 — 高级感设计语言</title>
+<style>
+  /* ============ 基础 ============ */
+  :root {
+    --deep-water: #0c1626;      /* 1 深海夜 · 页面背景 */
+    --mid-water:  #172a45;      /* 2 中层水 · 卡片底层 */
+    --near-water: #21395c;      /* 3 近水面 · 卡片中层 */
+    --waterline:  #2d4a75;      /* 4 水界线 · 边框 */
+    --glass-mist: #4a6a94;      /* 5 玻璃雾 · 前景玻璃基色 */
+    --water-glow: #6fb4ff;      /* 6 水光蓝 · 主交互 */
+    --ripple-glow:#a8d0ff;      /* 7 波光   · 高光/AI */
+    --foam-white: #e2ecfa;      /* 8 浪花白 · 正文 */
+    --morning-fog:#8fa6c4;      /* 9 晨雾   · 次级文字 */
+    --moon-gold:  #ffd9a0;      /* 10 月金  · 触发瞬间 */
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);   /* 弹簧回弹曲线 */
+    --spring-soft: cubic-bezier(0.22, 1.28, 0.42, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--deep-water);
+    color: var(--foam-white);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* 月光层（右上） */
+  .moon-wash {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse at 82% -8%, rgba(168,208,255,0.10) 0%, transparent 46%),
+      radial-gradient(ellipse at 18% 112%, rgba(111,180,255,0.05) 0%, transparent 42%);
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 48px;
+  }
+
+  /* ============ 顶部 ============ */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32px 0;
+    border-bottom: 1px solid rgba(45,74,117,0.35);
+  }
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 15px; letter-spacing: 3px;
+    color: var(--foam-white);
+  }
+  .brand .mark {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 32%, rgba(168,208,255,0.5), rgba(111,180,255,0.12) 60%, transparent);
+    border: 1px solid rgba(168,208,255,0.35);
+    position: relative;
+  }
+  .brand .mark::after {
+    content: ''; position: absolute; inset: 4px; border-radius: 50%;
+    border: 1px solid rgba(168,208,255,0.22);
+  }
+  .topbar .meta {
+    font-size: 11px; letter-spacing: 2px;
+    color: var(--morning-fog);
+  }
+
+  /* ============ HERO · 宽空白 ============ */
+  .hero {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 96px;
+    align-items: center;
+    padding: 96px 0 140px;
+  }
+
+  .hero-copy .eyebrow {
+    font-size: 11px; letter-spacing: 4px;
+    color: var(--water-glow);
+    margin-bottom: 32px;
+    text-transform: uppercase;
+  }
+  .hero-copy h1 {
+    font-size: 52px;
+    font-weight: 300;
+    line-height: 1.15;
+    letter-spacing: 2px;
+    color: var(--foam-white);
+    margin-bottom: 28px;
+  }
+  .hero-copy h1 .em {
+    font-weight: 500;
+    color: var(--ripple-glow);
+  }
+  .hero-copy .sub {
+    font-size: 16px;
+    font-weight: 300;
+    color: var(--morning-fog);
+    max-width: 42ch;
+    margin-bottom: 56px;
+    line-height: 1.9;
+  }
+  .hero-cta {
+    display: flex; gap: 16px;
+  }
+
+  .btn {
+    padding: 15px 34px;
+    border-radius: 999px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: transform 0.45s var(--spring), box-shadow 0.45s var(--spring), background 0.3s ease;
+    border: 1px solid transparent;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn:active { transform: scale(0.96); transition-duration: 0.15s; }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--water-glow), var(--ripple-glow));
+    color: #0a1626;
+    font-weight: 600;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.35),
+      0 12px 34px rgba(111,180,255,0.22);
+  }
+  .btn-primary:hover {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.4),
+      0 18px 44px rgba(111,180,255,0.32);
+  }
+  .btn-primary:active { box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(111,180,255,0.2); }
+
+  .btn-ghost {
+    background: rgba(33,57,92,0.35);
+    border-color: rgba(45,74,117,0.6);
+    color: var(--morning-fog);
+    backdrop-filter: blur(12px);
+  }
+  .btn-ghost:hover {
+    color: var(--foam-white);
+    border-color: var(--waterline);
+    background: rgba(33,57,92,0.5);
+  }
+
+  /* ============ 层叠卡片 ============ */
+  .hero-visual {
+    position: relative;
+    height: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 涟漪背景装饰（抽象，非生物） */
+  .ripple-rings {
+    position: absolute;
+    width: 420px; height: 420px;
+    pointer-events: none;
+  }
+  .ripple-rings .ring {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(168,208,255,0.07);
+    animation: ripple-expand 7s var(--spring-soft) infinite;
+  }
+  .ripple-rings .ring:nth-child(2) { animation-delay: 1.8s; }
+  .ripple-rings .ring:nth-child(3) { animation-delay: 3.6s; }
+  @keyframes ripple-expand {
+    0%   { transform: scale(0.35); opacity: 0; }
+    30%  { opacity: 0.8; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+
+  /* 卡片堆叠 */
+  .card-stack {
+    position: relative;
+    width: 400px;
+    height: 520px;
+  }
+
+  .stack-card {
+    position: absolute;
+    border-radius: 22px;
+    overflow: hidden;
+    transition: transform 0.6s var(--spring);
+    animation: settle-in 0.9s var(--spring) backwards;
+  }
+
+  @keyframes settle-in {
+    0%   { opacity: 0; transform: translateY(60px) scale(0.94); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* 记忆卡 3 · 最深（中层水） */
+  .card-memory-3 {
+    top: 18px; left: 8px; right: 8px; bottom: 90px;
+    background:
+      linear-gradient(160deg, rgba(33,57,92,0.85), rgba(23,42,69,0.95));
+    border: 1px solid rgba(45,74,117,0.35);
+    animation-delay: 0.25s;
+    transform: rotate(-3deg);
+    z-index: 1;
+  }
+  .card-memory-3:hover { transform: rotate(-1deg) translateY(-8px); }
+
+  /* 记忆卡 2 · 中层（近水面） */
+  .card-memory-2 {
+    top: 68px; left: 26px; right: 26px; bottom: 40px;
+    background:
+      linear-gradient(155deg, rgba(74,106,148,0.5), rgba(33,57,92,0.9));
+    border: 1px solid rgba(74,106,148,0.3);
+    backdrop-filter: blur(16px);
+    animation-delay: 0.42s;
+    transform: rotate(1.6deg);
+    z-index: 2;
+  }
+  .card-memory-2:hover { transform: rotate(0.5deg) translateY(-8px); }
+
+  /* 前卡 · 对话（玻璃 · 最亮） */
+  .card-chat {
+    top: 118px; left: 0; right: 0; bottom: 0;
+    background:
+      linear-gradient(150deg, rgba(74,106,148,0.42), rgba(33,57,92,0.62));
+    backdrop-filter: blur(28px) saturate(160%);
+    border: 1px solid rgba(168,208,255,0.22);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.12),
+      inset 0 -1px 0 rgba(255,255,255,0.04),
+      0 32px 80px rgba(2,8,20,0.5);
+    animation-delay: 0.6s;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-chat:hover { transform: translateY(-6px); }
+
+  /* 卡片内容 */
+  .card-inner { padding: 30px; display: flex; flex-direction: column; height: 100%; }
+  .card-chat .card-inner { padding: 26px 26px 22px; }
+
+  .memory-label {
+    font-size: 10px; letter-spacing: 2px;
+    color: rgba(143,166,196,0.7);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+  .memory-title {
+    font-size: 18px; font-weight: 400;
+    color: var(--foam-white);
+    margin-bottom: 10px;
+  }
+  .memory-excerpt {
+    font-size: 12px;
+    color: rgba(143,166,196,0.75);
+    line-height: 1.8;
+  }
+
+  /* 对话卡头部 */
+  .chat-head {
+    display: flex; align-items: center; gap: 12px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(168,208,255,0.12);
+    margin-bottom: 20px;
+  }
+  .chat-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(168,208,255,0.55), rgba(111,180,255,0.15) 65%, transparent);
+    border: 1px solid rgba(168,208,255,0.3);
+    box-shadow: 0 0 14px rgba(111,180,255,0.18);
+    flex-shrink: 0;
+  }
+  .chat-name { font-size: 13px; color: var(--foam-white); letter-spacing: 0.5px; }
+  .chat-status { font-size: 10px; color: var(--morning-fog); }
+
+  /* 对话气泡 */
+  .bubble { max-width: 82%; padding: 12px 16px; font-size: 12.5px; line-height: 1.7; margin-bottom: 14px; }
+  .bubble.ai {
+    align-self: flex-start;
+    background: linear-gradient(135deg, rgba(111,180,255,0.14), rgba(74,106,148,0.18));
+    border: 1px solid rgba(168,208,255,0.14);
+    border-radius: 16px 16px 16px 4px;
+    color: var(--ripple-glow);
+    animation: bubble-in 0.7s var(--spring) 0.9s backwards;
+  }
+  .bubble.user {
+    align-self: flex-end;
+    background: rgba(23,42,69,0.7);
+    border: 1px solid rgba(45,74,117,0.5);
+    border-radius: 16px 16px 4px 16px;
+    color: var(--foam-white);
+    animation: bubble-in 0.7s var(--spring) 1.15s backwards;
+  }
+  @keyframes bubble-in {
+    0% { opacity: 0; transform: translateY(14px) scale(0.96); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* 输入框 */
+  .chat-input-row {
+    margin-top: auto;
+    display: flex; gap: 10px; align-items: center;
+    background: rgba(23,42,69,0.6);
+    border: 1px solid rgba(45,74,117,0.55);
+    border-radius: 999px;
+    padding: 6px 6px 6px 18px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .chat-input-row .ph {
+    flex: 1; font-size: 12px; color: rgba(143,166,196,0.65);
+  }
+  .chat-input-row .send {
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--water-glow), var(--ripple-glow));
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.4s var(--spring);
+  }
+  .chat-input-row .send:hover { transform: scale(1.08); }
+  .chat-input-row .send:active { transform: scale(0.9); }
+  .chat-input-row .send::after {
+    content: '↑'; color: #0a1626; font-size: 15px; font-weight: 700;
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  }
+
+  /* 触发时的月金闪光（仅触发瞬间） */
+  .send:active::before {
+    content: '';
+    position: absolute; inset: -6px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,217,160,0.55), transparent 70%);
+    animation: gold-flash 0.5s ease-out forwards;
+  }
+  @keyframes gold-flash {
+    0% { opacity: 1; transform: scale(0.5); }
+    100% { opacity: 0; transform: scale(1.6); }
+  }
+
+  /* ============ 分节标题 ============ */
+  .section {
+    padding: 120px 0;
+    border-top: 1px solid rgba(45,74,117,0.3);
+  }
+  .section-head {
+    margin-bottom: 72px;
+    max-width: 640px;
+  }
+  .section-head .kicker {
+    font-size: 11px; letter-spacing: 4px;
+    color: var(--water-glow);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .section-head h2 {
+    font-size: 34px; font-weight: 300;
+    letter-spacing: 1px;
+    color: var(--foam-white);
+    margin-bottom: 18px;
+  }
+  .section-head p {
+    font-size: 15px; font-weight: 300;
+    color: var(--morning-fog);
+    line-height: 1.9;
+  }
+
+  /* ============ 配色 · 十色各有其位 ============ */
+  .palette-board {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 0;
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid rgba(45,74,117,0.35);
+    margin-bottom: 28px;
+  }
+  .pal-col { position: relative; min-height: 180px; }
+  .pal-col .chip { position: absolute; inset: 0; transition: transform 0.5s var(--spring); }
+  .pal-col:hover .chip { transform: translateY(-6px) scale(1.04); z-index: 5; box-shadow: 0 16px 40px rgba(2,8,20,0.5); }
+  .pal-col .tag {
+    position: absolute; left: 12px; bottom: 12px; right: 12px;
+    font-size: 10px; line-height: 1.5;
+    color: var(--foam-white); opacity: 0.9;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  }
+  .pal-col .tag .role { display: block; font-size: 9px; letter-spacing: 1px; opacity: 0.7; }
+
+  .palette-legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .legend-item {
+    padding: 18px 22px;
+    border-radius: 14px;
+    background: rgba(23,42,69,0.4);
+    border: 1px solid rgba(45,74,117,0.3);
+    font-size: 12.5px;
+    color: var(--morning-fog);
+    line-height: 1.8;
+  }
+  .legend-item strong { color: var(--foam-white); font-weight: 500; }
+  .legend-item .pct {
+    display: inline-block; margin-left: 8px;
+    font-size: 10px; letter-spacing: 1px;
+    color: var(--water-glow);
+  }
+
+  .palette-rule {
+    padding: 20px 26px;
+    border-radius: 14px;
+    background: rgba(255,217,160,0.03);
+    border-left: 2px solid rgba(255,217,160,0.35);
+    font-size: 13px;
+    color: var(--morning-fog);
+    line-height: 1.9;
+  }
+  .palette-rule strong { color: var(--moon-gold); font-weight: 500; }
+
+  /* ============ 弹簧动效 ============ */
+  .motion-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .motion-demo {
+    border-radius: 18px;
+    padding: 40px 32px;
+    background: rgba(23,42,69,0.35);
+    border: 1px solid rgba(45,74,117,0.3);
+    text-align: center;
+    transition: transform 0.55s var(--spring), border-color 0.3s ease;
+  }
+  .motion-demo:hover {
+    transform: translateY(-8px);
+    border-color: rgba(111,180,255,0.35);
+  }
+  .motion-demo .demo-title { font-size: 13px; color: var(--foam-white); margin-bottom: 6px; }
+  .motion-demo .demo-note { font-size: 11px; color: var(--morning-fog); margin-bottom: 26px; }
+
+  .press-demo {
+    width: 120px; height: 44px; margin: 0 auto;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--water-glow), var(--ripple-glow));
+    color: #0a1626; font-weight: 600; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: transform 0.5s var(--spring);
+  }
+  .press-demo:active { transform: scale(0.88); transition-duration: 0.12s; }
+
+  .pillar-demo {
+    display: flex; gap: 10px; justify-content: center; align-items: flex-end;
+    height: 90px;
+  }
+  .pillar {
+    width: 16px; border-radius: 8px 8px 4px 4px;
+    background: linear-gradient(180deg, var(--ripple-glow), var(--water-glow));
+    transform-origin: bottom;
+    animation: pillar-spring 2.4s var(--spring) infinite;
+  }
+  .pillar:nth-child(1) { height: 40px; animation-delay: 0s; }
+  .pillar:nth-child(2) { height: 64px; animation-delay: 0.12s; }
+  .pillar:nth-child(3) { height: 48px; animation-delay: 0.24s; }
+  .pillar:nth-child(4) { height: 78px; animation-delay: 0.36s; }
+  .pillar:nth-child(5) { height: 52px; animation-delay: 0.48s; }
+  @keyframes pillar-spring {
+    0%, 100% { transform: scaleY(0.25); }
+    40% { transform: scaleY(1); }
+    60% { transform: scaleY(0.82); }
+    72% { transform: scaleY(1); }
+  }
+
+  .settle-demo {
+    width: 120px; height: 90px; margin: 0 auto;
+    border-radius: 14px;
+    background: linear-gradient(150deg, rgba(74,106,148,0.5), rgba(33,57,92,0.7));
+    border: 1px solid rgba(168,208,255,0.18);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: var(--ripple-glow);
+    cursor: pointer;
+    transition: transform 0.55s var(--spring);
+  }
+  .settle-demo:active { transform: scale(0.92) rotate(-2deg); transition-duration: 0.1s; }
+  .settle-demo:hover { transform: translateY(-6px) rotate(1deg); }
+
+  /* ============ 交付规格 ============ */
+  .spec-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .spec-card {
+    border-radius: 16px;
+    padding: 26px 28px;
+    background: rgba(23,42,69,0.35);
+    border: 1px solid rgba(45,74,117,0.3);
+  }
+  .spec-card h4 {
+    font-size: 13px; letter-spacing: 1px;
+    color: var(--water-glow);
+    margin-bottom: 14px;
+    font-weight: 500;
+  }
+  .spec-card ul { list-style: none; }
+  .spec-card li {
+    font-size: 12.5px;
+    color: var(--morning-fog);
+    line-height: 1.9;
+    padding-left: 18px;
+    position: relative;
+    margin-bottom: 8px;
+  }
+  .spec-card li::before {
+    content: '·';
+    position: absolute; left: 4px;
+    color: var(--water-glow);
+  }
+  .spec-card code {
+    color: var(--ripple-glow);
+    font-size: 11px;
+    background: rgba(111,180,255,0.06);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  /* ============ 页脚 ============ */
+  .foot {
+    text-align: center;
+    padding: 60px 0 40px;
+    border-top: 1px solid rgba(45,74,117,0.3);
+    font-size: 11px; letter-spacing: 2px;
+    color: rgba(143,166,196,0.4);
+  }
+
+  /* ============ 响应式 ============ */
+  @media (max-width: 1000px) {
+    .hero { grid-template-columns: 1fr; gap: 64px; padding: 64px 0 100px; }
+    .hero-copy h1 { font-size: 40px; }
+    .hero-visual { height: 480px; }
+    .palette-board { grid-template-columns: repeat(5, 1fr); }
+    .palette-legend { grid-template-columns: 1fr 1fr; }
+    .motion-row, .spec-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .container { padding: 0 24px; }
+    .hero-copy h1 { font-size: 32px; }
+    .palette-board { grid-template-columns: repeat(2, 1fr); }
+    .palette-legend { grid-template-columns: 1fr; }
+    .card-stack { transform: scale(0.82); }
+    .hero-visual { height: 440px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="moon-wash"></div>
+
+<div class="container">
+
+  <!-- ============ 顶栏 ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="mark"></span>
+      NIGHT POND
+    </div>
+    <div class="meta">AI 树洞 · 池塘涟漪</div>
+  </header>
+
+  <!-- ============ HERO · 宽空白 + 层叠卡片 ============ -->
+  <section class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow">Night Pond · 2026</div>
+      <h1>夜深了<br>把心事<span class="em">交给月光</span></h1>
+      <p class="sub">一个只属于你的树洞。水面之下是沉底的回忆，水面之上是和 AI 的轻声对话。</p>
+      <div class="hero-cta">
+        <button class="btn btn-primary">开始倾诉</button>
+        <button class="btn btn-ghost">翻看日记</button>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="ripple-rings">
+        <span class="ring"></span>
+        <span class="ring"></span>
+        <span class="ring"></span>
+      </div>
+      <div class="card-stack">
+        <!-- 最深 · 记忆卡 3 -->
+        <div class="stack-card card-memory-3">
+          <div class="card-inner">
+            <div class="memory-label">Memory · 三月</div>
+            <div class="memory-title">雨夜，把伞借给了陌生人</div>
+            <div class="memory-excerpt">那天路灯很黄，她跑得很快，伞在我手里还没撑开……</div>
+          </div>
+        </div>
+        <!-- 中层 · 记忆卡 2 -->
+        <div class="stack-card card-memory-2">
+          <div class="card-inner">
+            <div class="memory-label">Memory · 六月</div>
+            <div class="memory-title">第一次加班到凌晨</div>
+            <div class="memory-excerpt">楼下便利店还亮着灯，买了一杯热的，突然觉得也没那么糟……</div>
+          </div>
+        </div>
+        <!-- 前层 · 对话（玻璃） -->
+        <div class="stack-card card-chat">
+          <div class="card-inner">
+            <div class="chat-head">
+              <div class="chat-avatar"></div>
+              <div>
+                <div class="chat-name">树洞 AI</div>
+                <div class="chat-status">今夜陪你 · 第 327 位到访者</div>
+              </div>
+            </div>
+            <div class="bubble ai">晚上好。今晚的水面很平静，想聊聊今天发生的事吗？</div>
+            <div class="bubble user">其实……今天面试被拒了。</div>
+            <div class="bubble ai">听起来很难受。被拒绝的那一刻，你在想什么？</div>
+            <div class="chat-input-row">
+              <span class="ph">想说点什么…</span>
+              <button class="send"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 十色 · 各有其位 ============ -->
+  <section class="section">
+    <div class="section-head">
+      <div class="kicker">Palette · 配色</div>
+      <h2>十种颜色，各有其位</h2>
+      <p>不是一条蓝色渐变色阶，而是明确的角色分工。每一种颜色都在画面上真实出现，承担它自己的叙事角色。</p>
+    </div>
+
+    <div class="palette-board">
+      <div class="pal-col">
+        <div class="chip" style="background:#0c1626;"></div>
+        <div class="tag">深海夜<span class="role">页面底色 · 60%</span></div>
+      </div>
+      <div class="pal-col">
+        <div class="chip" style="background:#172a45;"></div>
+        <div class="tag">中层水<span class="role">卡片底层 · 12%</span></div>
+      </div>
+      <div class="pal-col">
+        <div class="chip" style="background:#21395c;"></div>
+        <div class="tag">近水面<span class="role">卡片中层 · 10%</span></div>
+      </div>
+      <div class="pal-col">
+        <div class="chip" style="background:#2d4a75;"></div>
+        <div class="tag">水界线<span class="role">边框分隔 · 4%</span></div>
+      </div>
+      <div class="pal-col">
+        <div class="chip" style="background:#4a6a94;"></div>
+        <div class="tag">玻璃雾<span class="role">前景玻璃 · 5%</span></div>
+      </div>
+      <div class="pal-col">
+        <div class="chip" style="background:#6fb4ff;"></div>
+        <div class="tag">水光蓝<span class="role">主交互 · 3%</span></div>
+      </div>
+      <div class="pal-col">
+        <div class="chip" style="background:#a8d0ff;"></div>
+        <div class="tag">波光<span class="role">高光 · AI · 2%</span></div>
+      </div>
+      <div class="pal-col">
+        <div class="chip" style="background:#e2ecfa;"></div>
+        <div class="tag">浪花白<span class="role">正文 · 2%</span></div>
+      </div>
+      <div class="pal-col">
+        <div class="chip" style="background:#8fa6c4;"></div>
+        <div class="tag">晨雾<span class="role">次级文字 · 1.5%</span></div>
+      </div>
+      <div class="pal-col">
+        <div class="chip" style="background:#ffd9a0;"></div>
+        <div class="tag">月金<span class="role">触发瞬间 · 0.5%</span></div>
+      </div>
+    </div>
+
+    <div class="palette-legend">
+      <div class="legend-item">
+        <strong>水面叙事</strong><span class="pct">60% 画面</span><br>
+        五档蓝阶 = 从"深水"到"波光"的物理纵深。背景深海，卡片一层层浮向水面，前景玻璃最亮。
+      </div>
+      <div class="legend-item">
+        <strong>文字层级</strong><span class="pct">3.5% 画面</span><br>
+        浪花白承载正文，晨雾灰承载辅助信息。对比度全部过 WCAG AA，正文 9:1。
+      </div>
+      <div class="legend-item">
+        <strong>情感点缀</strong><span class="pct">0.5% 画面</span><br>
+        月金只出现在"触发的霎那"（发送闪光、完成回弹），平时不占画面。稀缺才有贵感。
+      </div>
+    </div>
+
+    <div class="palette-rule">
+      <strong>配色的纪律：</strong>十色全部锁定，任何元素不得引入第十一种颜色。面积占比就是叙事权——深色大面积铺底，亮色小面积点睛。月金是"月光拂过水面"的那一瞬，不是常驻装饰。
+    </div>
+  </section>
+
+  <!-- ============ 弹簧动效 ============ -->
+  <section class="section">
+    <div class="section-head">
+      <div class="kicker">Motion · 弹簧</div>
+      <h2>水面之上，一切都轻轻回弹</h2>
+      <p>不用线性渐变。所有交互走弹簧曲线 <code>cubic-bezier(0.34, 1.56, 0.64, 1)</code>，像水波一样到达后轻轻荡一下。悬停，试试。</p>
+    </div>
+
+    <div class="motion-row">
+      <div class="motion-demo">
+        <div class="demo-title">弹簧按压</div>
+        <div class="demo-note">按下 0.88，松开回弹到 1.0，过冲 4%</div>
+        <div class="press-demo">按住我</div>
+      </div>
+      <div class="motion-demo">
+        <div class="demo-title">弹性音频</div>
+        <div class="demo-note">声音粒子逐级弹起，各自回弹两次</div>
+        <div class="pillar-demo">
+          <div class="pillar"></div>
+          <div class="pillar"></div>
+          <div class="pillar"></div>
+          <div class="pillar"></div>
+          <div class="pillar"></div>
+        </div>
+      </div>
+      <div class="motion-demo">
+        <div class="demo-title">卡片落水</div>
+        <div class="demo-note">悬停浮起，点击沉下再弹回</div>
+        <div class="settle-demo">悬停 / 按住</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 交付规格 ============ -->
+  <section class="section">
+    <div class="section-head">
+      <div class="kicker">Spec · 交付</div>
+      <h2>给 lamda 的实现规格</h2>
+      <p>这是视觉语言定义，不是参数表。按这里的质感、层级和动效感觉编码，具体数值可微调。</p>
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-card">
+        <h4>布局 · 层叠卡片</h4>
+        <ul>
+          <li>卡片错落堆叠（sticky-stack），后暗前亮形成水面纵深</li>
+          <li>背景卡片暗（<code>#172a45</code>），前景卡片亮（玻璃雾 <code>#4a6a94</code>）</li>
+          <li>卡片间留 <code>48-96px</code> 呼吸，拒绝平铺网格</li>
+          <li>宽空白优先：<code>padding: 96-140px</code> 区块间距</li>
+        </ul>
+      </div>
+      <div class="spec-card">
+        <h4>玻璃质感</h4>
+        <ul>
+          <li><code>backdrop-filter: blur(28px) saturate(160%)</code></li>
+          <li>内高光 <code>inset 0 1px 0 rgba(255,255,255,0.12)</code> 模拟折射</li>
+          <li>描边用波光 <code>rgba(168,208,255,0.22)</code>，不用纯白</li>
+          <li>不支持 backdrop-filter 时回退实色 <code>#21395c</code></li>
+        </ul>
+      </div>
+      <div class="spec-card">
+        <h4>动效 · 弹簧</h4>
+        <ul>
+          <li>统一弹簧曲线 <code>cubic-bezier(0.34, 1.56, 0.64, 1)</code></li>
+          <li>按压 <code>scale(0.96)</code> 瞬间压缩，松手过冲回弹</li>
+          <li>卡片进入从水下浮起（<code>translateY(60px)</code> → 0）</li>
+          <li>涟漪扩散 <code>scale 0.35 → 1.6</code>，7s 循环</li>
+        </ul>
+      </div>
+      <div class="spec-card">
+        <h4>色彩纪律</h4>
+        <ul>
+          <li>只用 10 色，不引入第 11 种</li>
+          <li>月金 <code>#ffd9a0</code> 仅在触发瞬间出现</li>
+          <li>正文 <code>#e2ecfa</code> 对底 <code>#0c1626</code> ≥ 9:1</li>
+          <li>玻璃下的文字垫实色底，保证稳定可读</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">NIGHT POND · 池塘涟漪 · miky / taste-skill 驱动 · 2026-07-31</div>
+
+</div>
+
+</body>
+</html>

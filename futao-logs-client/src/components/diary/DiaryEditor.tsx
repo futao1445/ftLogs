@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Diary } from '../../lib/types';
+import { useRipples } from '../common/useRipples';
 
 // ─── Props ───
 interface DiaryEditorProps {
@@ -54,6 +55,9 @@ export default function DiaryEditor({ diary, onSave, onClose }: DiaryEditorProps
   );
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // ─── 水波涟漪（保存按钮月金扩散） ───
+  const ripple = useRipples();
 
   // ─── Refs ───
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -204,15 +208,22 @@ export default function DiaryEditor({ diary, onSave, onClose }: DiaryEditorProps
                 </span>
               </div>
 
-              <button
+              <motion.button
                 onClick={handleSave}
+                onPointerDown={ripple.add}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-150 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed select-none"
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium relative overflow-visible shrink-0 disabled:opacity-50 disabled:cursor-not-allowed select-none"
                 style={{
-                  background: loading ? 'var(--accent-soft)' : 'var(--accent)',
-                  color: loading ? 'var(--accent)' : 'var(--bg-primary)',
+                  background: loading
+                    ? 'var(--accent-soft)'
+                    : 'linear-gradient(135deg, #6fb4ff 0%, #a8d0ff 100%)',
+                  color: loading ? 'var(--accent)' : '#0a1626',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.35), 0 4px 16px rgba(111,180,255,0.18)',
                 }}
+                whileTap={{ scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
               >
+                {!loading && ripple.render()}
                 {loading ? (
                   <>
                     <svg
@@ -254,7 +265,7 @@ export default function DiaryEditor({ diary, onSave, onClose }: DiaryEditorProps
                     <span>保存</span>
                   </>
                 )}
-              </button>
+              </motion.button>
             </div>
 
             {/* ═══════════ Scrollable body ═══════════ */}
