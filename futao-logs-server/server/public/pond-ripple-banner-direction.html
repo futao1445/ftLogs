@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>涟漪页 Banner 重构 · 方向稿</title>
+<style>
+/* ═══════════════ 池塘涟漪 10 色体系 ═══════════════ */
+:root {
+  --deep: #0c1626; --mid: #172a45; --near: #21395c; --line: #2d4a75;
+  --glass: #4a6a94; --ripple: #6fb4ff; --shine: #a8d0ff;
+  --foam: #e2ecfa; --mist: #8fa6c4; --gold: #ffd9a0;
+  --spring: cubic-bezier(0.34,1.56,0.64,1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--deep); font-family:'Inter','Noto Sans SC',system-ui,sans-serif; color:var(--foam); }
+.wrap { max-width:1240px; margin:0 auto; padding:64px 48px 96px; }
+
+/* ─── 页头 ─── */
+.head .kicker { font-size:11px; letter-spacing:4px; color:var(--ripple); margin-bottom:14px; }
+.head h1 { font-size:34px; font-weight:200; letter-spacing:6px; margin-bottom:12px; }
+.head p { font-size:14px; color:var(--mist); line-height:1.9; max-width:70ch; }
+.head .base { margin-top:18px; font-size:12px; color:var(--mist); background:rgba(23,42,69,0.5); border:1px solid rgba(45,74,117,0.4); border-radius:10px; padding:12px 16px; line-height:1.8; }
+.head .base b { color:var(--shine); font-weight:400; }
+
+/* ─── 涟漪同心圆图案（复用设计稿 name-panel::before）─── */
+.rings {
+  pointer-events:none; position:absolute;
+  background:
+    radial-gradient(circle, transparent 0 24px, rgba(168,208,255,0.12) 25px, transparent 26px),
+    radial-gradient(circle, transparent 0 60px, rgba(168,208,255,0.10) 61px, transparent 62px),
+    radial-gradient(circle, transparent 0 100px, rgba(111,180,255,0.08) 101px, transparent 102px),
+    radial-gradient(circle, transparent 0 145px, rgba(111,180,255,0.06) 146px, transparent 147px);
+}
+.moon {
+  pointer-events:none; position:absolute; width:56px; height:56px; border-radius:50%;
+  background: radial-gradient(circle at 35% 30%, var(--gold), var(--gold) 40%, transparent 70%);
+  box-shadow:0 0 40px rgba(255,217,160,0.45); opacity:0.7;
+}
+
+/* ─── 方向区块 ─── */
+.dir { margin-top:64px; }
+.dir-head { display:flex; align-items:baseline; gap:16px; margin-bottom:6px; }
+.dir-num { font-size:12px; letter-spacing:3px; color:var(--gold); }
+.dir-title { font-size:22px; font-weight:300; letter-spacing:4px; }
+.dir-one { font-size:13px; color:var(--mist); line-height:1.9; max-width:80ch; margin-bottom:22px; }
+.dir-one b { color:var(--shine); font-weight:400; }
+
+/* ─── 涟漪页骨架（左会话列表 + 右对话窗）─── */
+.shell { display:flex; gap:12px; height:420px; border-radius:14px; overflow:hidden; border:1px solid rgba(45,74,117,0.5); background:var(--mid); }
+.shell .side { width:150px; flex-shrink:0; border-right:1px solid rgba(45,74,117,0.5); background:rgba(23,42,69,0.6); padding:10px; display:flex; flex-direction:column; gap:8px; }
+.side .kb { font-size:11px; text-align:center; padding:7px 0; border-radius:10px; color:var(--ripple); border:1px solid rgba(111,180,255,0.2); background:rgba(111,180,255,0.06); }
+.side .new { font-size:11px; text-align:center; padding:7px 0; border-radius:10px; color:var(--ripple); border:1px solid rgba(111,180,255,0.2); background:rgba(111,180,255,0.06); }
+.side .item { font-size:11px; padding:8px 10px; border-radius:9px; color:var(--mist); background:rgba(45,74,117,0.25); }
+.side .item.active { color:var(--shine); background:rgba(111,180,255,0.10); }
+.shell .chat { flex:1; display:flex; flex-direction:column; background:linear-gradient(150deg, rgba(74,106,148,0.42) 0%, rgba(33,57,92,0.62) 100%); }
+
+/* ════ 方向 A：页首水镜 banner ════ */
+.dirA .banner {
+  position:relative; overflow:hidden; padding:22px 28px 20px;
+  background:linear-gradient(160deg, rgba(23,42,69,0.75) 0%, rgba(33,57,92,0.55) 60%, rgba(45,74,117,0.3) 100%);
+  border-bottom:1px solid rgba(168,208,255,0.14);
+}
+.dirA .rings { width:260px; height:260px; left:-40px; top:-60px; }
+.dirA .moon { right:8%; top:-18px; }
+.dirA .kicker { font-size:9px; letter-spacing:3px; color:var(--gold); margin-bottom:4px; }
+.dirA .big { font-size:30px; font-weight:200; letter-spacing:8px; color:var(--foam); position:relative; z-index:1; }
+.dirA .big .dot { color:var(--shine); }
+.dirA .line { font-size:12px; color:var(--mist); margin-top:6px; line-height:1.8; max-width:34ch; position:relative; z-index:1; }
+.dirA .line b { color:var(--shine); font-weight:400; }
+.dirA .msg { flex:1; padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+.dirA .bub { max-width:70%; padding:9px 13px; border-radius:13px; font-size:12px; line-height:1.7; background:rgba(74,106,148,0.28); border:1px solid rgba(168,208,255,0.3); color:var(--foam); }
+.dirA .bub.ai { align-self:flex-start; }
+.dirA .input { margin:0 16px 14px; padding:10px 14px; border-radius:12px; font-size:12px; color:var(--mist); background:rgba(12,22,38,0.4); border:1px solid rgba(45,74,117,0.5); }
+
+/* ════ 方向 B：引导仪式 banner（无会话时）═══ */
+.dirB .guide {
+  position:relative; overflow:hidden; margin:14px 14px 8px; border-radius:14px;
+  padding:28px 30px 24px; text-align:center;
+  background:linear-gradient(160deg, rgba(23,42,69,0.8) 0%, rgba(33,57,92,0.6) 100%);
+  border:1px solid rgba(168,208,255,0.16);
+}
+.dirB .rings { width:340px; height:340px; left:50%; top:50%; transform:translate(-50%,-50%); opacity:0.7; }
+.dirB .moon { right:10%; top:10%; }
+.dirB .kicker { font-size:9px; letter-spacing:4px; color:var(--gold); margin-bottom:8px; }
+.dirB .big { font-size:44px; font-weight:200; letter-spacing:12px; color:var(--foam); }
+.dirB .big .dot { color:var(--shine); }
+.dirB .line { font-size:13px; color:var(--mist); margin-top:12px; line-height:2; position:relative; z-index:1; }
+.dirB .line b { color:var(--shine); font-weight:400; }
+.dirB .tags { display:flex; gap:8px; justify-content:center; margin-top:16px; flex-wrap:wrap; position:relative; z-index:1; }
+.dirB .tag { font-size:10px; letter-spacing:1px; padding:4px 12px; border-radius:999px; color:var(--gold); background:rgba(255,217,160,0.07); border:1px solid rgba(255,217,160,0.18); }
+.dirB .msg { flex:1; padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+.dirB .bub { max-width:70%; padding:9px 13px; border-radius:13px; font-size:12px; line-height:1.7; background:rgba(74,106,148,0.28); border:1px solid rgba(168,208,255,0.3); color:var(--foam); }
+.dirB .bub.ai { align-self:flex-start; }
+.dirB .input { margin:0 16px 14px; padding:10px 14px; border-radius:12px; font-size:12px; color:var(--mist); background:rgba(12,22,38,0.4); border:1px solid rgba(45,74,117,0.5); }
+
+/* ════ 方向 C：水波沉浸（对话窗背景涟漪 + 字标头部）═══ */
+.dirC .chat { position:relative; }
+.dirC .chat-bg { position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(circle at 85% 20%, rgba(255,217,160,0.06) 0 24px, transparent 26px),
+    radial-gradient(circle at 85% 20%, rgba(168,208,255,0.05) 0 60px, transparent 62px),
+    radial-gradient(circle at 85% 20%, rgba(111,180,255,0.04) 0 100px, transparent 102px);
+}
+.dirC .chat-head { display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid rgba(168,208,255,0.12); }
+.dirC .chat-head .dot-ring { width:34px; height:34px; border-radius:50%; border:1px solid rgba(168,208,255,0.25); position:relative; flex-shrink:0; }
+.dirC .chat-head .dot-ring::before { content:""; position:absolute; inset:6px; border-radius:50%; border:1px solid rgba(111,180,255,0.3); }
+.dirC .chat-head .dot-ring::after { content:""; position:absolute; inset:12px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px rgba(255,217,160,0.5); }
+.dirC .chat-head .name { font-size:17px; font-weight:200; letter-spacing:5px; color:var(--foam); }
+.dirC .chat-head .name .dot { color:var(--shine); }
+.dirC .chat-head .tagline { font-size:10px; color:var(--mist); margin-left:6px; letter-spacing:1px; }
+.dirC .msg { flex:1; padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+.dirC .bub { max-width:70%; padding:9px 13px; border-radius:13px; font-size:12px; line-height:1.7; background:rgba(74,106,148,0.28); border:1px solid rgba(168,208,255,0.3); color:var(--foam); }
+.dirC .bub.ai { align-self:flex-start; }
+.dirC .bub.poem { align-self:center; text-align:center; background:transparent; border:none; color:var(--mist); font-size:11px; line-height:2; padding:8px 0; }
+.dirC .bub.poem b { color:var(--shine); font-weight:400; }
+.dirC .input { margin:0 16px 14px; padding:10px 14px; border-radius:12px; font-size:12px; color:var(--mist); background:rgba(12,22,38,0.4); border:1px solid rgba(45,74,117,0.5); }
+
+/* ─── 底部 ─── */
+.foot { margin-top:72px; padding-top:28px; border-top:1px solid rgba(45,74,117,0.4); font-size:12px; color:var(--mist); line-height:2; }
+.foot b { color:var(--gold); font-weight:400; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="kicker">NIGHT POND · DESIGN DIRECTION</div>
+    <h1>涟漪页 Banner 重构 · 方向稿</h1>
+    <p>futao：「设计稿里的涟漪大标签页带图案没有用于真实网页挺可惜，包括文案 涟.漪 / 把心里的话，投进水里。水面泛起一圈圈光，有人在水下，静静听。设计得挺好，能不能合理融入涟漪窗口中，稍微重构一下」</p>
+    <div class="base"><b>设计稿基准（pond-round4-direction.html 页面02）</b>：kicker「NIGHT POND · TALK TO THE WATER」+ <b>涟.漪</b> 64px 超细字标 + 三行文案 + <b>涟漪同心圆图案</b>（4 圈 radial-gradient）+ <b>右上角月光光晕</b>。本稿给出 3 个融入方向，均沿用 10 色体系 + 玻璃对话窗 + 弹簧，非硬贴。</div>
+  </div>
+
+  <!-- ════ 方向 A ════ -->
+  <section class="dir dirA">
+    <div class="dir-head"><span class="dir-num">方向 A</span><h2 class="dir-title">页首水镜 · 常驻窄条</h2></div>
+    <p class="dir-one"><b>一句话</b>：涟漪对话窗顶部加一条「水镜 banner」——涟.漪 字标 + 同心圆图案常驻，文案精炼为一到两行，对话内容在下方流动。图案始终可见，仪式感不占屏。</p>
+    <div class="shell">
+      <div class="side">
+        <div class="kb">📚 知识库</div>
+        <div class="new">＋ 新对话</div>
+        <div class="item active">今天的心事</div>
+        <div class="item">关于工作</div>
+        <div class="item">深夜独白</div>
+      </div>
+      <div class="chat">
+        <div class="banner">
+          <div class="rings"></div><div class="moon"></div>
+          <div class="kicker">NIGHT POND · TALK TO THE WATER</div>
+          <div class="big">涟<span class="dot">.</span>漪</div>
+          <div class="line">把心里的话，<b>投进水里</b>。水面泛起一圈圈光，有人在水下，<b>静静听</b>。</div>
+        </div>
+        <div class="msg">
+          <div class="bub ai">嗨，我是涟漪 🤗 今天想对我说点什么？</div>
+          <div class="bub" style="align-self:flex-end; background:rgba(111,180,255,0.16);">工作上的事，压得我有点喘不过气……</div>
+          <div class="bub ai">辛苦了。听起来像很多事同时压着你，愿意说说最重的那件吗？</div>
+        </div>
+        <div class="input">把心里的话，投进水里……</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ 方向 B ════ -->
+  <section class="dir dirB">
+    <div class="dir-head"><span class="dir-num">方向 B</span><h2 class="dir-title">引导仪式 · 无会话全屏</h2></div>
+    <p class="dir-one"><b>一句话</b>：保留设计稿完整仪式感——进入涟漪页且尚无会话时，banner 以整幅形式呈现（涟.漪 44px + 完整三行文案 + 同心圆居中 + 月光 + 引导标签），点任一标签即落入对话，有会话后 banner 收起为顶部窄条。</p>
+    <div class="shell">
+      <div class="side">
+        <div class="kb">📚 知识库</div>
+        <div class="new">＋ 新对话</div>
+        <div class="item active">今天的心事</div>
+      </div>
+      <div class="chat">
+        <div class="guide">
+          <div class="rings"></div><div class="moon"></div>
+          <div class="kicker">NIGHT POND · TALK TO THE WATER</div>
+          <div class="big">涟<span class="dot">.</span>漪</div>
+          <div class="line">把心里的话，<b>投进水里</b>。<br/>水面泛起一圈圈光，<br/>有人在水下，<b>静静听</b>。</div>
+          <div class="tags">
+            <span class="tag">最近有点烦</span>
+            <span class="tag">想聊聊工作</span>
+            <span class="tag">深夜睡不着</span>
+          </div>
+        </div>
+        <div class="msg">
+          <div class="bub ai">选择想说的话，或直接在下面输入。</div>
+        </div>
+        <div class="input">把心里的话，投进水里……</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ 方向 C ════ -->
+  <section class="dir dirC">
+    <div class="dir-head"><span class="dir-num">方向 C</span><h2 class="dir-title">水波沉浸 · 对话即涟漪</h2></div>
+    <p class="dir-one"><b>一句话</b>：最克制——涟漪字标缩进对话窗头部（涟漪圆环 + 字标 + 一句话 tagline），同心圆图案淡为对话窗背景角落；三行文案不再常显，改为一则「涟漪小诗」在引导态居中轻显，对话时消失，让图案与文案都退为水的气质而非贴纸。</p>
+    <div class="shell">
+      <div class="side">
+        <div class="kb">📚 知识库</div>
+        <div class="new">＋ 新对话</div>
+        <div class="item active">今天的心事</div>
+      </div>
+      <div class="chat">
+        <div class="chat-bg"></div>
+        <div class="chat-head">
+          <div class="dot-ring"></div>
+          <span class="name">涟<span class="dot">.</span>漪</span>
+          <span class="tagline">TALK TO THE WATER</span>
+        </div>
+        <div class="msg">
+          <div class="bub poem">把心里的话，<b>投进水里</b>。<br/>水面泛起一圈圈光，有人在水下，<b>静静听</b>。</div>
+          <div class="bub ai">嗨，我是涟漪 🤗 今天想对我说点什么？</div>
+          <div class="bub" style="align-self:flex-end; background:rgba(111,180,255,0.16);">工作上的事，压得我有点喘不过气……</div>
+          <div class="bub ai">辛苦了。愿意说说最重的那件吗？</div>
+        </div>
+        <div class="input">把心里的话，投进水里……</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <b>三个方向的取舍</b>：A「页首水镜」最直接，设计稿图案 100% 呈现，适合 futao 想完整看到设计稿效果；B「引导仪式」最有仪式感，把「涟漪=投石入水」的叙事做到极致，但 banner 只在无会话时全幅；C「水波沉浸」最克制高级，图案退为背景、字标融入头部，但设计稿图案不完整呈现。<br/>
+    <b>miky 推荐</b>：方向 B——涟漪页的本质是「向水投话」，无会话时的全幅仪式最贴合产品叙事；进入对话后 banner 收起不干扰阅读，兼顾 futao「合理融入 + 稍作重构」。若 futao 更想保留设计稿图案的完整性，则方向 A。
+  </div>
+</div>
+</body>
+</html>

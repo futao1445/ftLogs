@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../../lib/api';
 import KnowledgeBasePage from '../knowledge/KnowledgeBasePage';
+import RippleBanner from './RippleBanner';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
@@ -45,8 +46,6 @@ function pickRandomBubbles(count: number): string[] {
   const shuffled = [...ALL_BUBBLES].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count);
 }
-
-const GREETING = '嗨，我是涟漪 🤗\n我可以看到你的日记、知识图谱和整个知识库。\n要不要试试这些？';
 
 export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKnowledge?: boolean }) {
   const [sessions, setSessions] = useState<{ id: number; title: string; updatedAt: string }[]>([]);
@@ -526,6 +525,14 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
               'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.04), 0 32px 80px rgba(2,8,20,0.5)',
           }}
         >
+          {/* ─── 涟漪 Banner（方向 B：无会话全幅仪式 / 有会话收起窄条）─── */}
+          <RippleBanner
+            expanded={showGuide}
+            bubbles={bubbles}
+            onGuideClick={handleGuideClick}
+            onShuffle={() => setBubbles(pickRandomBubbles(4))}
+          />
+
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             <AnimatePresence mode="popLayout">
@@ -538,7 +545,7 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
                   transition={{ duration: 0.2 }}
                   className="space-y-3"
                 >
-                  {/* AI greeting — 玻璃雾浮起气泡 */}
+                  {/* Direction B：banner 已含仪式 + 引导标签，仅保留一句提示文案（协调不冲突） */}
                   <motion.div
                     className="flex justify-start"
                     initial={{ opacity: 0, x: -20 }}
@@ -554,67 +561,8 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
                         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), 0 0 24px rgba(111,180,255,0.08)',
                       }}
                     >
-                      <p style={{ whiteSpace: 'pre-wrap' }}>{GREETING}</p>
+                      <p>选择想说的话，或直接在下面输入。</p>
                     </div>
-                  </motion.div>
-                  {/* Guide chips — 玻璃雾水滴 */}
-                  <motion.div
-                    className="flex flex-wrap gap-2 pl-2"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2, delay: 0.15 }}
-                  >
-                    {bubbles.map((g) => (
-                      <motion.button
-                        key={g}
-                        onClick={() => handleGuideClick(g)}
-                        className="text-xs cursor-pointer relative inline-flex items-center gap-1.5"
-                        style={{
-                          padding: '2px 18px 2px 14px',
-                          borderRadius: '30px 30px 30px 4px',
-                          background: 'linear-gradient(135deg, rgba(74,106,148,0.30) 0%, rgba(23,42,69,0.35) 100%)',
-                          border: '1px solid rgba(74,106,148,0.40)',
-                          color: 'var(--text-secondary)',
-                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
-                        }}
-                        whileHover={{
-                          background: 'linear-gradient(135deg, rgba(111,180,255,0.18) 0%, rgba(74,106,148,0.30) 100%)',
-                          borderColor: 'rgba(168,208,255,0.45)',
-                          color: '#a8d0ff',
-                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.10), 0 0 10px rgba(111,180,255,0.15)',
-                        }}
-                        whileTap={{
-                          scale: 0.96,
-                        }}
-                        transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-                      >
-                        <span
-                          className="inline-block rounded-full"
-                          style={{
-                            width: '5px', height: '5px',
-                            background: '#6fb4ff',
-                            boxShadow: '0 0 5px rgba(111,180,255,0.6)',
-                          }}
-                        />
-                        {g}
-                      </motion.button>
-                    ))}
-                    <motion.button
-                      onClick={() => setBubbles(pickRandomBubbles(4))}
-                      className="px-2 py-1.5 rounded-full text-xs cursor-pointer"
-                      style={{ color: 'var(--text-tertiary)' }}
-                      whileHover={{
-                        color: 'var(--text-secondary)',
-                        boxShadow: '0 0 10px rgba(111,180,255,0.10)',
-                      }}
-                      whileTap={{
-                        scale: 0.94,
-                        backgroundColor: 'rgba(111,180,255,0.15)',
-                      }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-                    >
-                      🔄 换一批
-                    </motion.button>
                   </motion.div>
                 </motion.div>
               )}
