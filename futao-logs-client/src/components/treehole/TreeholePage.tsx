@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../../lib/api';
 import KnowledgeBasePage from '../knowledge/KnowledgeBasePage';
-import RippleBanner from './RippleBanner';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
@@ -327,13 +326,15 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-3 sm:px-4 lg:px-6" style={{ height: 'calc(100vh - 56px)' }}>
-      <div className="flex h-full gap-3 py-3">
-        {/* ─── Left: Session list ─── */}
-        <div
-          className="w-36 sm:w-44 flex-shrink-0 rounded-xl overflow-hidden flex flex-col"
-          style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}
-        >
+    <div className="max-w-[1240px] mx-auto px-3 sm:px-4 lg:px-6 relative overflow-hidden" style={{ height: 'calc(100vh - 56px)' }}>
+      <div className="flex h-full gap-3 pt-3 pb-14 relative z-10">
+        {/* ─── Left: 会话列表 + 大标签页元素（方向 A：拆分到左侧背景，不占聊天窗）─── */}
+        <div className="w-56 sm:w-60 lg:w-72 flex-shrink-0 flex flex-col gap-3">
+          {/* 会话列表（上） */}
+          <div
+            className="flex-none rounded-xl overflow-hidden flex flex-col"
+            style={{ maxHeight: '40%', background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}
+          >
           {/* Knowledge base entry — 玻璃雾水光 */}
           <motion.button
             onClick={() => setShowKnowledge(true)}
@@ -512,27 +513,49 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
           </div>
         </div>
 
-        {/* ─── Right: Chat area (玻璃前景对话卡 — pond-premium card-chat) ─── */}
-        <div
-          className="flex-1 rounded-xl overflow-hidden flex flex-col"
-          style={{
-            background:
-              'linear-gradient(150deg, rgba(74,106,148,0.42) 0%, rgba(33,57,92,0.62) 100%)',
-            border: '1px solid rgba(168,208,255,0.22)',
-            backdropFilter: 'blur(28px) saturate(160%)',
-            WebkitBackdropFilter: 'blur(28px) saturate(160%)',
-            boxShadow:
-              'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.04), 0 32px 80px rgba(2,8,20,0.5)',
-          }}
-        >
-          {/* ─── 涟漪 Banner（方向 B：无会话全幅仪式 / 有会话收起窄条）─── */}
-          <RippleBanner
-            expanded={showGuide}
-            bubbles={bubbles}
-            onGuideClick={handleGuideClick}
-            onShuffle={() => setBubbles(pickRandomBubbles(4))}
-          />
+        {/* ─── Left · 大标签页元素（方向 A：拆分到背景空白，不占聊天窗）─── */}
+        <div className="pond-bg-elems w-52 sm:w-56 lg:w-64 flex-1 relative">
+          <div className="pond-bg-elems-inner">
+            <div className="pond-kicker">NIGHT POND · TALK TO THE WATER</div>
+            <div className="pond-wordmark">涟<span className="pond-wordmark-dot">.</span>漪</div>
+            <div className="pond-poem">
+              把心里的话，<b>投进水里</b>。<br />
+              水面泛起一圈圈光，<br />
+              有人在水下，<b>静静听</b>。
+            </div>
+            {/* 月金引导话题（4 随机 + 换一批）——像岸边的话题石，不嵌聊天窗 */}
+            <div className="pond-guide-tags">
+              {bubbles.map(t => (
+                <button key={t} onClick={() => handleGuideClick(t)} className="pond-guide-tag">
+                  {t}
+                </button>
+              ))}
+              <button onClick={() => setBubbles(pickRandomBubbles(4))} className="pond-guide-tag pond-guide-shuffle">
+                🔄 换一批
+              </button>
+            </div>
+          </div>
+          <div className="pond-rings" />
+          <div className="pond-moon" />
+        </div>
+        </div>
 
+        {/* ─── Right: Chat area (玻璃前景对话卡 — pond-premium card-chat) ─── */}
+        <div className="relative flex-1 min-w-0">
+          {/* 大水波：聊天框坐下水面上（futao 手绘布局：动态大水波泛在框下） */}
+          <div className="pond-big-wave" />
+          <div
+            className="relative z-10 h-full rounded-xl overflow-hidden flex flex-col"
+            style={{
+              background:
+                'linear-gradient(150deg, rgba(74,106,148,0.42) 0%, rgba(33,57,92,0.62) 100%)',
+              border: '1px solid rgba(168,208,255,0.22)',
+              backdropFilter: 'blur(28px) saturate(160%)',
+              WebkitBackdropFilter: 'blur(28px) saturate(160%)',
+              boxShadow:
+                'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.04), 0 32px 80px rgba(2,8,20,0.5)',
+            }}
+          >
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             <AnimatePresence mode="popLayout">
@@ -699,6 +722,7 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13" /><path d="M22 2L15 22l-4-9-9-4 20-7z" /></svg>
               </motion.button>
             </div>
+          </div>
           </div>
         </div>
       </div>
