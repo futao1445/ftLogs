@@ -6,6 +6,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 3333,
+    allowedHosts: true,
+    watch: null,
+    hmr: false,
     proxy: {
       '/api': 'http://localhost:1111',
       '/uploads': 'http://localhost:1111',

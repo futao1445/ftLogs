@@ -473,7 +473,112 @@ export default function LLMConfigSection() {
           {testResult.message}
         </div>
       )}
+
+      {/* ─── Embedding Config Section ─── */}
+      <details className="mt-6 rounded-xl" style={{ border: '1px solid var(--border-default)' }}>
+        <summary
+          className="px-4 py-3 text-sm font-medium cursor-pointer select-none rounded-xl transition-colors"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          🧠 Embedding 配置（语义搜索专用）
+        </summary>
+        <div className="px-4 pb-4 space-y-3">
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
+            语义搜索需要用 embedding 模型将文字转为向量。如果聊天用的平台不支持 embedding（如 DeepSeek），需要单独配置一个支持 embedding 的平台。
+            留空则使用上方聊天配置。推荐：<strong>阿里云（免费额度）</strong> 或 <strong>OpenAI</strong>。
+          </p>
+          <EmbeddingConfigFields />
+        </div>
+      </details>
     </div>
+  );
+}
+
+/* ─── Embedding Config ─── */
+
+function EmbeddingConfigFields() {
+  const [provider, setProvider] = useState<'inherit' | 'openai' | 'aliyun' | 'custom'>('inherit');
+  const [apiKey, setApiKey] = useState('');
+  const [apiUrl, setApiUrl] = useState('');
+  const [model, setModel] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [draftKey, setDraftKey] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const all = await api.configGetAll();
+        if (all.embedding_provider) setProvider(all.embedding_provider);
+        if (all.embedding_api_key) { setApiKey(all.embedding_api_key); setDraftKey(all.embedding_api_key); }
+        if (all.embedding_api_url) setApiUrl(all.embedding_api_url);
+        if (all.embedding_model) setModel(all.embedding_model);
+      } catch {}
+    })();
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    try {
+      await api.configSet('embedding_provider', provider);
+      await api.configSet('embedding_api_key', apiKey);
+      await api.configSet('embedding_api_url', apiUrl);
+      await api.configSet('embedding_model', model);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {}
+    setSaving(false);
+  }, [provider, apiKey, apiUrl, model]);
+
+  return (
+    <>
+      <Field label="Embedding 平台">
+        <select
+          value={provider}
+          onChange={(e) => setProvider(e.target.value as any)}
+          className="w-full h-10 px-3 rounded-lg text-sm outline-none cursor-pointer"
+          style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-default)' }}
+        >
+          <option value="inherit">沿用聊天配置（不单独指定）</option>
+          <option value="openai">OpenAI</option>
+          <option value="aliyun">阿里云（阿里云）</option>
+          <option value="custom">自定义</option>
+        </select>
+      </Field>
+
+      {provider !== 'inherit' && (
+        <>
+          {provider === 'custom' && (
+            <Field label="API 地址">
+              <input type="text" value={apiUrl} onChange={e => { setApiUrl(e.target.value); setSaved(false); }}
+                placeholder="https://api.openai.com/v1"
+                className="w-full h-10 px-3 rounded-lg text-sm outline-none"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-default)' }} />
+            </Field>
+          )}
+          <Field label="API Key">
+            <input type="password" value={draftKey || apiKey} onChange={e => { setDraftKey(e.target.value); setApiKey(e.target.value); setSaved(false); }}
+              placeholder="输入 embedding API Key"
+              className="w-full h-10 px-3 rounded-lg text-sm outline-none"
+              style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-default)' }} />
+          </Field>
+          <Field label="模型">
+            <input type="text" value={model} onChange={e => { setModel(e.target.value); setSaved(false); }}
+              placeholder={provider === 'openai' ? 'text-embedding-3-small' : provider === 'aliyun' ? 'text-embedding-v2' : '模型名'}
+              className="w-full h-10 px-3 rounded-lg text-sm outline-none"
+              style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-default)' }} />
+          </Field>
+        </>
+      )}
+
+      <button
+        onClick={handleSave} disabled={saving}
+        className="px-3 py-1.5 rounded-lg text-sm cursor-pointer disabled:opacity-50"
+        style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}
+      >
+        {saving ? '保存中...' : saved ? '✅ 已保存' : '💾 保存 Embedding 配置'}
+      </button>
+    </>
   );
 }
 

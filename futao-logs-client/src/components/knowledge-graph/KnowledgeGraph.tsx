@@ -43,6 +43,7 @@ interface KGProps {
 export default function KnowledgeGraph({ data: externalData }: KGProps) {
   const [data, setData] = useState<GraphData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const [error, setError] = useState('');
   const [selectedNode, setSelectedNode] = useState<number | null>(null);
   const [relatedDiaries, setRelatedDiaries] = useState<Diary[]>([]);
@@ -152,6 +153,22 @@ export default function KnowledgeGraph({ data: externalData }: KGProps) {
     if (data) layoutGraph(data);
   }, [dimensions]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /* ── Extract entities ── */
+  const handleExtract = useCallback(async () => {
+    setExtracting(true);
+    try {
+      const result = await api.ragExtractEntities({});
+      // reload graph after extraction
+      const graphData = await api.ragGraph();
+      setData(graphData as unknown as GraphData);
+      layoutGraph(graphData as unknown as GraphData);
+    } catch {
+      setError('实体提取失败，请重试');
+    } finally {
+      setExtracting(false);
+    }
+  }, [layoutGraph]);
+
   /* ── Select node → load related diaries ── */
   const handleNodeClick = useCallback(async (nodeId: number) => {
     if (selectedNode === nodeId) {
@@ -211,10 +228,18 @@ export default function KnowledgeGraph({ data: externalData }: KGProps) {
           style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}
         >
           <div className="text-3xl mb-3">🗺</div>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>还没有图谱数据</p>
-          <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
-            继续记录日记，AI 会自动提取知识点并生成关联关系图谱
+          <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>还没有图谱数据</p>
+          <p className="text-xs mb-4" style={{ color: 'var(--text-tertiary)' }}>
+            知识图谱从你的日记中提取实体（人物、事件、地点、情绪、话题），生成关联关系。
           </p>
+          <button
+            onClick={handleExtract}
+            disabled={extracting}
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+            style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}
+          >
+            {extracting ? '⏳ 提取中...' : '✨ 从日记中提取实体'}
+          </button>
         </div>
       )}
 
