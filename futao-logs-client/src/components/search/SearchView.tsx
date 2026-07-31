@@ -80,9 +80,10 @@ function ScoreBadge({ score }: { score: number }) {
 interface SearchViewProps {
   onEditDiary?: (diary: Diary) => void;
   onDeleteDiary?: (id: number) => void;
+  onOpenSettings?: () => void;
 }
 
-export default function SearchView({ onEditDiary, onDeleteDiary }: SearchViewProps) {
+export default function SearchView({ onEditDiary, onDeleteDiary, onOpenSettings }: SearchViewProps) {
   const [mode, setMode] = useState<SearchMode>('keyword');
   const [query, setQuery] = useState('');
   const [keywordResults, setKeywordResults] = useState<Diary[]>([]);
@@ -98,13 +99,18 @@ export default function SearchView({ onEditDiary, onDeleteDiary }: SearchViewPro
     setLoading(true);
     setError('');
     try {
-      const result = await api.ragSearch(q, 20, 0.5);
+      const result: any = await api.ragSearch(q, 20, 0.5);
       const items = (result.items || []).map((item: any) => ({
         diary: item.diary as Diary,
         score: item.score,
       }));
       setSemanticResults(items);
-      if (!items.length) setError('没有找到语义匹配的日记，换个说法试试');
+      // 如果后端回退到关键词搜索，显示引导提示
+      if (result.note) {
+        setError('💡 ' + result.note + '。如需真正的语义搜索，请到设置中使用 OpenAI / 阿里云等支持 embeddings 的平台');
+      } else if (!items.length) {
+        setError('没有找到语义匹配的日记，换个说法试试');
+      }
     } catch {
       setError('语义搜索暂时不可用（后端 RAG 引擎可能尚未就绪）');
       setSemanticResults([]);
@@ -117,26 +123,25 @@ export default function SearchView({ onEditDiary, onDeleteDiary }: SearchViewPro
   /* ── Keyword search (debounced) ── */
   useEffect(() => {
     if (mode !== 'keyword') return;
-    clearTimeout(searchTimerRef.current);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    setError('');
     if (!query.trim()) {
       setKeywordResults([]);
-      setError('');
       return;
     }
     searchTimerRef.current = setTimeout(async () => {
       setLoading(true);
-      setError('');
       try {
         const result = await api.diaryList({ searchText: query, page: 1, size: 50 });
         setKeywordResults(result.items);
-        if (!result.items.length) setError('没找到匹配的日记');
+        setError(result.items.length ? '' : '没找到匹配的日记');
       } catch {
         setKeywordResults([]);
       } finally {
         setLoading(false);
       }
     }, 300);
-    return () => clearTimeout(searchTimerRef.current);
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
   }, [query, mode]);
 
   /* ── Shared input ── */
@@ -226,12 +231,28 @@ export default function SearchView({ onEditDiary, onDeleteDiary }: SearchViewPro
       {/* Error / empty state — keyword */}
       {!loading && error && mode === 'keyword' && (
         <div className="py-8 text-center">
-          <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{error}</p>
+          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{error}</p>
+        </div>
+      )}
+
+      {/* Error / empty state — semantic with embedding config button */}
+      {!loading && error && mode === 'semantic' && (
+        <div className="py-8 text-center">
+          <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>{error}</p>
+          {(error.toLowerCase().includes('embedding') || error.toLowerCase().includes('llm')) && onOpenSettings && (
+            <button
+              onClick={onOpenSettings}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}
+            >
+              ⚙️ 去配置 Embedding
+            </button>
+          )}
         </div>
       )}
 
       {/* Semantic search: empty state with guidance */}
-      {!loading && !query.trim() && dataFetched && mode === 'semantic' && semanticResults.length === 0 && (
+      {!loading && !error && !query.trim() && dataFetched && mode === 'semantic' && semanticResults.length === 0 && (
         <div className="py-12 text-center">
           <div className="text-4xl mb-4">🧠</div>
           <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>试试换个说法：</p>
