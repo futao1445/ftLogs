@@ -137,7 +137,7 @@ export default function DiaryCard({ diary, onEdit, onDelete }: DiaryCardProps) {
         {/* futao ⑤：点卡片本身=编辑，去掉独立编辑按钮；删除按钮加大（文案化：删除） */}
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
-            className="px-2.5 py-1 rounded-lg transition-colors text-xs cursor-pointer"
+            className="px-3 py-1.5 rounded-lg transition-colors text-[13px] cursor-pointer"
             style={{
               color: 'var(--text-tertiary)',
               border: '1px solid var(--border-default)',
