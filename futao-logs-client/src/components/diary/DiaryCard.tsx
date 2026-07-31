@@ -30,25 +30,27 @@ export default function DiaryCard({ diary, onEdit, onDelete }: DiaryCardProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="group cursor-pointer rounded-xl border p-4 transition-all duration-200"
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      whileHover={{
+        y: -8,
+        scale: 1.01,
+        borderColor: 'rgba(111,180,255,0.35)',
+        boxShadow: '0 8px 28px rgba(2,8,20,0.5), inset 0 1px 0 rgba(255,255,255,0.10), 0 0 24px rgba(111,180,255,0.08)',
+      }}
+      whileTap={{ scale: 0.98 }}
+      className="group cursor-pointer rounded-xl border p-4 transition-colors relative overflow-hidden"
       style={{
-        background: 'var(--bg-secondary)',
+        background: 'linear-gradient(160deg, rgba(33,57,92,0.45) 0%, var(--bg-secondary) 55%)',
         borderColor: 'var(--border-default)',
         boxShadow: 'var(--shadow-card)',
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = 'var(--border-hover)';
-        e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)';
-        e.currentTarget.style.transform = 'translateY(-2px)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = 'var(--border-default)';
-        e.currentTarget.style.boxShadow = 'var(--shadow-card)';
-        e.currentTarget.style.transform = 'translateY(0)';
-      }}
       onClick={() => onEdit?.(diary)}
     >
+      {/* 玻璃雾高光 — 卡片上层浮起感 */}
+      <div
+        className="absolute inset-x-0 top-0 h-px pointer-events-none"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(168,208,255,0.35), transparent)' }}
+      />
       {/* Top: time + mood */}
       <div className="flex items-center justify-between mb-2" style={{ height: 20 }}>
         <span style={{ color: 'var(--text-tertiary)', fontSize: 'var(--font-size-xs)' }}>

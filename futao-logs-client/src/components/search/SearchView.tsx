@@ -60,7 +60,8 @@ function SemanticHint({ onFill }: { onFill: (q: string) => void }) {
 
 function ScoreBadge({ score }: { score: number }) {
   const pct = Math.round(score * 100);
-  const color = pct >= 85 ? '#22c55e' : pct >= 70 ? '#eab308' : '#ef4444';
+  // 相关性色阶 → 池塘纵深：高相关波光亮、中相关晨雾、低相关弱化
+  const color = pct >= 85 ? '#a8d0ff' : pct >= 70 ? '#6fb4ff' : '#8fa6c4';
   return (
     <span
       className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium leading-none"

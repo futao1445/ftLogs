@@ -122,49 +122,64 @@ function TimelineSkeleton() {
 function TimelineEmpty({ onNew }: { onNew?: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-20">
-      {/* Leaf illustration */}
-      <svg
+      {/* Water droplet illustration — 一滴等待落水的晨露 */}
+      <motion.svg
         className="mb-6"
         width="64"
         height="64"
         viewBox="0 0 64 64"
         fill="none"
         aria-hidden="true"
+        initial={{ y: -8, opacity: 0.6 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 22, repeat: Infinity, repeatType: 'mirror', repeatDelay: 1.2 }}
       >
         <path
-          d="M32 8C32 8 18 20 16 32C14 44 24 54 32 56C40 54 50 44 48 32C46 20 32 8 32 8Z"
-          stroke="var(--accent)"
+          d="M32 10C32 10 20 28 18 40C16 50 24 56 32 56C40 56 48 50 46 40C44 28 32 10 32 10Z"
+          fill="rgba(111,180,255,0.10)"
+          stroke="#6fb4ff"
           strokeWidth="1.5"
-          strokeLinecap="round"
           strokeLinejoin="round"
-          fill="var(--accent-soft)"
         />
-        <path d="M32 56L32 32" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M32 32L44 22" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
+        <path d="M24 40C24 36 27 33 30 32" stroke="#a8d0ff" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M36 22C36 22 40 26 41 30" stroke="rgba(168,208,255,0.5)" strokeWidth="1" strokeLinecap="round" />
+        <circle cx="26" cy="16" r="2" fill="#a8d0ff" opacity="0.7" />
+      </motion.svg>
 
       <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
-        还没有日记，写第一篇吧
+        水面上还没有日记，写第一篇吧
       </p>
 
       {onNew && (
-        <button
+        <motion.button
           onClick={onNew}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-          style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--accent-hover)';
+          className="flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-medium cursor-pointer relative overflow-visible"
+          style={{
+            background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.25) 0%, rgba(111,180,255,0.08) 60%, rgba(111,180,255,0.02) 100%)',
+            color: '#6fb4ff',
+            border: '1px solid rgba(111,180,255,0.18)',
+            boxShadow: '0 0 4px rgba(111,180,255,0.08)',
           }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'var(--accent)';
+          whileHover={{
+            background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.40) 0%, rgba(111,180,255,0.15) 50%, rgba(111,180,255,0.05) 100%)',
+            color: '#a8d0ff',
+            boxShadow: '0 0 20px rgba(111,180,255,0.25), 0 0 40px rgba(111,180,255,0.10)',
           }}
+          whileTap={{
+            scale: 0.96,
+            background: 'radial-gradient(circle at 50% 50%, rgba(255,217,160,0.40) 0%, rgba(111,180,255,0.20) 50%, rgba(111,180,255,0.08) 100%)',
+            color: '#ffd9a0',
+            borderColor: 'rgba(255,217,160,0.35)',
+            boxShadow: '0 0 40px rgba(255,217,160,0.30), 0 0 80px rgba(111,180,255,0.15)',
+          }}
+          transition={{ type: 'spring', stiffness: 400, damping: 22 }}
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M12 5v14" />
             <path d="M5 12h14" />
           </svg>
           写第一篇日记
-        </button>
+        </motion.button>
       )}
     </div>
   );
@@ -207,20 +222,28 @@ export default function DiaryTimeline({
         <div className="flex items-center gap-2">
           <ExportButton />
           {onNew && (
-            <button
+            <motion.button
               onClick={onNew}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
-              style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--accent-hover)';
-                e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)';
-                e.currentTarget.style.transform = 'translateY(-1px)';
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-sm font-medium cursor-pointer relative overflow-visible"
+              style={{
+                background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.25) 0%, rgba(111,180,255,0.08) 60%, rgba(111,180,255,0.02) 100%)',
+                color: '#6fb4ff',
+                border: '1px solid rgba(111,180,255,0.18)',
+                boxShadow: '0 0 4px rgba(111,180,255,0.08)',
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'var(--accent)';
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.transform = 'translateY(0)';
+              whileHover={{
+                background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.40) 0%, rgba(111,180,255,0.15) 50%, rgba(111,180,255,0.05) 100%)',
+                color: '#a8d0ff',
+                boxShadow: '0 0 20px rgba(111,180,255,0.25), 0 0 40px rgba(111,180,255,0.10)',
               }}
+              whileTap={{
+                scale: 0.96,
+                background: 'radial-gradient(circle at 50% 50%, rgba(255,217,160,0.40) 0%, rgba(111,180,255,0.20) 50%, rgba(111,180,255,0.08) 100%)',
+                color: '#ffd9a0',
+                borderColor: 'rgba(255,217,160,0.35)',
+                boxShadow: '0 0 40px rgba(255,217,160,0.30), 0 0 80px rgba(111,180,255,0.15)',
+              }}
+              transition={{ type: 'spring', stiffness: 400, damping: 22 }}
             >
               <svg
                 className="w-4 h-4"
@@ -234,7 +257,7 @@ export default function DiaryTimeline({
                 <path d="M5 12h14" />
               </svg>
               <span className="hidden sm:inline">新日记</span>
-            </button>
+            </motion.button>
           )}
         </div>
       </header>
@@ -348,26 +371,30 @@ export default function DiaryTimeline({
           {/* ═══ Load more ═══ */}
           {hasMore && (
             <div className="flex justify-center pt-6 pb-2" style={{ paddingLeft: 32 }}>
-              <button
+              <motion.button
                 onClick={onLoadMore}
                 disabled={loading}
-                className="px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                className="px-5 py-2 rounded-2xl text-sm font-medium cursor-pointer relative overflow-visible"
                 style={{
-                  background: 'var(--bg-secondary)',
+                  background: 'linear-gradient(135deg, rgba(23,42,69,0.6) 0%, rgba(33,57,92,0.4) 100%)',
                   color: 'var(--text-secondary)',
-                  border: '1px solid var(--border-default)',
+                  border: '1px solid rgba(45,74,117,0.45)',
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-hover)';
-                  e.currentTarget.style.color = 'var(--text-primary)';
+                whileHover={{
+                  borderColor: 'rgba(168,208,255,0.45)',
+                  color: '#a8d0ff',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), 0 0 16px rgba(111,180,255,0.12)',
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-default)';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
+                whileTap={{
+                  scale: 0.96,
+                  background: 'radial-gradient(circle at 50% 50%, rgba(255,217,160,0.30) 0%, rgba(111,180,255,0.15) 60%, rgba(23,42,69,0.6) 100%)',
+                  color: '#ffd9a0',
+                  borderColor: 'rgba(255,217,160,0.35)',
                 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
               >
                 {loading ? '加载中…' : '加载更多'}
-              </button>
+              </motion.button>
             </div>
           )}
         </div>
