@@ -586,8 +586,8 @@ export default function TreeholePage() {
                     <div
                       className="rounded-2xl px-4 py-2.5 text-sm leading-relaxed"
                       style={{
-                        background: msg.role === 'user' ? 'var(--bg-secondary)' : 'var(--bg-primary)',
-                        color: msg.role === 'user' ? 'var(--text-primary)' : 'var(--text-primary)',
+                        background: msg.role === 'user' ? 'var(--bg-secondary)' : 'rgba(74,106,148,0.35)',
+                        color: 'var(--text-primary)',
                         border: msg.role === 'user' ? '1px solid var(--border-default)' : '1px solid rgba(168,208,255,0.35)',
                         boxShadow: msg.role === 'user'
                           ? '0 1px 3px rgba(2,8,20,0.4)'
