@@ -15,6 +15,7 @@ interface PageShellProps {
   onNewDiary: () => void;
   openSettings?: boolean;
   onSettingsClosed?: () => void;
+  waterLayer?: string;
   children: React.ReactNode;
 }
 
@@ -24,6 +25,7 @@ export default function PageShell({
   onNewDiary,
   openSettings,
   onSettingsClosed,
+  waterLayer,
   children,
 }: PageShellProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -47,14 +49,14 @@ export default function PageShell({
           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
         }}
       >
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-12">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-1">
               <TabButton active={activeTab === 'diary'} onClick={() => onTabChange('diary')} label="日记" />
               <TabButton active={activeTab === 'calendar'} onClick={() => onTabChange('calendar')} label="日历" />
               <TabButton active={activeTab === 'search'} onClick={() => onTabChange('search')} label="搜索" />
               <TabButton active={activeTab === 'summary'} onClick={() => onTabChange('summary')} label="AI 总结" />
-              <TabButton active={activeTab === 'treehole'} onClick={() => onTabChange('treehole')} label="树洞" />
+              <TabButton active={activeTab === 'treehole'} onClick={() => onTabChange('treehole')} label="涟漪" />
             </div>
 
             <div className="flex items-center gap-2">
@@ -105,7 +107,7 @@ export default function PageShell({
       </nav>
 
       {/* Main content */}
-      <main className="flex-1">
+      <main className="flex-1" style={waterLayer ? { background: waterLayer } : undefined}>
         {children}
       </main>
     </div>

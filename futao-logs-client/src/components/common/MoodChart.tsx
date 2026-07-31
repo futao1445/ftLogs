@@ -111,8 +111,8 @@ export default function MoodChart({ data, totalCount, loading = false }: MoodCha
       <div className="space-y-2">
         {sorted.map((m) => (
           <div key={m.key} className="flex items-center gap-2">
-            {/* Emoji + label */}
-            <span className="text-xs w-10 shrink-0" style={{ color: 'var(--text-secondary)' }}>
+            {/* Emoji + label（futao 修改⑤-2：禁止强制换行） */}
+            <span className="text-xs w-14 shrink-0 whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>
               {m.emoji} {m.label}
             </span>
 

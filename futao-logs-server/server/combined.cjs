@@ -113,6 +113,10 @@ const diaryRouter = t.router({
             update: { vector: JSON.stringify(vector), model: 'auto', updatedAt: new Date() },
           });
         }).catch(() => {});
+        // 异步自动提取实体（不阻塞保存返回），保持图谱实时更新
+        if (content) {
+          extractEntitiesFromText(content, { type: 'diary', id }).then(() => {}).catch(() => {});
+        }
         return prisma.diaries.findFirst({
           where: { id },
           include: { tags: { include: { tag: true } }, attachments: true },
@@ -147,6 +151,10 @@ const diaryRouter = t.router({
           update: { vector: JSON.stringify(vector), model: 'auto', updatedAt: new Date() },
         });
       }).catch(() => {});
+      // 异步自动提取实体（不阻塞保存返回）
+      if (result.content) {
+        extractEntitiesFromText(result.content, { type: 'diary', id: diary.id }).then(() => {}).catch(() => {});
+      }
       return result;
     }),
 
@@ -154,8 +162,8 @@ const diaryRouter = t.router({
   delete: t.procedure
     .input(z.object({ ids: z.array(z.number()) }))
     .mutation(async ({ input }) => {
-      await prisma.diaries.deleteMany({ where: { id: { in: input.ids } } });
-      return { success: true };
+      const result = await prisma.diaries.deleteMany({ where: { id: { in: input.ids } } });
+      return { success: true, deleted: result.count };
     }),
 
   // ─── 日历查询 ────────────────────────
@@ -288,8 +296,11 @@ const tagRouter = t.router({
   delete: t.procedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
+      const exists = await prisma.tags.findUnique({ where: { id: input.id } });
+      if (!exists) return { success: false, error: '标签不存在' };
+      const usage = await prisma.diaries_tags.count({ where: { tagId: input.id } });
       await prisma.tags.delete({ where: { id: input.id } });
-      return { success: true };
+      return { success: true, removedFromDiaries: usage };
     }),
 });
 
@@ -419,7 +430,10 @@ const summaryRouter = t.router({
         periodKey = dayStr;
         const diaries = await prisma.diaries.findMany({ where: { isArchived: false, date: { gte: new Date(dayStr+'T00:00:00.000Z'), lte: new Date(dayStr+'T23:59:59.999Z') } }, orderBy: { createdAt: 'asc' }, select: { content: true, mood: true, createdAt: true } });
         if (diaries.length===0) return { success: false, error: `${dayStr} 没有日记` };
-        sourceData = diaries.map((di,i) => `[日记 ${i+1}] 时间: ${di.createdAt.toISOString().slice(11,16)} 心情: ${di.mood||'无'}\n内容: ${di.content}`).join('\n\n');
+        sourceData = diaries.map((di,i) => {
+          const localTime = new Date(di.createdAt.getTime() + 8 * 60 * 60 * 1000);
+          return `[日记 ${i+1}] 时间: ${localTime.toISOString().slice(11,16)} 心情: ${di.mood||'无'}\n内容: ${di.content}`;
+        }).join('\n\n');
       } else if (input.type === 'week') {
         periodKey = getWeekKey(baseDate);
         const weekStart = new Date(baseDate); weekStart.setDate(weekStart.getDate()-weekStart.getDay()+1);
@@ -451,13 +465,29 @@ const summaryRouter = t.router({
       }
       const feedbackNote = input.feedback ? `\n用户反馈（需根据此意见调整）：${input.feedback}` : '';
       const typeLabel = { day: '每日', week: '每周', month: '每月', year: '每年' }[input.type];
-      const systemPrompt = `你是一个专业的日记分析助手。请对以下${typeLabel}日记内容进行全面分析，以 JSON 格式回复。\n分析维度：\n1. 身体状态 (body) — 睡眠、运动、健康\n2. 精神状态 (mind) — 情绪波动、专注力\n3. 心理状态 (psychology) — 压力、焦虑、社交\n4. 个人成长 (growth) — 进步、习惯养成\n最后给出针对性建议 (advice)。${feedbackNote}\nJSON 格式：{"summary":"总体总结","analysis":{"body":"...","mind":"...","psychology":"...","growth":"..."},"advice":"建议","keywords":["k1","k2"]}`;
+      const systemPrompt = `你是一个专业的日记分析助手。请对以下${typeLabel}日记内容进行全面分析，以 JSON 格式回复。
+
+分析维度：
+1. 身体状态 (body) — 睡眠、运动、健康（结合记录时间分析作息是否规律）
+2. 精神状态 (mind) — 情绪波动、专注力
+3. 心理状态 (psychology) — 压力、焦虑、社交
+4. 个人成长 (growth) — 进步、习惯养成
+
+规则：
+- 数据中的"时间"是北京时间（UTC+8），基于实际时间分析作息状态（凌晨/上午/下午/晚上）
+- 结合日记数量（共N篇）调整分析粒度：篇数少时聚焦关键信息，篇数多时提炼共性趋势
+- 建议（advice）格式约束：具体行动 + 预期收益，如"建议今晚11点前关掉电子设备，持续3天可改善精神状态"
+- 关键词（keywords）应为有区分度的复合标签（如"工作压力""阅读收获"），避免单个名词，最多5个
+- 异常判定标准（满足任一条则在 analysis 中标记）：a) 凌晨00:00~06:00写日记；b) 连续3天同一低情绪（焦虑/悲伤）；c) 突发超长情绪宣泄；d) 连续3天以上中断后突然恢复
+- 如果存在多篇日记，分析前后的状态变化趋势（如"相比昨日（平静），今日转为（焦虑）"）
+${feedbackNote}
+JSON 格式：{"summary":"总体总结","analysis":{"body":"...","mind":"...","psychology":"...","growth":"..."},"advice":"建议","keywords":["k1","k2"]}`;
       try {
         const res = await fetch(`${apiUrl.replace(/\/+$/, '')}/chat/completions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
           body: JSON.stringify({ model, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `${typeLabel}数据：\n\n${sourceData}` }], max_tokens: 2048 }),
-          signal: AbortSignal.timeout(60000),
+          signal: AbortSignal.timeout(30000),
         });
         if (!res.ok) { const bd = await res.text().catch(() => ''); return { success: false, error: `HTTP ${res.status}: ${bd.slice(0,200)}` }; }
         const json = await res.json();
@@ -511,13 +541,32 @@ async function readLLMConfig() {
 
 // 辅助：调用 LLM embeddings API
 async function getEmbedding(text) {
-  const { apiUrl, apiKey, model } = await readLLMConfig();
-  if (!apiKey) throw new Error('LLM 未配置');
+  const readCfg = (key) => prisma.config.findUnique({ where: { key } }).then(c => {
+    if (!c) return null; try { return JSON.parse(c.value); } catch { return c.value; }
+  }).catch(() => null);
+  // 优先使用独立 embedding 配置，无则用 chat 配置
+  let apiUrl = await readCfg('embedding_api_url');
+  let apiKey = await readCfg('embedding_api_key');
+  let model = await readCfg('embedding_model');
+  const embedProvider = await readCfg('embedding_provider');
+  if (!apiKey) {
+    // 回退到 chat 配置
+    const chatCfg = await readLLMConfig();
+    apiUrl = chatCfg.apiUrl;
+    apiKey = chatCfg.apiKey;
+    model = model || chatCfg.model;
+  } else {
+    const KNOWN_URLS = { deepseek: 'https://api.deepseek.com', kimi: 'https://api.moonshot.cn/v1', aliyun: 'https://dashscope.aliyuncs.com/compatible-mode/v1' };
+    if (!apiUrl && embedProvider) apiUrl = KNOWN_URLS[embedProvider] || 'https://api.openai.com/v1';
+  }
+  if (!apiKey) throw new Error('EMBEDDING_NOT_CONFIGURED');
   // 尝试不同的 embedding 模型名
-  const embedModels = [model, 'text-embedding-3-small', 'text-embedding-ada-002', 'embed-v2', 'embedding-v1'];
+  const embedModels = [model, 'deepseek-embedding', 'text-embedding-3-small', 'text-embedding-ada-002', 'embed-v2', 'embedding-v1'];
+  const embedUrls = ['/v1/embeddings', '/embeddings', '/beta/embeddings'];
   for (const em of embedModels) {
-    try {
-      const res = await fetch(`${apiUrl.replace(/\/+$/, '')}/embeddings`, {
+    for (const ep of embedUrls) {
+      try {
+        const res = await fetch(`${apiUrl.replace(/\/+$/, '')}${ep}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify({ model: em, input: text }),
@@ -528,9 +577,10 @@ async function getEmbedding(text) {
         if (json.data?.[0]?.embedding) return json.data[0].embedding;
       }
     } catch {}
+    }
   }
-  // 如果都不支持，用 chat API 生成简化 embedding（备选方案）
-  throw new Error('当前 LLM 平台不支持 embeddings API');
+  // 如果都不支持 embeddings API
+  throw new Error('当前 LLM 平台不支持 embeddings API。请到设置中切换到 OpenAI / 阿里云 / Kimi 等支持 embeddings 的模型');
 }
 
 // 余弦相似度
@@ -565,6 +615,133 @@ async function llmChat(systemPrompt, userMessage) {
   const json = await res.json();
   return json.choices?.[0]?.message?.content || '';
 }
+
+// ─── 共享：从文本提取实体并写入图谱（日记 / 知识库条目 / 全量重建复用）───
+// scope: { type: 'diary' | 'knowledge', id: number }
+//   diary → 写入 graph_entities.diaryIds
+//   knowledge → 写入 graph_entities.entryIds（知识库条目关联）
+// 返回：{ entityIds: number[], matched: number, created: number }
+async function extractEntitiesFromText(text, scope) {
+  if (!text || !text.trim()) return { entityIds: [], matched: 0, created: 0 };
+  let result;
+  try {
+    result = await llmChat(
+      '你是一个实体提取助手。从文本中提取人物(person)、地点(place)、事件(event)、情绪(emotion)、话题(topic)实体。' +
+      '只回复 JSON 数组：{"entities":[{"type":"person","name":"张三"}]}。如果不确定，返回空数组。' +
+      '要求：只提取明确的、有信息量的实体；名称保持原文；最多返回 8 个。',
+      text
+    );
+  } catch (e) {
+    throw new Error('实体提取 LLM 调用失败: ' + (e.message || ''));
+  }
+  let entities = [];
+  try {
+    const clean = result.replace(/```json\n?/g, '').replace(/```/g, '').trim();
+    entities = (JSON.parse(clean).entities || []).slice(0, 8);
+  } catch { entities = []; }
+  const entityIds = [];
+  let matched = 0, created = 0;
+  const isDiary = scope && scope.type === 'diary';
+  const idField = isDiary ? 'diaryIds' : 'entryIds';
+  for (const ent of entities) {
+    if (!ent || !ent.type || !ent.name) continue;
+    const normType = normalizeEntityType(ent.type);
+    try {
+      const existing = await prisma.graph_entities.findUnique({
+        where: { type_name: { type: normType, name: String(ent.name) } },
+      });
+      const merged = (existing
+        ? JSON.parse(existing[idField] || '[]')
+        : []).filter(x => Number(x) !== Number(scope.id));
+      merged.push(Number(scope.id));
+      if (existing) {
+        await prisma.graph_entities.update({
+          where: { id: existing.id },
+          data: { [idField]: JSON.stringify(merged) },
+        });
+        entityIds.push(existing.id);
+        matched++;
+      } else {
+        const createdEntity = await prisma.graph_entities.create({
+          data: { type: normType, name: String(ent.name), [idField]: JSON.stringify([Number(scope.id)]) },
+        });
+        entityIds.push(createdEntity.id);
+        created++;
+      }
+    } catch {}
+  }
+  return { entityIds, matched, created };
+}
+
+// ─── 实体类型规范化：LLM 可能输出英文/中文/同义类型，统一落库英文规范类型 ───
+const TYPE_NORMALIZE = {
+  // 中文 → 规范英文
+  '人物': 'person', '人': 'person', '人类': 'person', 'people': 'person',
+  '地点': 'place', '地方': 'place', '场所': 'place', '位置': 'place', 'location': 'place', 'locality': 'place',
+  '事件': 'event', '事情': 'event', '事': 'event', '事件性': 'event',
+  '情绪': 'emotion', '情感': 'emotion', '感受': 'emotion', '心情': 'emotion', 'feelings': 'emotion', 'feeling': 'emotion',
+  '话题': 'topic', '主题': 'topic', '主题词': 'topic', '主题标签': 'topic',
+  '组织': 'org', '机构': 'org', '公司': 'org', '企业': 'org', 'organization': 'org', 'organization': 'org',
+  '时间': 'time', '时间点': 'time', '日期': 'time',
+  '其他': 'other', '其它': 'other', '杂项': 'other', 'misc': 'other',
+};
+function normalizeEntityType(type) {
+  if (!type) return 'topic';
+  const t = String(type).trim().toLowerCase();
+  if (!t) return 'topic';
+  if (TYPE_NORMALIZE[t] !== undefined) return TYPE_NORMALIZE[t];
+  // 英文近义收敛
+  if (/^person|^people|^human|^name/.test(t)) return 'person';
+  if (/^place|^location|^city|^address|^geogra/.test(t)) return 'place';
+  if (/^event|^happening|^occurrence|^incident/.test(t)) return 'event';
+  if (/^emotion|^feeling|^mood|^sentiment|^psych/.test(t)) return 'emotion';
+  if (/^topic|^theme|^subject|^keyword|^tag|^concept/.test(t)) return 'topic';
+  if (/^org|^company|^corporation|^institution|^team|^group/.test(t)) return 'org';
+  if (/^time|^date|^period|^year|^month/.test(t)) return 'time';
+  if (/^other|^misc|^miscellaneous|^none/.test(t)) return 'other';
+  return t; // 未知类型原样保留（不强制改）
+}
+global.normalizeEntityType = normalizeEntityType;
+
+// 实体类型英文 → 中文展示名（图谱前端无需再映射）
+const TYPE_LABEL_CN = {
+  person: '人物', place: '地点', event: '事件', emotion: '情绪', topic: '话题',
+  org: '组织', time: '时间', other: '其他',
+};
+function typeLabelCn(type) {
+  return TYPE_LABEL_CN[String(type || '').toLowerCase()] || String(type || '');
+}
+global.typeLabelCn = typeLabelCn;
+
+// treehole-router.cjs 等被 require 的模块通过 global 访问共享的实体提取逻辑
+global.extractEntitiesFromText = extractEntitiesFromText;
+
+// 图谱全量重建进度（进程内共享状态，供 rebuildGraph / rebuildStatus 使用）
+const rebuildState = { running: false, total: 0, processed: 0, current: '', stage: 'idle', error: '', startedAt: null, finishedAt: null };
+
+// 重算图谱关系（基于共享日记 + 知识库条目），供全量重建后调用
+async function recomputeGraphRelations() {
+  await prisma.graph_relations.deleteMany({});
+  const entities = await prisma.graph_entities.findMany({});
+  const pairs = [];
+  for (const e of entities) {
+    const dIds = JSON.parse(e.diaryIds);
+    const eIds = JSON.parse(e.entryIds || '[]');
+    for (const e2 of entities) {
+      if (e.id >= e2.id) continue;
+      const tDIds = JSON.parse(e2.diaryIds);
+      const tEIds = JSON.parse(e2.entryIds || '[]');
+      const shared = dIds.filter(id => tDIds.includes(id)).length + eIds.filter(id => tEIds.includes(id)).length;
+      if (shared > 0) {
+        pairs.push({ sourceId: e.id, targetId: e2.id, weight: shared });
+      }
+    }
+  }
+  if (pairs.length) {
+    await prisma.graph_relations.createMany({ data: pairs.map(p => ({ ...p, relation: 'mentioned_together' })) });
+  }
+}
+global.recomputeGraphRelations = recomputeGraphRelations;
 
 const ragRouter = t.router({
   // ─── 生成单篇日记的 embedding ─────────
@@ -616,47 +793,34 @@ const ragRouter = t.router({
       return { success: true, total: diaries.length, indexed, errors };
     }),
 
-  // ─── 语义搜索 ──────────────────────
+  // ─── 语义搜索（含关键词回退） ─────
   search: t.procedure
     .input(z.object({ query: z.string(), limit: z.number().default(10), minScore: z.number().default(0.5) }))
     .query(async ({ input }) => {
       if (!input.query.trim()) return { items: [], query: input.query };
       try {
         const queryVector = await getEmbedding(input.query);
-        const allEmbeddings = await prisma.diary_embeddings.findMany({
-          select: { diaryId: true, vector: true },
-        });
-        const scored = [];
-        for (const emb of allEmbeddings) {
-          let vec;
-          try { vec = JSON.parse(emb.vector); } catch { continue; }
-          const score = cosineSimilarity(queryVector, vec);
-          if (score >= input.minScore) scored.push({ diaryId: emb.diaryId, score });
+        const allEmbeddings = await prisma.diary_embeddings.findMany({ select: { diaryId: true, vector: true } });
+        if (allEmbeddings.length > 0) {
+          const scored = [];
+          for (const emb of allEmbeddings) {
+            try { const vec = JSON.parse(emb.vector); const s = cosineSimilarity(queryVector, vec); if (s >= input.minScore) scored.push({ diaryId: emb.diaryId, score: s }); } catch {}
+          }
+          scored.sort((a,b)=>b.score-a.score);
+          const top = scored.slice(0, input.limit);
+          const diaryIds = top.map(s=>s.diaryId);
+          const diaries = diaryIds.length ? await prisma.diaries.findMany({ where:{id:{in:diaryIds}}, include:{tags:{include:{tag:true}}} }) : [];
+          const dm = {}; diaries.forEach(d=>dm[d.id]=d);
+          await prisma.search_logs.create({ data:{query:input.query, results:top.length} });
+          return { items: top.map(s=>({diary:dm[s.diaryId]||null, score:Math.round(s.score*10000)/10000})).filter(i=>i.diary), query:input.query, mode:"semantic" };
         }
-        scored.sort((a, b) => b.score - a.score);
-        const top = scored.slice(0, input.limit);
-        const diaryIds = top.map(s => s.diaryId);
-        const diaries = diaryIds.length ? await prisma.diaries.findMany({
-          where: { id: { in: diaryIds } },
-          include: { tags: { include: { tag: true } } },
-        }) : [];
-        const diaryMap = {};
-        for (const d of diaries) diaryMap[d.id] = d;
-        // 搜索日志
-        await prisma.search_logs.create({ data: { query: input.query, results: top.length } });
-        return {
-          items: top.map(s => ({
-            diary: diaryMap[s.diaryId] || null,
-            score: Math.round(s.score * 10000) / 10000,
-          })).filter(i => i.diary),
-          query: input.query,
-        };
-      } catch (e) {
-        return { items: [], query: input.query, error: e.message || '搜索失败' };
-      }
+      } catch {}
+      const diaries = await prisma.diaries.findMany({ where:{isArchived:false, content:{contains:input.query}}, orderBy:[{date:"desc"},{createdAt:"desc"}], take:input.limit, include:{tags:{include:{tag:true}}} });
+      await prisma.search_logs.create({ data:{query:input.query, results:diaries.length} });
+      return { items: diaries.map(d=>({diary:d, score:1})), query:input.query, mode:"keyword", note:"语义搜索需额外配置 embedding 服务（设置 > embedding 配置），当前已自动降级为关键词搜索" };
     }),
 
-  // ─── 实体提取 ──────────────────────
+// ─── 实体提取 ──────────────────────
   extractEntities: t.procedure
     .input(z.object({ diaryId: z.number().optional(), diaryIds: z.array(z.number()).optional() }))
     .mutation(async ({ input }) => {
@@ -687,8 +851,10 @@ const ragRouter = t.router({
               entities = JSON.parse(clean).entities || [];
             } catch { entities = []; }
             for (const ent of entities) {
+              if (!ent || !ent.type || !ent.name) continue;
+              const normType = normalizeEntityType(ent.type);
               const existing = await prisma.graph_entities.findUnique({
-                where: { type_name: { type: ent.type, name: ent.name } },
+                where: { type_name: { type: normType, name: ent.name } },
               });
               if (existing) {
                 const ids_ = new Set(JSON.parse(existing.diaryIds));
@@ -699,7 +865,7 @@ const ragRouter = t.router({
                 });
               } else {
                 await prisma.graph_entities.create({
-                  data: { type: ent.type, name: ent.name, diaryIds: JSON.stringify([diary.id]) },
+                  data: { type: normType, name: ent.name, diaryIds: JSON.stringify([diary.id]) },
                 });
               }
             }
@@ -725,8 +891,10 @@ const ragRouter = t.router({
             entities = JSON.parse(clean).entities || [];
           } catch { entities = []; }
           for (const ent of entities) {
+            if (!ent || !ent.type || !ent.name) continue;
+            const normType = normalizeEntityType(ent.type);
             const existing = await prisma.graph_entities.findUnique({
-              where: { type_name: { type: ent.type, name: ent.name } },
+              where: { type_name: { type: normType, name: ent.name } },
             });
             if (existing) {
               const ids_ = new Set(JSON.parse(existing.diaryIds));
@@ -737,7 +905,7 @@ const ragRouter = t.router({
               });
             } else {
               await prisma.graph_entities.create({
-                data: { type: ent.type, name: ent.name, diaryIds: JSON.stringify([diary.id]) },
+                data: { type: normType, name: ent.name, diaryIds: JSON.stringify([diary.id]) },
               });
             }
           }
@@ -747,46 +915,33 @@ const ragRouter = t.router({
       return { success: true, total: diaries.length, extracted, errors };
     }),
 
-  // ─── 获取知识图谱数据 ─────────────────
+  // ─── 获取知识图谱数据（只读，重算关系请用 recomputeGraphRelations）───
   graph: t.procedure
     .input(z.object({ type: z.string().optional() }))
     .query(async ({ input }) => {
       const where = input.type ? { type: input.type } : {};
       const entities = await prisma.graph_entities.findMany({ where, orderBy: { createdAt: 'desc' } });
       const edges = [];
+      // 先只计算在内存中的边（不写库），避免每次查询都污染权重
       for (const e of entities) {
-        const targetIds = JSON.parse(e.diaryIds);
+        const dIds = JSON.parse(e.diaryIds);
+        const eIds = JSON.parse(e.entryIds || '[]');
         for (const e2 of entities) {
           if (e.id >= e2.id) continue;
-          const tIds = JSON.parse(e2.diaryIds);
-          const shared = targetIds.filter(id => tIds.includes(id));
-          if (shared.length > 0) {
-            // 已有关系记录？有则更新权重
-            const existing = await prisma.graph_relations.findFirst({
-              where: {
-                OR: [
-                  { sourceId: e.id, targetId: e2.id },
-                  { sourceId: e2.id, targetId: e.id },
-                ],
-              },
-            });
-            if (existing) {
-              await prisma.graph_relations.update({
-                where: { id: existing.id },
-                data: { weight: existing.weight + 1 },
-              });
-            } else {
-              await prisma.graph_relations.create({
-                data: { sourceId: e.id, targetId: e2.id, relation: 'mentioned_together', weight: shared.length },
-              });
-            }
-            edges.push({ source: e.id, target: e2.id, weight: shared.length, relation: 'mentioned_together' });
+          const tDIds = JSON.parse(e2.diaryIds);
+          const tEIds = JSON.parse(e2.entryIds || '[]');
+          const sharedDiary = dIds.filter(id => tDIds.includes(id)).length;
+          const sharedEntry = eIds.filter(id => tEIds.includes(id)).length;
+          const shared = sharedDiary + sharedEntry;
+          if (shared > 0) {
+            edges.push({ source: e.id, target: e2.id, weight: shared, relation: 'mentioned_together' });
           }
         }
       }
       const nodes = entities.map(e => ({
-        id: e.id, type: e.type, name: e.name,
+        id: e.id, type: e.type, typeCn: typeLabelCn(e.type), name: e.name,
         diaryCount: JSON.parse(e.diaryIds).length,
+        entryCount: JSON.parse(e.entryIds || '[]').length,
       }));
       return { nodes, edges };
     }),
@@ -814,21 +969,185 @@ const ragRouter = t.router({
       const relatedEntities = relatedIds.size ? await prisma.graph_entities.findMany({
         where: { id: { in: [...relatedIds] } },
       }) : [];
+
+      // 关联知识库条目（entityIds 里的知识库 id → knowledge_entries）
+      let knowledgeEntries = [];
+      try {
+        const entryIds = JSON.parse(entity.entryIds || '[]');
+        if (entryIds.length) {
+          const rows = await prisma.$queryRawUnsafe(
+            'SELECT id, content, source, sourceId, createdAt, updatedAt FROM knowledge_entries WHERE id IN (' +
+            entryIds.map(() => '?').join(',') + ')',
+            ...entryIds
+          );
+          knowledgeEntries = rows;
+        }
+      } catch {}
+
       return {
         entity,
+        typeCn: typeLabelCn(entity.type),
         diaries,
         relatedEntities,
+        knowledgeEntries,
         relations: relations.map(r => ({
           id: r.id, relation: r.relation, weight: r.weight,
           sourceId: r.sourceId, targetId: r.targetId,
         })),
       };
     }),
+
+  // ─── 图谱全量重建（清空后从全部日记 + 知识库条目重新提取）───
+  rebuildGraph: t.procedure
+    .input(z.object({ force: z.boolean().default(false) }))
+    .mutation(async function({ input }) {
+      if (rebuildState.running) {
+        return { success: false, error: '图谱重建正在进行中，请稍后再试' };
+      }
+      // 未 force 且已有实体时不做（避免误清）
+      const existingCount = await prisma.graph_entities.count();
+      if (existingCount > 0 && !input.force) {
+        return { success: false, error: '图谱已有数据，如需重新生成请传 force: true' };
+      }
+      rebuildState.running = true;
+      rebuildState.error = '';
+      rebuildState.startedAt = new Date().toISOString();
+      rebuildState.finishedAt = null;
+      rebuildState.processed = 0;
+      rebuildState.stage = 'clearing';
+
+      // 在后台异步执行，立即返回已启动
+      (async function() {
+        try {
+          await prisma.graph_relations.deleteMany({});
+          await prisma.graph_entities.deleteMany({});
+
+          const diaries = await prisma.diaries.findMany({ select: { id: true, content: true }, orderBy: { id: 'asc' } });
+          const entries = await prisma.$queryRawUnsafe('SELECT id, content FROM knowledge_entries ORDER BY id ASC');
+          const total = diaries.length + entries.length;
+          rebuildState.total = total;
+          rebuildState.stage = 'extracting';
+          rebuildState.processed = 0;
+
+          for (const diary of diaries) {
+            rebuildState.current = '日记 #' + diary.id;
+            try {
+              await extractEntitiesFromText(diary.content, { type: 'diary', id: diary.id });
+            } catch {}
+            rebuildState.processed++;
+          }
+          for (const entry of entries) {
+            rebuildState.current = '知识库 #' + entry.id;
+            try {
+              const ext = await extractEntitiesFromText(entry.content, { type: 'knowledge', id: entry.id });
+              const entityIds = ext.entityIds.length ? JSON.stringify(ext.entityIds) : '[]';
+              await prisma.$executeRawUnsafe(
+                'UPDATE knowledge_entries SET entityIds = ? WHERE id = ?',
+                entityIds, entry.id
+              );
+            } catch {}
+            rebuildState.processed++;
+          }
+
+          // 重建完成后重算关系（基于共享日记/条目）
+          await recomputeGraphRelations();
+          rebuildState.stage = 'done';
+          rebuildState.finishedAt = new Date().toISOString();
+        } catch (e) {
+          rebuildState.stage = 'error';
+          rebuildState.error = e.message || '重建失败';
+          rebuildState.finishedAt = new Date().toISOString();
+        } finally {
+          rebuildState.running = false;
+          rebuildState.current = '';
+        }
+      })();
+
+      return { success: true, started: true, total: existingCount };
+    }),
+
+  // ─── 图谱重建进度 ─────────────────────
+  rebuildStatus: t.procedure
+    .query(async () => {
+      return {
+        running: rebuildState.running,
+        total: rebuildState.total,
+        processed: rebuildState.processed,
+        current: rebuildState.current,
+        stage: rebuildState.stage,
+        error: rebuildState.error,
+        startedAt: rebuildState.startedAt,
+        finishedAt: rebuildState.finishedAt,
+      };
+    }),
 });
 
 // ═══════════════════════════════════════════
-// 汇总路由
+
 // ═══════════════════════════════════════════
+// 知识库 API（knowledge_entries 表）
+// ═══════════════════════════════════════════
+
+const knowledgeRouter = t.router({
+  list: t.procedure
+    .input(z.object({ page: z.number().default(1), size: z.number().default(20), source: z.string().optional(), searchText: z.string().optional() }))
+    .query(async ({ input }) => {
+      let sql = 'SELECT * FROM knowledge_entries WHERE 1=1';
+      const params = [];
+      if (input.source) { sql += ' AND source = ?'; params.push(input.source); }
+      if (input.searchText && input.searchText.trim()) {
+        sql += ' AND content LIKE ?'; params.push('%' + input.searchText.trim() + '%');
+      }
+      const totalRows = await prisma.$queryRawUnsafe(sql.replace('SELECT *', 'SELECT COUNT(*) as total'), ...params);
+      const total = Number(totalRows[0]?.total || 0);
+      sql += ' ORDER BY updatedAt DESC LIMIT ? OFFSET ?';
+      params.push(input.size, (input.page - 1) * input.size);
+      const items = await prisma.$queryRawUnsafe(sql, ...params);
+      // 解析 entityIds JSON 字段
+      const parsedItems = items.map(it => ({ ...it, entityIds: (() => { try { return JSON.parse(it.entityIds || '[]'); } catch { return []; } })() }));
+      return { items: parsedItems, total, page: input.page, size: input.size, totalPages: Math.ceil(total / input.size) };
+    }),
+  detail: t.procedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const rows = await prisma.$queryRawUnsafe('SELECT * FROM knowledge_entries WHERE id = ?', input.id);
+      if (!rows.length) return null;
+      const row = rows[0];
+      return { ...row, entityIds: (() => { try { return JSON.parse(row.entityIds || '[]'); } catch { return []; } })() };
+    }),
+  delete: t.procedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await prisma.$executeRawUnsafe('DELETE FROM knowledge_entries WHERE id = ?', input.id);
+      return { success: true };
+    }),
+  update: t.procedure
+    .input(z.object({ id: z.number(), content: z.string().optional(), tags: z.string().optional() }))
+    .mutation(async ({ input }) => {
+      const sets = []; const params = [];
+      if (input.content !== undefined) { sets.push('content = ?'); params.push(input.content); }
+      if (input.tags !== undefined) { sets.push('tags = ?'); params.push(input.tags); }
+      if (sets.length === 0) return { success: false, error: '没有要更新的字段' };
+      sets.push('updatedAt = ?'); params.push(new Date());
+      params.push(input.id);
+      await prisma.$executeRawUnsafe(`UPDATE knowledge_entries SET ${sets.join(', ')} WHERE id = ?`, ...params);
+      // 内容变化后异步重提实体并刷新图谱关联
+      if (input.content !== undefined && typeof extractEntitiesFromText === 'function') {
+        extractEntitiesFromText(input.content, { type: 'knowledge', id: input.id }).then(function(ext) {
+          if (ext && ext.entityIds && ext.entityIds.length) {
+            return prisma.$executeRawUnsafe(
+              'UPDATE knowledge_entries SET entityIds = ? WHERE id = ?',
+              JSON.stringify(ext.entityIds), input.id
+            );
+          }
+        }).catch(function() {});
+      }
+      return { success: true };
+    }),
+});
+
+const { createTreeholeRouter } = require("./treehole-router.cjs");
+const treeholeRouter = createTreeholeRouter(t, prisma, readLLMConfig);
 
 const appRouter = t.router({
   diary: diaryRouter,
@@ -836,121 +1155,13 @@ const appRouter = t.router({
   config: configRouter,
   export: exportRouter,
   summary: summaryRouter,
+  knowledge: knowledgeRouter,
+  treehole: treeholeRouter,
   rag: ragRouter,
   llm: t.router({
-    // 获取模型列表（从 API 动态获取）
-    models: t.procedure
-      .input(z.object({
-        provider: z.string().optional(),
-        apiKey: z.string().optional(),
-        apiUrl: z.string().optional(),
-      }))
-      .query(async ({ input }) => {
-        const readCfg = (key) => prisma.config.findUnique({ where: { key } }).then(c => {
-          if (!c) return null;
-          try { return JSON.parse(c.value); } catch { return c.value; }
-        }).catch(() => null);
-        const activeProvider = input.provider || await readCfg('llm_provider_active') || 'custom';
-        const KNOWN_URLS = { deepseek: 'https://api.deepseek.com', kimi: 'https://api.moonshot.cn/v1', aliyun: 'https://dashscope.aliyuncs.com/compatible-mode/v1' };
-        const [apiUrl, apiKey] = await Promise.all([
-          input.apiUrl || KNOWN_URLS[activeProvider] || readCfg(`llm_${activeProvider}_api_url`).then(v => v || ''),
-          input.apiKey || readCfg(`llm_${activeProvider}_api_key`),
-        ]);
-        if (!apiUrl || !apiKey) return { models: [], error: '请先配置 LLM' };
-        try {
-          const res = await fetch(`${apiUrl.replace(/\/+$/, '')}/v1/models`, {
-            headers: { 'Authorization': `Bearer ${apiKey}` },
-            signal: AbortSignal.timeout(10000),
-          });
-          if (!res.ok) return { models: [], error: `HTTP ${res.status}` };
-          const json = await res.json();
-          const models = (json.data || []).filter(m => !m.id.startsWith('ft:')).map(m => ({ id: m.id, ownedBy: m.owned_by || '' }));
-          return { models };
-        } catch (e) { return { models: [], error: e.message || '请求失败' }; }
-      }),
-    test: t.procedure
-      .input(z.object({
-        apiUrl: z.string(),
-        apiKey: z.string(),
-        model: z.string(),
-      }))
-      .mutation(async ({ input }) => {
-        const start = Date.now();
-        try {
-          const res = await fetch(`${input.apiUrl.replace(/\/+$/, '')}/chat/completions`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${input.apiKey}`,
-            },
-            body: JSON.stringify({
-              model: input.model,
-              messages: [{ role: 'user', content: 'Reply with just "ok".' }],
-              max_tokens: 10,
-            }),
-            signal: AbortSignal.timeout(15000),
-          });
-          if (!res.ok) {
-            const body = await res.text().catch(() => '');
-            return { success: false, error: `HTTP ${res.status}: ${body.slice(0, 200)}`, latency: Date.now() - start };
-          }
-          return { success: true, model: input.model, latency: Date.now() - start };
-        } catch (e) {
-          return { success: false, error: e.message || 'Connection failed', latency: Date.now() - start };
-        }
-      }),
-    chat: t.procedure
-      .input(z.object({
-        messages: z.array(z.object({ role: z.string(), content: z.string() })),
-        provider: z.string().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        // 确定使用的 provider
-        const readCfg = (key) => prisma.config.findUnique({ where: { key } }).then(c => {
-          if (!c) return null;
-          try { return JSON.parse(c.value); } catch { return c.value; }
-        }).catch(() => null);
-        const activeProvider = input.provider || await readCfg('llm_provider_active') || 'custom';
-        // 根据 provider 读取对应配置
-        const KNOWN_URLS = {
-          deepseek: 'https://api.deepseek.com',
-          kimi: 'https://api.moonshot.cn/v1',
-          aliyun: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-        };
-        const [apiUrl, apiKey, model] = await Promise.all([
-          KNOWN_URLS[activeProvider]
-            ? Promise.resolve(KNOWN_URLS[activeProvider])
-            : readCfg(`llm_${activeProvider}_api_url`).then(v => v || 'https://api.openai.com/v1'),
-          readCfg(`llm_${activeProvider}_api_key`),
-          readCfg(`llm_${activeProvider}_model`).then(v => v || 'gpt-4o-mini'),
-        ]);
-        if (!apiKey) return { success: false, error: 'LLM 未配置，请先在设置中选择平台并保存 API Key' };
-        try {
-          const res = await fetch(`${apiUrl.replace(/\/+$/, '')}/chat/completions`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${apiKey}`,
-            },
-            body: JSON.stringify({ model, messages: input.messages, max_tokens: 2048 }),
-            signal: AbortSignal.timeout(30000),
-          });
-          if (!res.ok) {
-            const body = await res.text().catch(() => '');
-            return { success: false, error: `HTTP ${res.status}: ${body.slice(0, 200)}` };
-          }
-          const json = await res.json();
-          return { success: true, content: json.choices?.[0]?.message?.content || '' };
-        } catch (e) {
-          return { success: false, error: e.message || 'LLM 请求失败' };
-        }
-      }),
+    // llm router
   }),
 });
-
-// ═══════════════════════════════════════════
-// Express 服务器
-// ═══════════════════════════════════════════
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -975,14 +1186,25 @@ app.post('/api/file/upload', (req, res) => {
 // 静态文件
 app.use('/uploads', express.static(uploadDir));
 app.use('/exports', express.static(exportDir));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // 健康检查
 app.get('/health', (req, res) => res.json({ status: 'ok', app: 'futao-logs' }));
 
+// SPA fallback — 所有非 API 请求返回 index.html
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/uploads') || req.path.startsWith('/exports')) return next();
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// 启动
+// ═══════════════════════════════════════════
+// 
+
 // 启动
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`📝 Futao Logs running on http://localhost:${PORT}`);
-  console.log(`   API: http://localhost:${PORT}/api/trpc`);
-  console.log(`   Uploads: ${uploadDir}`);
-  console.log(`   Exports: ${exportDir}`);
+  console.log('📝 Futao Logs running on http://localhost:' + PORT);
+  console.log('   API: http://localhost:' + PORT + '/api/trpc');
+  console.log('   Uploads: ' + uploadDir);
+  console.log('   Exports: ' + exportDir);
 });

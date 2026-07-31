@@ -7,7 +7,6 @@ import PageShell from '../common/PageShell';
 import DiaryTimeline from '../diary/DiaryTimeline';
 import DiaryEditor from '../diary/DiaryEditor';
 import CalendarView from '../calendar/CalendarView';
-import DiaryCard from '../diary/DiaryCard';
 import MoodChart from '../common/MoodChart';
 import AISummaryTab from '../ai-summary/AISummaryTab';
 import SearchView from '../search/SearchView';
@@ -47,6 +46,20 @@ export default function HomePage() {
   // Settings external trigger (from SearchView)
   const [triggerSettings, setTriggerSettings] = useState(0);
   const openSettings = triggerSettings > 0;
+
+  // Cross-tab navigation (graph <-> knowledge base)
+  const [autoOpenKnowledge, setAutoOpenKnowledge] = useState(false);
+  useEffect(() => {
+    const onNav = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.tab) {
+        if (detail.knowledge && detail.tab === 'treehole') setAutoOpenKnowledge(true);
+        setActiveTab(detail.tab as any);
+      }
+    };
+    window.addEventListener('nav-tab', onNav);
+    return () => window.removeEventListener('nav-tab', onNav);
+  }, []);
 
   // On This Day
   const [onThisDay, setOnThisDay] = useState<{ id: number; preview: string; year: number } | null>(null);
@@ -223,6 +236,34 @@ export default function HomePage() {
   }, [calDays]);
   const totalMoodCount = moodChartData.reduce((s, d) => s + d.count, 0);
 
+  /* ── C 水层：每页一个水色背景（滚动即下潜）── */
+  // 浅水面 #21395c（树洞·当下对话）→ 中层水 #172a45（日记/日历/搜索/总结·当下记录）→ 深海夜 #0c1626（图谱沉底，全局默认）
+  // 亮色模式：用浅水晨光 tint（futao 修改⑤-5：合理调色非反转）
+  const layerTint: Record<string, string> = {
+    diary: 'linear-gradient(180deg, rgba(33,57,92,0.35) 0%, rgba(23,42,69,0.0) 180px, transparent 100%)',
+    calendar: 'linear-gradient(180deg, rgba(33,57,92,0.28) 0%, transparent 200px)',
+    search: 'linear-gradient(180deg, rgba(33,57,92,0.28) 0%, transparent 200px)',
+    summary: 'linear-gradient(180deg, rgba(23,42,69,0.45) 0%, transparent 220px)',
+    treehole: 'linear-gradient(180deg, rgba(33,57,92,0.28) 0%, rgba(23,42,69,0.15) 200px, transparent 100%)',
+  };
+  const layerTintLight: Record<string, string> = {
+    diary: 'linear-gradient(180deg, rgba(111,180,255,0.14) 0%, rgba(232,240,248,0.0) 180px, transparent 100%)',
+    calendar: 'linear-gradient(180deg, rgba(111,180,255,0.12) 0%, transparent 200px)',
+    search: 'linear-gradient(180deg, rgba(111,180,255,0.12) 0%, transparent 200px)',
+    summary: 'linear-gradient(180deg, rgba(63,139,212,0.10) 0%, transparent 220px)',
+    treehole: 'linear-gradient(180deg, rgba(111,180,255,0.12) 0%, rgba(220,231,243,0.4) 200px, transparent 100%)',
+  };
+  // 用 CSS 媒体/属性检测当前主题（跟随 [data-theme]）
+  const [isLight, setIsLight] = useState(false);
+  useEffect(() => {
+    const check = () => setIsLight(document.documentElement.getAttribute('data-theme') === 'light');
+    check();
+    const mo = new MutationObserver(check);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => mo.disconnect();
+  }, []);
+  const tint = isLight ? layerTintLight : layerTint;
+
   return (
     <PageShell
       activeTab={activeTab}
@@ -232,6 +273,7 @@ export default function HomePage() {
       onNewDiary={() => setEditingDiary('new')}
       openSettings={openSettings}
       onSettingsClosed={() => setTriggerSettings(0)}
+      waterLayer={tint[activeTab]}
     >
       {/* ─── Pond Hero 首屏：层叠卡片 + 宽空白 ─── */}
       {activeTab === 'diary' && (
@@ -240,17 +282,21 @@ export default function HomePage() {
           totalCount={totalCount}
           streak={streak}
           onWrite={() => setEditingDiary('new')}
-          onOpenDiary={(d) => {
+          onEditDiary={(d) => {
             api.diaryDetail(d.id).then((full) => {
               if (full) setEditingDiary(full);
             });
+          }}
+          onScrollToTimeline={() => {
+            document.getElementById('diary-timeline')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}
         />
       )}
 
       {/* ─── Timeline Tab ─── */}
       {activeTab === 'diary' && (
-        <DiaryTimeline
+        <div id="diary-timeline">
+          <DiaryTimeline
           groups={groups}
           loading={loading}
           hasMore={hasMore}
@@ -270,11 +316,12 @@ export default function HomePage() {
           onTagChange={handleTagChange}
           onNew={() => setEditingDiary('new')}
         />
+        </div>
       )}
 
       {/* ─── Calendar Tab ─── */}
       {activeTab === 'calendar' && (
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-12 py-6">
           {/* Mood chart at top of calendar view */}
           <div className="mb-6">
             <MoodChart
@@ -288,48 +335,15 @@ export default function HomePage() {
             month={calMonth}
             days={calDays}
             onMonthChange={(y, m) => { setCalYear(y); setCalMonth(m); }}
-            onDayClick={(date) => {
-              // Switch to diary view filtered by this date
+            onDayClick={() => {
+              // 点右侧回忆卡「去读这段回忆」→ 切到日记 tab
               setActiveTab('diary');
               loadTimeline(1);
+              setTimeout(() => {
+                document.getElementById('diary-timeline')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 300);
             }}
           />
-          {/* Calendar day previews */}
-          <div className="mt-6 space-y-3">
-            {calDays.map((day) => (
-              <div key={day.date} className="mb-4">
-                <h3 className="text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                  {day.date} ({day.count} 篇)
-                </h3>
-                <div className="space-y-2">
-                  {day.previews.map((p) => (
-                    <div
-                      key={p.id}
-                      className="text-sm p-3 rounded-lg cursor-pointer transition-colors hover:bg-white/5"
-                      style={{
-                        background: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-default)',
-                        color: 'var(--text-secondary)',
-                      }}
-                      onClick={() => {
-                        api.diaryDetail(p.id).then((d) => {
-                          if (d) setEditingDiary(d);
-                        });
-                      }}
-                    >
-                      {p.mood && <span className="mr-1">{p.mood}</span>}
-                      {p.preview}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-            {calDays.length === 0 && (
-              <p className="text-sm text-center py-8" style={{ color: 'var(--text-tertiary)' }}>
-                这个月还没有日记
-              </p>
-            )}
-          </div>
         </div>
       )}
 
@@ -342,7 +356,9 @@ export default function HomePage() {
       {activeTab === 'summary' && <AISummaryTab />}
 
       {/* ─── Treehole Tab ─── */}
-      {activeTab === 'treehole' && <TreeholePage />}
+      {activeTab === 'treehole' && (
+        <TreeholePage autoOpenKnowledge={autoOpenKnowledge} />
+      )}
 
       {/* ─── Editor Modal ─── */}
       {editingDiary && (

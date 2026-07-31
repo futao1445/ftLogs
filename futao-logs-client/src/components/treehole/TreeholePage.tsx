@@ -46,9 +46,9 @@ function pickRandomBubbles(count: number): string[] {
   return shuffled.slice(0, count);
 }
 
-const GREETING = '嗨，我是你的 AI 树洞 🤗\n我可以看到你的日记、知识图谱和整个知识库。\n要不要试试这些？';
+const GREETING = '嗨，我是涟漪 🤗\n我可以看到你的日记、知识图谱和整个知识库。\n要不要试试这些？';
 
-export default function TreeholePage() {
+export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKnowledge?: boolean }) {
   const [sessions, setSessions] = useState<{ id: number; title: string; updatedAt: string }[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -60,6 +60,7 @@ export default function TreeholePage() {
   const [deleting, setDeleting] = useState<number | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [savingId, setSavingId] = useState<number | null>(null);
+  const [saveProcessing, setSaveProcessing] = useState(false);
   const [toast, setToast] = useState<{ msg: string; action?: { label: string; onClick: () => void } } | null>(null);
   const [saveModal, setSaveModal] = useState<{ sessionId: number; content: string } | null>(null);
   const [editContent, setEditContent] = useState('');
@@ -138,6 +139,11 @@ export default function TreeholePage() {
     loadSessions();
   }, [loadSessions]);
 
+  /* ── Auto-open knowledge base (cross-tab jump from graph) ── */
+  useEffect(() => {
+    if (autoOpenKnowledge) setShowKnowledge(true);
+  }, [autoOpenKnowledge]);
+
   /* ── Select session ── */
   const handleSelectSession = useCallback(async (id: number) => {
     setActiveSessionId(id);
@@ -148,17 +154,54 @@ export default function TreeholePage() {
   const handleSaveSession = useCallback(async (sessionId: number) => {
     if (savingRef.current) return;
     savingRef.current = true;
+    setSavingId(sessionId);
+    setSaveProcessing(true);
     try {
-      // First get AI summary of the conversation
-      const summaryResult = await api.treeholeSummarizeSession(sessionId);
-      let content: string;
-      if (summaryResult.success && summaryResult.summary) {
-        content = summaryResult.summary;
-      } else {
-        // Fallback: concatenate raw messages
+      // summarizeSession 已异步化：立即返回 processing，后台跑摘要
+      // 先给用户进度反馈，再轮询 treehole.status 等摘要完成
+      const summarizeResult = await api.treeholeSummarizeSession(sessionId);
+      // 若 summarize 本身直接失败 → 立即兜底拼接原文，不等 60s
+      if (!summarizeResult.success) {
+        const data = await api.treeholeMessages(sessionId);
+        const content = (data.messages as Message[]).map(m => `${m.role === 'user' ? '我' : 'AI'}: ${m.content}`).join('\n\n');
+        if (content) {
+          setEditContent(content);
+          setSaveModal({ sessionId, content });
+        } else {
+          showToast('该对话暂无内容可保存');
+        }
+        setSaveProcessing(false);
+        setSavingId(null);
+        savingRef.current = false;
+        return;
+      }
+
+      // 轮询摘要状态（最多 ~60s），done 才弹确认框，error 报错
+      let content: string | null = null;
+      const deadline = Date.now() + 60000;
+      while (Date.now() < deadline) {
+        await new Promise(r => setTimeout(r, 1500));
+        const st = await api.treeholeStatus(sessionId);
+        if (st.summary.status === 'done') {
+          content = st.summary.summary || '';
+          break;
+        }
+        if (st.summary.status === 'error') {
+          showToast(st.summary.error || '生成总结失败，请重试');
+          setSaveProcessing(false);
+          setSavingId(null);
+          savingRef.current = false;
+          return;
+        }
+        // processing / idle → 继续轮询
+      }
+
+      if (content === null) {
+        // 超时兜底：拼接原文
         const data = await api.treeholeMessages(sessionId);
         content = (data.messages as Message[]).map(m => `${m.role === 'user' ? '我' : 'AI'}: ${m.content}`).join('\n\n');
       }
+
       if (!content) {
         showToast('该对话暂无内容可保存');
       } else {
@@ -168,6 +211,8 @@ export default function TreeholePage() {
     } catch {
       showToast('获取对话内容失败');
     }
+    setSaveProcessing(false);
+    setSavingId(null);
     savingRef.current = false;
   }, [showToast]);
 
@@ -617,14 +662,17 @@ export default function TreeholePage() {
                 transition={{ duration: 0.3, ease: 'easeOut' }}
               >
                 <div
-                  className="rounded-2xl px-4 py-3"
+                  className="rounded-2xl px-4 py-2.5"
                   style={{
                     background: 'rgba(74,106,148,0.28)',
                     border: '1px solid rgba(168,208,255,0.35)',
                     boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)',
                   }}
                 >
-                  <span className="typing-dots">...</span>
+                  <div className="flex items-center gap-2">
+                    <span className="typing-dots"><span /></span>
+                    <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>对方正在输入中…</span>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -728,6 +776,57 @@ export default function TreeholePage() {
                 {toast.action.label}
               </button>
             )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 保存到知识库 · 进度提示（防止用户误以为操作完了/故障） */}
+      <AnimatePresence>
+        {saveProcessing && !saveModal && (
+          <motion.div
+            className="fixed inset-0 z-40 flex items-center justify-center p-4 pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="rounded-2xl px-6 py-5 flex items-center gap-4 pointer-events-auto"
+              style={{
+                background: 'rgba(12,22,38,0.82)',
+                backdropFilter: 'blur(28px) saturate(160%)',
+                border: '1px solid rgba(111,180,255,0.22)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 16px 40px rgba(0,0,0,0.35)',
+              }}
+              initial={{ opacity: 0, scale: 0.92, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 6 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+            >
+              <div className="relative" style={{ width: 26, height: 26, flexShrink: 0 }}>
+                <div
+                  className="absolute inset-0 rounded-full animate-spin"
+                  style={{
+                    border: '2px solid rgba(111,180,255,0.15)',
+                    borderTopColor: '#6fb4ff',
+                    boxShadow: '0 0 12px rgba(111,180,255,0.15)',
+                  }}
+                />
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    border: '2px solid transparent',
+                    borderTopColor: '#ffd9a0',
+                    animation: 'save-spin 1.6s linear infinite',
+                  }}
+                />
+              </div>
+              <div>
+                <div className="text-sm" style={{ color: 'var(--text-primary)' }}>正在整理这段对话…</div>
+                <div className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                  AI 正在把我们的对话整理成一条记忆
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

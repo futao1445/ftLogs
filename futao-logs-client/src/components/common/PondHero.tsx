@@ -1,12 +1,24 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { Diary, TimelineGroup } from '../../lib/types';
 
 /* ─── Spring constants (池塘涟漪语言) ─── */
 const SPRING = { type: 'spring' as const, stiffness: 400, damping: 22 };
-const SPRING_SOFT = { type: 'spring' as const, stiffness: 120, damping: 20 };
+
+/* ─── 当前主题（跟随 [data-theme]）─── */
+function useTheme(): 'dark' | 'light' {
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  useEffect(() => {
+    const read = () => setTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark');
+    read();
+    const mo = new MutationObserver(read);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => mo.disconnect();
+  }, []);
+  return theme;
+}
 
 /* ─── 水波涟漪 ─── */
 interface Ripple { id: number; x: number; y: number; }
@@ -22,36 +34,71 @@ function excerpt(content: string, len = 46): string {
 function MemoryCard({
   diary,
   depth,
-  onOpen,
+  onEdit,
+  onTop,
+  dragProps,
 }: {
   diary: Diary;
   depth: 0 | 1 | 2; // 0 = 最深（沉底），2 = 最前（玻璃）
-  onOpen?: (d: Diary) => void;
+  onEdit?: (d: Diary) => void;
+  onTop?: () => void;
+  dragProps?: {
+    drag: 'x';
+    dragConstraints: { left: number; right: number };
+    dragElastic: number;
+    onDragStart: () => void;
+    onDragEnd: (e: unknown, info: { offset: { x: number } }) => void;
+  };
 }) {
-  const dateLabel = diary.date.slice(5).replace('-', '/');
+  const dateLabel = (diary.date || '').slice(0, 10).slice(5).replace('-', '/');
 
   // 后暗前亮：深度 0 最暗贴底，深度 2 最亮玻璃
+  // 亮色模式跟随 token（futao 修改⑤-5：合理调色非反转）
+  const theme = useTheme();
   const layerStyle =
-    depth === 0
+    theme === 'dark'
+      ? depth === 0
+        ? {
+            background:
+              'linear-gradient(160deg, rgba(33,57,92,0.85) 0%, rgba(23,42,69,0.95) 100%)',
+            border: '1px solid rgba(45,74,117,0.35)',
+          }
+        : depth === 1
+        ? {
+            background:
+              'linear-gradient(155deg, rgba(74,106,148,0.50) 0%, rgba(33,57,92,0.90) 100%)',
+            border: '1px solid rgba(74,106,148,0.30)',
+            backdropFilter: 'blur(16px)',
+          }
+        : {
+            background:
+              'linear-gradient(150deg, rgba(74,106,148,0.42) 0%, rgba(33,57,92,0.62) 100%)',
+            border: '1px solid rgba(168,208,255,0.22)',
+            backdropFilter: 'blur(28px) saturate(160%)',
+            boxShadow:
+              'inset 0 1px 0 rgba(255,255,255,0.12), 0 32px 80px rgba(2,8,20,0.5)',
+          }
+      // 亮色：晨光玻璃（浅水影卡，保留层叠）
+      : depth === 0
       ? {
           background:
-            'linear-gradient(160deg, rgba(33,57,92,0.85) 0%, rgba(23,42,69,0.95) 100%)',
-          border: '1px solid rgba(45,74,117,0.35)',
+            'linear-gradient(160deg, #c9d9ec 0%, #dfe9f5 100%)',
+          border: '1px solid rgba(88,112,143,0.30)',
         }
       : depth === 1
       ? {
           background:
-            'linear-gradient(155deg, rgba(74,106,148,0.50) 0%, rgba(33,57,92,0.90) 100%)',
-          border: '1px solid rgba(74,106,148,0.30)',
+            'linear-gradient(155deg, #e8f1fa 0%, #d3e2f2 100%)',
+          border: '1px solid rgba(88,112,143,0.25)',
           backdropFilter: 'blur(16px)',
         }
       : {
           background:
-            'linear-gradient(150deg, rgba(74,106,148,0.42) 0%, rgba(33,57,92,0.62) 100%)',
-          border: '1px solid rgba(168,208,255,0.22)',
+            'linear-gradient(150deg, #ffffff 0%, #eef4fb 100%)',
+          border: '1px solid rgba(63,139,212,0.25)',
           backdropFilter: 'blur(28px) saturate(160%)',
           boxShadow:
-            'inset 0 1px 0 rgba(255,255,255,0.12), 0 32px 80px rgba(2,8,20,0.5)',
+            'inset 0 1px 0 rgba(255,255,255,0.9), 0 32px 80px rgba(63,91,124,0.22)',
         };
 
   // 错落堆叠：每层轻微旋转 + 偏移
@@ -68,39 +115,57 @@ function MemoryCard({
 
   return (
     <motion.div
-      className="absolute rounded-[22px] cursor-pointer overflow-hidden"
+      className="absolute rounded-[22px] overflow-hidden"
       style={{ inset: 0, ...layerStyle }}
       initial={{ opacity: 0, y: 60, scale: 0.94, rotate: pose.rotate, x: pose.x }}
       animate={{ opacity: 1, y: pose.y, scale: 1, rotate: pose.rotate, x: pose.x }}
       transition={{ ...SPRING, delay: 0.25 + depth * 0.2 }}
       whileHover={{ ...hoverPose, scale: 1.02 }}
-      onClick={() => onOpen?.(diary)}
+      {...dragProps}
     >
-      <div className="h-full flex flex-col" style={{ padding: depth === 2 ? '22px 24px' : '20px 22px' }}>
+      <div
+        className="h-full flex flex-col cursor-pointer"
+        style={{ padding: depth === 2 ? '22px 24px' : '20px 22px' }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit?.(diary);
+        }}
+        title="点击编辑"
+      >
         <div
           className="mb-3 text-[10px] tracking-[2px] uppercase"
-          style={{ color: 'rgba(143,166,196,0.7)' }}
+          style={{ color: theme === 'light' ? '#7c91ad' : 'rgba(143,166,196,0.7)' }}
         >
           Memory · {dateLabel}
         </div>
-        <div
-          className="text-sm mb-2"
-          style={{
-            color: depth === 2 ? 'var(--text-primary)' : 'var(--text-primary)',
-            fontWeight: 400,
-            lineHeight: 1.7,
-          }}
-        >
+        <div className="text-sm mb-2" style={{ color: 'var(--text-primary)', fontWeight: 400, lineHeight: 1.7 }}>
           {excerpt(diary.content, depth === 2 ? 60 : 44)}
         </div>
-        {depth === 2 && diary.mood && (
-          <div className="mt-auto flex items-center justify-between">
-            <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
-              心情 {diary.mood}
-            </span>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#a8d0ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14" /><path d="m13 6 6 6-6 6" />
-            </svg>
+        {depth === 2 && (
+          <div className="mt-auto flex items-center justify-between" style={{ paddingTop: 8 }}>
+            {diary.mood && (
+              <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
+                心情 {diary.mood}
+              </span>
+            )}
+            {/* 右下角：回到第一张（置顶） */}
+            <motion.button
+              onClick={(e) => {
+                e.stopPropagation();
+                onTop?.();
+              }}
+              className="flex items-center gap-1 text-[11px] cursor-pointer relative"
+              style={{ color: theme === 'light' ? '#7c91ad' : 'rgba(143,166,196,0.85)', border: 'none', background: 'transparent', padding: '2px 4px' }}
+              whileHover={{ color: theme === 'light' ? '#3f8bd4' : '#a8d0ff' }}
+              whileTap={{ scale: 0.9, color: theme === 'light' ? '#b9852f' : '#ffd9a0' }}
+              transition={SPRING}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 11l4-4 4 4" />
+                <path d="M8 17l4-4 4 4" />
+              </svg>
+              <span>置顶</span>
+            </motion.button>
           </div>
         )}
       </div>
@@ -115,26 +180,49 @@ export default function PondHero({
   totalCount,
   streak,
   onWrite,
-  onOpenDiary,
+  onEditDiary,
+  onScrollToTimeline,
 }: {
   groups: TimelineGroup[];
   totalCount: number;
   streak: number;
   onWrite?: () => void;
-  onOpenDiary?: (d: Diary) => void;
+  onEditDiary?: (d: Diary) => void;
+  onScrollToTimeline?: () => void;
 }) {
-  // 从时间线取最近 3 篇真实日记（深→浅，时间新的在前层）
-  const recent = useMemo(() => {
+  const theme = useTheme();
+  // 亮色模式 hero 文案色（合理调色：深墨水蓝 + 水光蓝，非反转）
+  const heroText = theme === 'light'
+    ? { heading: '#1c2f4a', sub: '#58708f', meta: '#3f8bd4', gold: '#b9852f' }
+    : { heading: '#e2ecfa', sub: '#8fa6c4', meta: '#6fb4ff', gold: '#ffd9a0' };
+  // 全部日记（时间新→旧），轮播数据源
+  const allDiaries = useMemo(() => {
     const flat: Diary[] = [];
     for (const g of groups) {
       for (const d of g.diaries) flat.push(d);
-      if (flat.length >= 3) break;
     }
-    return flat.slice(0, 3);
+    return flat;
   }, [groups]);
 
-  // 补齐到 3 张卡（不足时用占位，保持层叠结构）
-  const stack: (Diary | null)[] = [recent[2] || null, recent[1] || null, recent[0] || null];
+  // 当前置顶卡片在 allDiaries 中的下标（0 = 最新/第一张）
+  const [index, setIndex] = useState(0);
+  const clamped = Math.min(index, Math.max(allDiaries.length - 1, 0));
+  const current = clamped;
+  const isFirst = current === 0;
+  const isLast = current >= allDiaries.length - 1;
+
+  // 层叠栈：前置卡 + 后两张（沉底记忆）
+  const stack: (Diary | null)[] = [
+    allDiaries[current] || null,
+    allDiaries[current + 1] || null,
+    allDiaries[current + 2] || null,
+  ];
+
+  // 手势阈值
+  const DRAG_THRESHOLD = 60;
+
+  // 拖拽后抑制 click（防止滑完误开编辑）
+  const draggedRef = useRef(false);
 
   // 水波涟漪
   const [ripples, setRipples] = useState<Ripple[]>([]);
@@ -151,6 +239,25 @@ export default function PondHero({
     ]);
   };
   const removeRipple = (id: number) => setRipples((r) => r.filter((x) => x.id !== id));
+
+  // 切卡：n=+1 往后翻（更旧），n=-1 往前翻（更新）
+  const go = (n: number) => {
+    setIndex((i) => {
+      const next = i + n;
+      if (next < 0) return 0;
+      if (next >= allDiaries.length) return Math.max(allDiaries.length - 1, 0);
+      return next;
+    });
+  };
+
+  // 点击编辑（抑制拖拽后的误触 click）
+  const handleEditDiary = (d: Diary) => {
+    if (draggedRef.current) {
+      draggedRef.current = false;
+      return;
+    }
+    onEditDiary?.(d);
+  };
 
   return (
     <section className="relative overflow-hidden">
@@ -175,7 +282,7 @@ export default function PondHero({
               animate={{ opacity: 1, y: 0 }}
               transition={{ ...SPRING, delay: 0.1 }}
               className="mb-6 text-[11px] tracking-[4px] uppercase"
-              style={{ color: '#6fb4ff' }}
+              style={{ color: heroText.meta }}
             >
               Night Pond · {new Date().getFullYear()}
             </motion.div>
@@ -184,18 +291,18 @@ export default function PondHero({
               animate={{ opacity: 1, y: 0 }}
               transition={{ ...SPRING, delay: 0.16 }}
               className="text-4xl lg:text-5xl font-light leading-[1.15] tracking-[2px] mb-7"
-              style={{ color: '#e2ecfa' }}
+              style={{ color: heroText.heading }}
             >
               夜深了
               <br />
-              把心事<span style={{ color: '#a8d0ff', fontWeight: 400 }}>交给月光</span>
+              把心事<span style={{ color: heroText.meta, fontWeight: 400 }}>交给月光</span>
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ ...SPRING, delay: 0.22 }}
               className="text-base font-light leading-[1.9] mb-12 max-w-[42ch]"
-              style={{ color: '#8fa6c4' }}
+              style={{ color: heroText.sub }}
             >
               水面之下是沉底的回忆，水面之上是和 AI 的轻声对话。
               把今天写下来，让它浮出水面。
@@ -210,14 +317,14 @@ export default function PondHero({
             >
               {totalCount > 0 && (
                 <div>
-                  <div className="text-2xl font-light" style={{ color: '#e2ecfa' }}>{totalCount}</div>
-                  <div className="text-xs mt-1" style={{ color: '#8fa6c4' }}>篇日记</div>
+                  <div className="text-2xl font-light" style={{ color: heroText.heading }}>{totalCount}</div>
+                  <div className="text-xs mt-1" style={{ color: heroText.sub }}>篇日记</div>
                 </div>
               )}
               {streak > 0 && (
                 <div>
-                  <div className="text-2xl font-light" style={{ color: '#e2ecfa' }}>{streak}</div>
-                  <div className="text-xs mt-1" style={{ color: '#8fa6c4' }}>天连续</div>
+                  <div className="text-2xl font-light" style={{ color: heroText.heading }}>{streak}</div>
+                  <div className="text-xs mt-1" style={{ color: heroText.sub }}>天连续</div>
                 </div>
               )}
             </motion.div>
@@ -266,22 +373,21 @@ export default function PondHero({
                 写一篇日记
               </motion.button>
               <button
+                onClick={onScrollToTimeline}
                 className="px-8 py-4 rounded-full text-sm tracking-wide cursor-pointer"
                 style={{
-                  background: 'rgba(33,57,92,0.35)',
-                  border: '1px solid rgba(45,74,117,0.6)',
-                  color: '#8fa6c4',
+                  background: theme === 'light' ? 'rgba(220,231,243,0.7)' : 'rgba(33,57,92,0.35)',
+                  border: `1px solid ${theme === 'light' ? 'rgba(88,112,143,0.35)' : 'rgba(45,74,117,0.6)'}`,
+                  color: heroText.sub,
                   backdropFilter: 'blur(12px)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#e2ecfa';
-                  e.currentTarget.style.borderColor = '#2d4a75';
-                  e.currentTarget.style.background = 'rgba(33,57,92,0.5)';
+                  e.currentTarget.style.color = heroText.heading;
+                  e.currentTarget.style.borderColor = theme === 'light' ? 'rgba(88,112,143,0.6)' : '#2d4a75';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.color = '#8fa6c4';
-                  e.currentTarget.style.borderColor = 'rgba(45,74,117,0.6)';
-                  e.currentTarget.style.background = 'rgba(33,57,92,0.35)';
+                  e.currentTarget.style.color = heroText.sub;
+                  e.currentTarget.style.borderColor = theme === 'light' ? 'rgba(88,112,143,0.35)' : 'rgba(45,74,117,0.6)';
                 }}
               >
                 翻看日记 ↓
@@ -310,10 +416,11 @@ export default function PondHero({
               ))}
             </div>
 
-            {/* 卡片堆叠：后暗前亮 */}
+            {/* 卡片堆叠：前卡玻璃 → 后卡沉底；stack[0] 最新最前（futao 修改⑤-1：置顶=最新） */}
             <div className="relative w-[400px] h-[520px] max-w-[92%]" style={{ perspective: 1000 }}>
               {stack.map((d, i) => {
-                const depth = i as 0 | 1 | 2;
+                // depth: 0=沉底最暗, 2=玻璃最前 —— 最新卡(stack[0])必须在最前
+                const depth = (2 - i) as 0 | 1 | 2;
                 return (
                   <div
                     key={d ? `diary-${d.id}` : `placeholder-${i}`}
@@ -325,7 +432,28 @@ export default function PondHero({
                     }}
                   >
                     {d ? (
-                      <MemoryCard diary={d} depth={depth} onOpen={onOpenDiary} />
+                      <MemoryCard
+                        diary={d}
+                        depth={depth}
+                        onEdit={handleEditDiary}
+                        onTop={() => setIndex(0)}
+                        dragProps={
+                          depth === 2 && allDiaries.length > 1
+                            ? {
+                                drag: 'x',
+                                dragConstraints: { left: 0, right: 0 },
+                                dragElastic: 0.15,
+                                onDragStart: () => { draggedRef.current = true; },
+                                onDragEnd: (_, info) => {
+                                  if (info.offset.x <= -DRAG_THRESHOLD) go(1);
+                                  else if (info.offset.x >= DRAG_THRESHOLD) go(-1);
+                                  // 延迟清除抑制标记，等 click 事件过去
+                                  setTimeout(() => { draggedRef.current = false; }, 100);
+                                },
+                              }
+                            : undefined
+                        }
+                      />
                     ) : (
                       <motion.div
                         className="absolute rounded-[22px]"
@@ -355,7 +483,7 @@ export default function PondHero({
                               style={{ background: 'rgba(168,208,255,0.10)' }}
                             />
                           </span>
-                          <span className="text-xs" style={{ color: 'rgba(143,166,196,0.6)' }}>
+                          <span className="text-xs" style={{ color: theme === 'light' ? 'rgba(124,145,173,0.8)' : 'rgba(143,166,196,0.6)' }}>
                             {depth === 0 ? '沉底的回忆' : depth === 1 ? '浮起的水面' : '等你写下今天'}
                           </span>
                         </div>
@@ -364,7 +492,77 @@ export default function PondHero({
                   </div>
                 );
               })}
+
+              {/* 底部指示：页码点 */}
+              {allDiaries.length > 1 && (
+                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2">
+                  <span className="text-[10px] tracking-[2px] uppercase" style={{ color: theme === 'light' ? '#7c91ad' : 'rgba(143,166,196,0.5)' }}>
+                    {current + 1} / {allDiaries.length}
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* 置顶 / 左右切换辅助按钮（桌面 hover 可见，移动端常显） */}
+            {allDiaries.length > 1 && (
+              <div className="absolute bottom-0 right-4 flex items-center gap-2">
+                <button
+                  onClick={() => go(-1)}
+                  disabled={isFirst}
+                  className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer disabled:opacity-30"
+                  style={{
+                    background: theme === 'light' ? 'rgba(220,231,243,0.8)' : 'rgba(33,57,92,0.45)',
+                    border: `1px solid ${theme === 'light' ? 'rgba(88,112,143,0.3)' : 'rgba(45,74,117,0.6)'}`,
+                    color: heroText.sub,
+                    backdropFilter: 'blur(12px)',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = heroText.heading; e.currentTarget.style.borderColor = theme === 'light' ? 'rgba(88,112,143,0.55)' : '#2d4a75'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = heroText.sub; e.currentTarget.style.borderColor = theme === 'light' ? 'rgba(88,112,143,0.3)' : 'rgba(45,74,117,0.6)'; }}
+                  title="上一张"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => go(1)}
+                  disabled={isLast}
+                  className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer disabled:opacity-30"
+                  style={{
+                    background: theme === 'light' ? 'rgba(220,231,243,0.8)' : 'rgba(33,57,92,0.45)',
+                    border: `1px solid ${theme === 'light' ? 'rgba(88,112,143,0.3)' : 'rgba(45,74,117,0.6)'}`,
+                    color: heroText.sub,
+                    backdropFilter: 'blur(12px)',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = heroText.heading; e.currentTarget.style.borderColor = theme === 'light' ? 'rgba(88,112,143,0.55)' : '#2d4a75'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = heroText.sub; e.currentTarget.style.borderColor = theme === 'light' ? 'rgba(88,112,143,0.3)' : 'rgba(45,74,117,0.6)'; }}
+                  title="下一张"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 6l6 6-6 6" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setIndex(0)}
+                  disabled={isFirst}
+                  className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer disabled:opacity-30"
+                  style={{
+                    background: theme === 'light' ? 'rgba(220,231,243,0.8)' : 'rgba(33,57,92,0.45)',
+                    border: `1px solid ${theme === 'light' ? 'rgba(88,112,143,0.3)' : 'rgba(45,74,117,0.6)'}`,
+                    color: heroText.sub,
+                    backdropFilter: 'blur(12px)',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = theme === 'light' ? '#b9852f' : '#ffd9a0'; e.currentTarget.style.borderColor = theme === 'light' ? 'rgba(185,133,47,0.5)' : 'rgba(255,217,160,0.5)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = heroText.sub; e.currentTarget.style.borderColor = theme === 'light' ? 'rgba(88,112,143,0.3)' : 'rgba(45,74,117,0.6)'; }}
+                  title="回到第一张"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8 11l4-4 4 4" />
+                    <path d="M8 17l4-4 4 4" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </motion.div>
         </div>
       </div>

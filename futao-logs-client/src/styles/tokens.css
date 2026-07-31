@@ -68,35 +68,44 @@
 }
 
 /* ═══════════════════════════════════════════
-   亮色模式（池塘涟漪 · 晨光）
+   亮色模式（池塘涟漪 · 晨光水面）
+   合理调色而非简单反转：暗=深海夜 → 亮=晨雾水面
+   —— 底色是清晨微光的浅水面蓝灰，文字深墨水蓝（非低透明灰），
+      阴影水色更淡，保留水的通透感（futao 修改⑤-5）
    ═══════════════════════════════════════════ */
 [data-theme="light"] {
-  --bg-primary: #e8eef7;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #dfe8f4;
-  --bg-elevated: #ffffff;
+  /* ─── 背景色（晨光水面：蓝灰阶，非纯白非反转）─── */
+  --bg-primary: #e9f0f8;        /* 1 晨雾水面 · 页面底色（淡蓝灰，带水感） */
+  --bg-secondary: #f4f8fc;      /* 2 波光浮起 · 卡片底层（近白带蓝） */
+  --bg-tertiary: #dce7f3;       /* 3 浅水影 · 卡片中层（比底色略深的蓝灰） */
+  --bg-elevated: #ffffff;       /* 浮起层 · 纯白玻璃 */
 
-  --text-primary: rgba(12, 22, 38, 0.88);
-  --text-secondary: rgba(74, 106, 148, 0.75);
-  --text-tertiary: rgba(74, 106, 148, 0.45);
-  --text-placeholder: rgba(74, 106, 148, 0.3);
+  /* ─── 文字（深墨水蓝，不靠低透明度）─── */
+  --text-primary: #1c2f4a;      /* 深墨水蓝 · 正文（对比度 AA） */
+  --text-secondary: #58708f;    /* 中层水蓝 · 次级文字 */
+  --text-tertiary: #7c91ad;     /* 浅水灰蓝 · 辅助 */
+  --text-placeholder: #9db0c8;  /* 占位符 */
 
-  --accent: #4a90e2;
-  --accent-hover: #2d7bd6;
-  --accent-soft: rgba(74, 144, 226, 0.10);
-  --accent-border: rgba(74, 144, 226, 0.2);
+  /* ─── 主色（水光蓝 · 晨光版）─── */
+  --accent: #3f8bd4;            /* 水光蓝 · 主交互（亮底上清晰可读） */
+  --accent-hover: #2f78c0;      /* 波光 · 高光/AI（hover 加深） */
+  --accent-soft: rgba(63, 139, 212, 0.12);
+  --accent-border: rgba(63, 139, 212, 0.24);
   --accent-text: #ffffff;
 
-  --gold: #b8860b;
-  --gold-soft: rgba(184, 134, 11, 0.14);
+  /* ─── 强调色（晨光金 · 触发瞬间）─── */
+  --gold: #b9852f;              /* 晨光金 · 亮底可读（比暗色版暗，非土黄反转） */
+  --gold-soft: rgba(185, 133, 47, 0.14);
 
-  --border-default: rgba(74, 106, 148, 0.2);
-  --border-hover: rgba(74, 106, 148, 0.35);
-  --border-active: rgba(74, 144, 226, 0.45);
+  /* ─── 边框（水界线 · 浅水版）─── */
+  --border-default: rgba(88, 112, 143, 0.25);
+  --border-hover: rgba(88, 112, 143, 0.42);
+  --border-active: rgba(63, 139, 212, 0.5);
   --glass-mist: #ffffff;
 
-  --shadow-card: 0 1px 3px rgba(12, 22, 38, 0.08);
-  --shadow-card-hover: 0 4px 12px rgba(12, 22, 38, 0.1);
-  --shadow-modal: 0 8px 32px rgba(12, 22, 38, 0.14);
+  /* ─── 阴影（浅水影 · 带蓝不浓黑）─── */
+  --shadow-card: 0 1px 3px rgba(63, 91, 124, 0.12);
+  --shadow-card-hover: 0 4px 12px rgba(63, 91, 124, 0.16);
+  --shadow-modal: 0 8px 32px rgba(63, 91, 124, 0.2);
 }
 

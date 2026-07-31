@@ -10,6 +10,8 @@ interface KnowledgeEntry {
   source: string;
   sourceId: string;
   tags: string;
+  entityIds?: string;
+  entityNames?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -75,7 +77,7 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
     try {
       await api.knowledgeUpdate({ id: viewModal.id, content: editContent });
       setViewModal(null);
-      showToast('✅ 已保存修改');
+      showToast('已保存修改');
       load(page);
     } catch {
       showToast('保存失败');
@@ -87,7 +89,7 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
     try {
       await api.knowledgeDelete(id);
       setDeleteConfirm(null);
-      showToast('🗑️ 已删除');
+      showToast('已删除');
       // Use refs to get fresh values, avoiding stale closure
       const currentEntries = entriesRef.current;
       const currentPage = pageRef.current;
@@ -99,28 +101,66 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
   }, [load, showToast]);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-12 py-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
             className="flex items-center gap-1.5 text-sm transition-all"
-            style={{ color: 'var(--accent)' }}
+            style={{ color: '#a8d0ff' }}
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-            💬 返回树洞
+            返回涟漪
           </button>
         </div>
-        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-          共 {entries.length} 条知识
-        </span>
+        <div className="flex items-center gap-3">
+          <motion.button
+            onClick={() => window.dispatchEvent(new CustomEvent('nav-tab', { detail: { tab: 'summary' } }))}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs cursor-pointer relative overflow-visible"
+            style={{
+              background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.25) 0%, rgba(111,180,255,0.08) 60%, rgba(111,180,255,0.02) 100%)',
+              color: '#6fb4ff',
+              border: '1px solid rgba(111,180,255,0.18)',
+              boxShadow: '0 0 4px rgba(111,180,255,0.08)',
+            }}
+            whileHover={{
+              background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.40) 0%, rgba(111,180,255,0.15) 50%, rgba(111,180,255,0.05) 100%)',
+              color: '#a8d0ff',
+              boxShadow: '0 0 20px rgba(111,180,255,0.25), 0 0 40px rgba(111,180,255,0.10)',
+            }}
+            whileTap={{
+              scale: 0.95,
+              background: 'radial-gradient(circle at 50% 50%, rgba(255,217,160,0.35) 0%, rgba(111,180,255,0.20) 50%, rgba(111,180,255,0.08) 100%)',
+              color: '#ffd9a0',
+              borderColor: 'rgba(255,217,160,0.3)',
+              boxShadow: '0 0 40px rgba(255,217,160,0.25), 0 0 80px rgba(111,180,255,0.15)',
+            }}
+            transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+          >
+            查看知识图谱
+          </motion.button>
+          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            共 {entries.length} 支记忆瓶
+          </span>
+        </div>
       </div>
 
-      {/* Entries */}
+      {/* Entries — 池底记忆瓶阵列 */}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
+        <div className="flex justify-center py-16">
+          <div className="flex gap-1.5">
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className="w-1.5 h-1.5 rounded-full"
+                style={{
+                  background: '#4a6a94',
+                  animation: `pond-pulse 2s ease-in-out ${i * 0.3}s infinite`,
+                }}
+              />
+            ))}
+          </div>
         </div>
       ) : entries.length === 0 ? (
         <motion.div
@@ -128,10 +168,18 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
           animate={{ opacity: 1, y: 0 }}
           className="text-center py-16"
         >
-          <div className="text-4xl mb-4">📚</div>
-          <p className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>还没有保存的知识</p>
+          {/* 池底空瓶插画 — 几何玻璃瓶 */}
+          <svg className="mx-auto mb-5" width="64" height="72" viewBox="0 0 64 72" fill="none" aria-hidden="true">
+            <path d="M22 14 h20 v10 h8 v34 a4 4 0 0 1 -4 4 H18 a4 4 0 0 1 -4 -4 V24 h8 z"
+              fill="rgba(74,106,148,0.12)" stroke="#4a6a94" strokeWidth="1.5" strokeLinejoin="round" />
+            <rect x="27" y="6" width="10" height="10" rx="2.5" fill="rgba(111,180,255,0.08)" stroke="#4a6a94" strokeWidth="1.2" />
+            <circle cx="24" cy="42" r="2.5" fill="#6fb4ff" opacity="0.5" />
+            <circle cx="40" cy="50" r="2" fill="#a8d0ff" opacity="0.4" />
+            <path d="M24 60 l16 -2" stroke="#6fb4ff" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
+          </svg>
+          <p className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>池底还没有记忆瓶</p>
           <p className="text-xs mb-6" style={{ color: 'var(--text-tertiary)' }}>
-            在树洞对话中把对你有价值的内容保存到知识库，方便随时查看。
+            在涟漪对话中把对你有价值的内容保存进玻璃瓶，沉在池底随时打捞。
           </p>
           <motion.button
             onClick={onBack}
@@ -156,58 +204,91 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
             }}
             transition={{ type: 'spring', stiffness: 400, damping: 22 }}
           >
-            💬 去树洞聊一聊
+            去涟漪聊一聊
           </motion.button>
         </motion.div>
       ) : (
         <>
-          <div className="space-y-3">
+          {/* 玻璃瓶网格 */}
+          <div
+            className="grid gap-3"
+            style={{
+              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+            }}
+          >
             <AnimatePresence>
               {entries.map((entry) => (
                 <motion.div
                   key={entry.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="rounded-xl flex gap-3 overflow-hidden"
-                  style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}
+                  initial={{ opacity: 0, y: 14, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.94 }}
+                  whileHover={{ y: -5 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+                  className="relative cursor-pointer overflow-hidden"
+                  style={{
+                    borderRadius: 18,
+                    background: 'linear-gradient(160deg, rgba(23,42,69,0.75) 0%, rgba(12,22,38,0.85) 100%)',
+                    border: '1px solid rgba(74,106,148,0.35)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 12px 32px rgba(0,0,0,0.25)',
+                    backdropFilter: 'blur(12px)',
+                  }}
+                  onClick={() => handleView(entry)}
                 >
-                  {/* Bookmark leaf vein strip — 波光蓝书签条 */}
+                  {/* 瓶口（月金微光）*/}
                   <div
-                    className="w-[6px] flex-shrink-0 self-stretch relative"
                     style={{
-                      background: 'linear-gradient(180deg, rgba(168,208,255,0.30) 0%, rgba(111,180,255,0.08) 100%)',
-                      clipPath: 'polygon(50% 0%, 100% 10%, 100% 90%, 0% 100%, 0% 10%)',
-                      boxShadow: '1px 0 8px rgba(111,180,255,0.06)',
+                      position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+                      width: 52, height: 7,
+                      background: 'linear-gradient(90deg, rgba(255,217,160,0.15), rgba(255,217,160,0.5), rgba(255,217,160,0.15))',
+                      borderRadius: '0 0 999px 999px',
+                      boxShadow: '0 0 12px rgba(255,217,160,0.25)',
                     }}
                   />
-                  <div className="flex-1 py-3 pr-3">
-                    <p className="text-sm mb-2 line-clamp-2" style={{ color: 'var(--text-primary)' }}>
-                      {entry.content}
+                  {/* 瓶身高光 */}
+                  <div
+                    style={{
+                      position: 'absolute', left: 10, top: 14, bottom: 14, width: 2,
+                      background: 'linear-gradient(180deg, rgba(168,208,255,0.35), transparent)',
+                      borderRadius: 2,
+                    }}
+                  />
+                  {/* 瓶内月金微光 */}
+                  <div
+                    style={{
+                      position: 'absolute', right: 12, bottom: 10, width: 34, height: 34,
+                      background: 'radial-gradient(circle, rgba(255,217,160,0.16) 0%, transparent 70%)',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                  <div className="py-4 px-4" style={{ paddingTop: 18 }}>
+                    <p className="text-sm mb-2 leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                      {entry.content.length > 90 ? entry.content.slice(0, 90) + '…' : entry.content}
                     </p>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                        {new Date(entry.updatedAt).toLocaleDateString('zh-CN')} · 来自{entry.source === 'treehole' ? '树洞对话' : entry.source}
+                      <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
+                        {new Date(entry.updatedAt).toLocaleDateString('zh-CN')} · {entry.source === 'treehole' ? '涟漪对话' : entry.source}
                       </span>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <motion.button
-                          onClick={() => handleView(entry)}
-                          className="text-xs px-2 py-1 rounded transition-all cursor-pointer"
-                          style={{ color: 'var(--text-tertiary)' }}
-                          whileHover={{ scale: 1.05 }}
+                          onClick={(e) => { e.stopPropagation(); handleView(entry); }}
+                          className="text-[11px] px-1.5 py-0.5 rounded transition-all cursor-pointer"
+                          style={{ color: '#8fa6c4' }}
+                          whileHover={{ scale: 1.05, color: '#a8d0ff' }}
                           whileTap={{ scale: 0.92, backgroundColor: 'rgba(111,180,255,0.15)' }}
                           transition={{ duration: 0.1 }}
                         >
-                          👁️ 查看
+                          查看
                         </motion.button>
                         <motion.button
-                          onClick={() => setDeleteConfirm(entry.id)}
-                          className="text-xs px-2 py-1 rounded transition-all cursor-pointer"
-                          style={{ color: 'var(--text-tertiary)' }}
-                          whileHover={{ scale: 1.05 }}
+                          onClick={(e) => { e.stopPropagation(); setDeleteConfirm(entry.id); }}
+                          className="text-[11px] px-1.5 py-0.5 rounded transition-all cursor-pointer"
+                          style={{ color: '#8fa6c4' }}
+                          whileHover={{ scale: 1.05, color: '#ffd9a0' }}
                           whileTap={{ scale: 0.92, backgroundColor: 'rgba(111,180,255,0.15)' }}
                           transition={{ duration: 0.1 }}
                         >
-                          🗑️ 删除
+                          删除
                         </motion.button>
                       </div>
                     </div>
@@ -272,7 +353,7 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
                   style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', border: '1px solid var(--border-default)' }}
                 />
                 <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>
-                  来源：{viewModal.source === 'treehole' ? '树洞对话' : viewModal.source} · {new Date(viewModal.updatedAt).toLocaleString('zh-CN')}
+                  来源：{viewModal.source === 'treehole' ? '涟漪对话' : viewModal.source} · {new Date(viewModal.updatedAt).toLocaleString('zh-CN')}
                 </p>
               </div>
               <div className="px-5 py-3 border-t flex justify-end gap-2" style={{ borderColor: 'var(--border-default)' }}>
@@ -284,7 +365,7 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
                   whileTap={{ scale: 0.95, backgroundColor: '#dc2626', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.4)' }}
                   transition={{ duration: 0.1 }}
                 >
-                  🗑️ 删除
+                  删除
                 </motion.button>
                 <motion.button
                   onClick={() => setViewModal(null)}
@@ -319,7 +400,7 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
                   }}
                   transition={{ type: 'spring', stiffness: 400, damping: 22 }}
                 >
-                  {saving ? '保存中...' : '💾 保存修改'}
+                  {saving ? '保存中…' : '保存修改'}
                 </motion.button>
               </div>
             </motion.div>

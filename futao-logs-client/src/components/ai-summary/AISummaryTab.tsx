@@ -9,11 +9,11 @@ import type { SummaryLevel, SummaryData } from './SummaryCard';
 
 /* ─── Level config ─── */
 
-const LEVELS: { key: SummaryLevel; label: string; icon: string }[] = [
-  { key: 'day', label: '日报', icon: '📅' },
-  { key: 'week', label: '周报', icon: '📆' },
-  { key: 'month', label: '月报', icon: '📊' },
-  { key: 'year', label: '年报', icon: '📈' },
+const LEVELS: { key: SummaryLevel; label: string; sub: string; depth: string }[] = [
+  { key: 'day', label: '日报', sub: '浅水面 · 当日细波', depth: 'rgba(168,208,255,0.45)' },
+  { key: 'week', label: '周报', sub: '中层水 · 一周回响', depth: 'rgba(111,180,255,0.45)' },
+  { key: 'month', label: '月报', sub: '中层水 · 一月沉流', depth: 'rgba(74,106,148,0.5)' },
+  { key: 'year', label: '年报', sub: '深水层 · 一年沉积', depth: 'rgba(12,22,38,0.55)' },
 ];
 
 /* ─── Date helpers ─── */
@@ -201,50 +201,137 @@ export default function AISummaryTab() {
   const levelDef = LEVELS.find(l => l.key === level)!;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {/* ═══ Level tabs ═══ */}
-      <div className="flex gap-1.5 mb-4">
-        {LEVELS.map(l => {
+    <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-12 py-6">
+      {/* ═══ 水面分层 · 三层浮标（浅水面 → 中层水 → 深水层）═══ */}
+      <div
+        className="summary-buoys mb-4"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 8,
+          position: 'relative',
+        }}
+      >
+        {/* 背景水层渐变（横向从左浅到右深）*/}
+        <div
+          style={{
+            position: 'absolute', inset: 0, borderRadius: 16, pointerEvents: 'none',
+            background: 'linear-gradient(90deg, rgba(33,57,92,0.35) 0%, rgba(23,42,69,0.45) 45%, rgba(12,22,38,0.55) 100%)',
+            border: '1px solid rgba(45,74,117,0.35)',
+          }}
+        />
+        {LEVELS.map((l, idx) => {
           const isActive = l.key === level;
           return (
             <button
               key={l.key}
               onClick={() => switchLevel(l.key)}
               disabled={generating}
-              className="flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center justify-center gap-1"
+              className="summary-buoy relative"
               style={{
-                background: isActive ? 'var(--accent)' : 'var(--bg-secondary)',
-                color: isActive ? 'var(--accent-text)' : 'var(--text-secondary)',
-                border: '1px solid var(--border-default)',
-                opacity: generating ? 0.5 : 1,
+                padding: '12px 8px 10px',
+                borderRadius: 14,
                 cursor: generating ? 'not-allowed' : 'pointer',
+                opacity: generating ? 0.55 : 1,
+                background: isActive
+                  ? 'radial-gradient(circle at 50% 30%, rgba(168,208,255,0.22) 0%, rgba(23,42,69,0.5) 70%)'
+                  : 'rgba(23,42,69,0.35)',
+                border: `1px solid ${isActive ? 'rgba(168,208,255,0.5)' : 'rgba(45,74,117,0.35)'}`,
+                color: isActive ? '#e2ecfa' : '#8fa6c4',
+                transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+                outline: 'none',
+                fontFamily: 'inherit',
+                position: 'relative',
+                boxShadow: isActive
+                  ? '0 0 20px rgba(111,180,255,0.18), inset 0 1px 0 rgba(255,255,255,0.08)'
+                  : 'inset 0 1px 0 rgba(255,255,255,0.04)',
               }}
             >
-              <span>{l.icon}</span>
-              <span>{l.label}</span>
+              {/* 浮标体：三小层（浅-中-深）*/}
+              <div
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  gap: 3, marginBottom: 6,
+                }}
+              >
+                {[0, 1, 2].map((layerIdx) => (
+                  <span
+                    key={layerIdx}
+                    style={{
+                      width: 6 + (2 - layerIdx) * 2,
+                      height: 6 + (2 - layerIdx) * 2,
+                      borderRadius: '50%',
+                      background: isActive ? l.depth : 'rgba(74,106,148,0.5)',
+                      opacity: 0.5 + (layerIdx === 0 ? 0.35 : 0),
+                    }}
+                  />
+                ))}
+              </div>
+              <div style={{ fontSize: 12, fontWeight: 500, letterSpacing: 1 }}>{l.label}</div>
+              <div
+                style={{
+                  fontSize: 9, marginTop: 2, letterSpacing: 0.3,
+                  color: isActive ? '#8fa6c4' : 'rgba(143,166,196,0.6)',
+                }}
+              >
+                {l.sub}
+              </div>
+              {/* 当前层指示线 */}
+              <span
+                style={{
+                  position: 'absolute', left: '50%', bottom: -1,
+                  transform: 'translateX(-50%)',
+                  width: isActive ? 22 : 0, height: 2,
+                  borderRadius: 2,
+                  background: '#ffd9a0',
+                  boxShadow: '0 0 8px rgba(255,217,160,0.7)',
+                  transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+                  opacity: isActive ? 1 : 0,
+                }}
+              />
             </button>
           );
         })}
       </div>
 
-      {/* ═══ Date navigation + Generate button ═══ */}
+      {/* ═══ 日期导航 + 生成（水面浮标条）═══ */}
       <div
-        className="flex items-center justify-between rounded-xl p-3 mb-4"
-        style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}
+        className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3 mb-4"
+        style={{
+          background: 'linear-gradient(180deg, rgba(33,57,92,0.35) 0%, rgba(23,42,69,0.4) 100%)',
+          border: '1px solid rgba(45,74,117,0.4)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
+        }}
       >
         <div className="flex items-center gap-2">
           <button onClick={() => navigate(-1)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-xs transition-all"
-            style={{ color: 'var(--text-secondary)', background: 'var(--bg-primary)' }}
+            className="w-7 h-7 flex items-center justify-center rounded-full text-xs transition-all"
+            style={{
+              color: '#a8d0ff',
+              background: 'rgba(23,42,69,0.6)',
+              border: '1px solid rgba(111,180,255,0.25)',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(111,180,255,0.15)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(23,42,69,0.6)'; }}
           >
             ◀
           </button>
-          <span className="text-sm font-medium min-w-[7rem] text-center" style={{ color: 'var(--text-primary)' }}>
+          <span className="text-sm font-medium min-w-[7rem] text-center" style={{ color: '#e2ecfa' }}>
             {navLabel(level, periodKey)}
           </span>
           <button onClick={() => navigate(1)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-xs transition-all"
-            style={{ color: 'var(--text-secondary)', background: 'var(--bg-primary)' }}
+            className="w-7 h-7 flex items-center justify-center rounded-full text-xs transition-all"
+            style={{
+              color: '#a8d0ff',
+              background: 'rgba(23,42,69,0.6)',
+              border: '1px solid rgba(111,180,255,0.25)',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(111,180,255,0.15)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(23,42,69,0.6)'; }}
           >
             ▶
           </button>
@@ -253,21 +340,42 @@ export default function AISummaryTab() {
         <button
           onClick={() => generate()}
           disabled={generating}
-          className="flex items-center gap-1 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
+          className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer"
           style={{
-            background: generating ? 'var(--bg-tertiary)' : 'var(--accent)',
-            color: 'var(--accent-text)',
-            opacity: generating ? 0.6 : 1,
+            background: generating
+              ? 'rgba(23,42,69,0.6)'
+              : 'linear-gradient(135deg, rgba(111,180,255,0.85), rgba(168,208,255,0.9))',
+            color: generating ? '#8fa6c4' : '#0a1626',
+            border: `1px solid ${generating ? 'rgba(45,74,117,0.5)' : 'rgba(168,208,255,0.6)'}`,
+            opacity: generating ? 0.8 : 1,
+            boxShadow: generating ? 'none' : '0 4px 18px rgba(111,180,255,0.28)',
+            fontFamily: 'inherit',
           }}
         >
           {generating ? (
             <>
-              <span className="w-3 h-3 rounded-full border-2 border-t-transparent animate-spin inline-block"
-                style={{ borderColor: 'var(--accent-text)', borderTopColor: 'transparent' }} />
-              生成中…
+              {/* 水波进度条 */}
+              <span className="wave-bar relative" style={{ width: 44, height: 10, overflow: 'hidden', borderRadius: 999, background: 'rgba(23,42,69,0.7)', display: 'inline-block' }}>
+                <span
+                  className="wave-fill"
+                  style={{
+                    position: 'absolute', left: 0, top: 0, bottom: 0, width: '45%',
+                    borderRadius: 999,
+                    background: 'linear-gradient(90deg, #6fb4ff, #a8d0ff)',
+                    animation: 'wave-sweep 1.4s ease-in-out infinite',
+                  }}
+                />
+              </span>
+              水波升起中…
             </>
           ) : (
-            `✨ 生成${levelDef.label}总结`
+            <>
+              <span className="relative inline-flex" style={{ width: 10, height: 10 }}>
+                <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '1.5px solid currentColor', opacity: 0.5 }} />
+                <span style={{ position: 'absolute', inset: 2, borderRadius: '50%', background: 'currentColor' }} />
+              </span>
+              生成{levelDef.label}总结
+            </>
           )}
         </button>
       </div>
@@ -284,11 +392,19 @@ export default function AISummaryTab() {
           {/* Loading */}
           {loading && (
             <div className="flex flex-col items-center justify-center py-12">
-              <div
-                className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin mb-3"
-                style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }}
-              />
-              <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>加载中…</p>
+              <div className="flex gap-1.5 mb-3">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{
+                      background: '#4a6a94',
+                      animation: `pond-pulse 2s ease-in-out ${i * 0.3}s infinite`,
+                    }}
+                  />
+                ))}
+              </div>
+              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>水面轻晃，回忆浮起…</p>
             </div>
           )}
 
@@ -310,14 +426,17 @@ export default function AISummaryTab() {
           {/* No saved summary, needs generation */}
           {!loading && !error && data === null && needData && (
             <div
-              className="rounded-xl p-6 text-center"
-              style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}
+              className="rounded-2xl p-8 text-center"
+              style={{
+                background: 'linear-gradient(180deg, rgba(33,57,92,0.3) 0%, rgba(23,42,69,0.35) 100%)',
+                border: '1px solid rgba(45,74,117,0.4)',
+              }}
             >
               <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
-                {levelDef.icon} {navLabel(level, periodKey)}
+                {navLabel(level, periodKey)}
               </p>
               <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                点击上方「✨ 生成{levelDef.label}总结」由 AI 自动生成
+                点击上方「生成{levelDef.label}总结」，让 AI 把这{levelDef.label === '日报' ? '一天的细波' : levelDef.label === '周报' ? '一周的回响' : levelDef.label === '月报' ? '一月的沉流' : '一年的沉积'}捞到水面
               </p>
             </div>
           )}
@@ -335,13 +454,14 @@ export default function AISummaryTab() {
         </motion.div>
       </AnimatePresence>
 
-      {/* ─── Knowledge Graph ─── */}
+      {/* ─── 知识图谱 · 沉底一层 ─── */}
       <div className="mt-8">
         <h2
           className="text-sm font-medium mb-3 flex items-center gap-2"
-          style={{ color: 'var(--text-secondary)' }}
+          style={{ color: '#8fa6c4' }}
         >
-          🗺 知识图谱
+          <span className="inline-block w-2 h-2 rounded-full" style={{ background: '#4a6a94', boxShadow: '0 0 6px rgba(74,106,148,0.8)' }} />
+          知识图谱 · 沉底一层
         </h2>
         <KnowledgeGraph />
       </div>

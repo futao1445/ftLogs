@@ -26,3 +26,246 @@
     background: var(--accent-soft);
   }
 }
+
+/* 微信式「对方正在输入中…」打字动画 */
+.typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.typing-dots span,
+.typing-dots::before,
+.typing-dots::after {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #a8d0ff;
+  animation: typing-bounce 1.2s ease-in-out infinite;
+}
+.typing-dots span { animation-delay: 0s; }
+.typing-dots::before { animation-delay: 0.15s; }
+.typing-dots::after { animation-delay: 0.3s; }
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* 保存到知识库 · 双环进度 */
+@keyframes save-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 水面呼吸点（加载/思考中）*/
+@keyframes pond-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.35; }
+  50% { transform: scale(1.4); opacity: 1; }
+}
+
+/* AI 总结 · 水波进度（生成中）*/
+@keyframes wave-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(320%); }
+}
+
+/* ═══ 知识图谱 · 小鱼游荡（#23）═══ */
+.pond-canvas {
+  position: relative;
+  height: 520px;
+  border-radius: 20px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 18% 82%, rgba(111,180,255,0.07) 0%, transparent 42%),
+    radial-gradient(ellipse at 84% 18%, rgba(168,208,255,0.06) 0%, transparent 40%),
+    linear-gradient(180deg, #21395c 0%, #172a45 38%, #0c1626 100%);
+  border: 1px solid rgba(45,74,117,0.6);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 24px 60px rgba(0,0,0,0.35);
+  cursor: grab;
+}
+.pond-canvas::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(168,208,255,0.5), transparent);
+}
+.pond-canvas::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0; height: 120px;
+  background:
+    radial-gradient(ellipse at 30% 100%, rgba(74,106,148,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 100%, rgba(23,42,69,0.5) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* 图例 */
+.pond-legend {
+  position: absolute;
+  left: 16px; top: 14px; z-index: 6;
+  display: flex; gap: 14px;
+  padding: 8px 14px; border-radius: 999px;
+  background: rgba(12,22,38,0.55);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(45,74,117,0.5);
+  font-size: 11px; color: #8fa6c4;
+}
+.pond-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.pond-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+/* 关联连线层 */
+.pond-links {
+  position: absolute;
+  inset: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 2;
+}
+.pond-links path {
+  fill: none;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+/* 鱼 */
+.fish {
+  position: absolute;
+  z-index: 5;
+  cursor: pointer;
+  will-change: transform;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
+  transition: filter 0.3s ease;
+}
+.fish .tail {
+  transform-origin: 82% 50%;
+  animation: tailswim 1.6s ease-in-out infinite;
+}
+.fish svg { display: block; overflow: visible; }
+.fish .glow {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, currentColor 0%, transparent 65%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.fish.hovered .glow { opacity: 0.25; }
+.fish.selected .glow { opacity: 0.45; }
+/* 鱼名：pond 直接子级，JS 独立定位在鱼下方，永不变形（futao 修改③）
+   .fish-unit 保持静态（不设 position），fname 的 containing block 才落回 .pond-canvas */
+.fish-unit { display: contents; }
+.fish-unit .fname {
+  position: absolute;
+  left: 0; top: 0;
+  transform: translate(-50%, 22px);
+  font-size: 9px;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  color: #8fa6c4;
+  opacity: 0.5;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  transition: opacity 0.25s ease, color 0.25s ease;
+  pointer-events: none;
+}
+.fish-unit:hover .fname, .fish-unit .fname.hovered { opacity: 0.85; color: #e2ecfa; }
+.fish-unit .fname.selected { opacity: 1; color: #ffd9a0; }
+@keyframes tailswim {
+  0%, 100% { transform: rotate(14deg); }
+  50% { transform: rotate(-14deg); }
+}
+
+/* 涟漪环（游动时偶尔泛起）*/
+.pond-ring {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  width: 16px; height: 16px;
+  margin-left: -8px; margin-top: -8px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(168,208,255,0.55);
+  animation: ripple 1.3s ease-out forwards;
+}
+@keyframes ripple {
+  0% { transform: scale(0.35); opacity: 0.85; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* 选中时中心泛开的大水纹 */
+.pond-wake {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  width: 120px; height: 120px;
+  margin-left: -60px; margin-top: -60px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,217,160,0.8);
+  box-shadow: 0 0 24px rgba(255,217,160,0.4), inset 0 0 24px rgba(255,217,160,0.2);
+  animation: wake 1.1s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+@keyframes wake {
+  0% { transform: scale(0.15); opacity: 0.95; }
+  100% { transform: scale(2.1); opacity: 0; }
+}
+
+/* 底部提示 */
+.pond-hint {
+  position: absolute;
+  left: 0; right: 0; bottom: 14px;
+  z-index: 6;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #8fa6c4;
+  pointer-events: none;
+}
+.pond-hint b { color: #ffd9a0; font-weight: 400; }
+
+/* ═══ 日历 · 几何水草茎（#25 页面 01 · futao 打回修复）═══ */
+.cal-stem {
+  transform-origin: bottom center;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+  opacity: 0.82;
+}
+.cal-stem:hover { opacity: 1; transform: translateX(3px); }
+.cal-stem.on { opacity: 1; transform: translateX(4px); }
+
+/* 茎描边：常态水面蓝雾 #4a6a94 → 选中月金波光 #a8d0ff */
+.cal-stem-svg path { transition: stroke 0.3s ease, fill 0.3s ease, opacity 0.3s ease; }
+.cal-stem-svg path:nth-child(1) { stroke: #4a6a94; }
+.cal-stem-svg path:nth-child(2),
+.cal-stem-svg path:nth-child(3) { fill: rgba(74,106,148,0.5); stroke: none; }
+.cal-stem-svg path:nth-child(4) { stroke: rgba(74,106,148,0.8); }
+.cal-stem-svg.on path:nth-child(1) { stroke: #a8d0ff; filter: drop-shadow(0 0 4px rgba(168,208,255,0.55)); }
+.cal-stem-svg.on path:nth-child(2),
+.cal-stem-svg.on path:nth-child(3) { fill: rgba(168,208,255,0.4); }
+.cal-stem-svg.on path:nth-child(4) { stroke: rgba(168,208,255,0.7); }
+
+/* 选中：茎尖月金水光（方向稿 .month.on::before 茎尖月金）*/
+.cal-stem-glow {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #ffd9a0;
+  box-shadow: 0 0 10px rgba(255,217,160,0.9), 0 0 22px rgba(255,217,160,0.45);
+  animation: cal-glow-breathe 2.4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+@keyframes cal-glow-breathe {
+  0%, 100% { box-shadow: 0 0 8px rgba(255,217,160,0.8), 0 0 18px rgba(255,217,160,0.35); }
+  50% { box-shadow: 0 0 14px rgba(255,217,160,1), 0 0 30px rgba(255,217,160,0.55); }
+}
+
+/* 月份标签：茎下方小字 */
+.cal-stem-label {
+  margin-top: 2px;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: #8fa6c4;
+  transition: color 0.25s ease;
+  pointer-events: none;
+}
+.cal-stem:hover .cal-stem-label { color: #e2ecfa; }
+.cal-stem.on .cal-stem-label { color: #ffd9a0; }

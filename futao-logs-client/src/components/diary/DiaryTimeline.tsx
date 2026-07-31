@@ -77,17 +77,11 @@ function extractTime(dateStr: string): string {
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
-/** Today's label for the page header */
-function todayLabel(): string {
-  const now = new Date();
-  return `今天 ${mmdd(now)}`;
-}
-
 /* ─── Skeleton card (loading placeholder) ─── */
 
 function TimelineSkeleton() {
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-12 py-8">
       {/* header skeleton */}
       <div className="flex items-center justify-between mb-8">
         <div className="h-6 w-28 rounded" style={{ background: 'var(--bg-tertiary)' }} />
@@ -123,29 +117,30 @@ function TimelineSkeleton() {
 function TimelineEmpty({ onNew }: { onNew?: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-20">
-      {/* Water droplet illustration — 一滴等待落水的晨露 */}
-      <motion.svg
-        className="mb-6"
-        width="64"
-        height="64"
-        viewBox="0 0 64 64"
-        fill="none"
-        aria-hidden="true"
-        initial={{ y: -8, opacity: 0.6 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 22, repeat: Infinity, repeatType: 'mirror', repeatDelay: 1.2 }}
-      >
-        <path
-          d="M32 10C32 10 20 28 18 40C16 50 24 56 32 56C40 56 48 50 46 40C44 28 32 10 32 10Z"
-          fill="rgba(111,180,255,0.10)"
-          stroke="#6fb4ff"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
+      {/* 空水面：一圈等待第一滴水的涟漪 */}
+      <div className="relative mb-6" style={{ width: 64, height: 64 }}>
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              inset: 12 + i * 8,
+              border: '1.5px solid rgba(111,180,255,0.45)',
+              opacity: 0.7 - i * 0.2,
+              animation: `ripple ${1.8 + i * 0.4}s ease-out ${i * 0.35}s infinite`,
+            }}
+          />
+        ))}
+        <span
+          className="absolute"
+          style={{
+            inset: 4,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle at 42% 32%, rgba(226,236,250,0.9) 0%, #6fb4ff 55%, rgba(111,180,255,0.4) 100%)',
+            boxShadow: '0 0 16px rgba(111,180,255,0.35)',
+          }}
         />
-        <path d="M24 40C24 36 27 33 30 32" stroke="#a8d0ff" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M36 22C36 22 40 26 41 30" stroke="rgba(168,208,255,0.5)" strokeWidth="1" strokeLinecap="round" />
-        <circle cx="26" cy="16" r="2" fill="#a8d0ff" opacity="0.7" />
-      </motion.svg>
+      </div>
 
       <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
         水面上还没有日记，写第一篇吧
@@ -210,14 +205,14 @@ export default function DiaryTimeline({
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-12 py-8">
       {/* ═══ Page header — today's date + export + new-diary button ═══ */}
-      <header className="flex items-center justify-between mb-2">
+      <header className="flex items-center justify-between mb-4">
         <h1
           className="text-lg font-medium tracking-wide"
           style={{ color: 'var(--text-primary)' }}
         >
-          ◈ {todayLabel()}
+          今天 · {mmdd(new Date())}
         </h1>
 
         <div className="flex items-center gap-2">
@@ -225,25 +220,16 @@ export default function DiaryTimeline({
           {onNew && (
             <motion.button
               onClick={onNew}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-sm font-medium cursor-pointer relative overflow-visible"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer"
               style={{
-                background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.25) 0%, rgba(111,180,255,0.08) 60%, rgba(111,180,255,0.02) 100%)',
-                color: '#6fb4ff',
-                border: '1px solid rgba(111,180,255,0.18)',
-                boxShadow: '0 0 4px rgba(111,180,255,0.08)',
+                background: 'linear-gradient(135deg, rgba(111,180,255,0.85), rgba(168,208,255,0.9))',
+                color: '#0a1626',
+                boxShadow: '0 4px 18px rgba(111,180,255,0.25)',
+                border: '1px solid rgba(168,208,255,0.5)',
+                fontFamily: 'inherit',
               }}
-              whileHover={{
-                background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.40) 0%, rgba(111,180,255,0.15) 50%, rgba(111,180,255,0.05) 100%)',
-                color: '#a8d0ff',
-                boxShadow: '0 0 20px rgba(111,180,255,0.25), 0 0 40px rgba(111,180,255,0.10)',
-              }}
-              whileTap={{
-                scale: 0.96,
-                background: 'radial-gradient(circle at 50% 50%, rgba(255,217,160,0.40) 0%, rgba(111,180,255,0.20) 50%, rgba(111,180,255,0.08) 100%)',
-                color: '#ffd9a0',
-                borderColor: 'rgba(255,217,160,0.35)',
-                boxShadow: '0 0 40px rgba(255,217,160,0.30), 0 0 80px rgba(111,180,255,0.15)',
-              }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.96 }}
               transition={{ type: 'spring', stiffness: 400, damping: 22 }}
             >
               <svg
@@ -309,7 +295,7 @@ export default function DiaryTimeline({
           {/* On This Day card — shown at top of first group when available */}
           {onThisDay && (
             <section className="mb-6">
-              <div style={{ paddingLeft: 32 }}>
+              <div style={{ paddingLeft: 44 }}>
                 <OnThisDay diary={onThisDay} onView={onViewOnThisDay || (() => {})} />
               </div>
             </section>
@@ -322,19 +308,16 @@ export default function DiaryTimeline({
             return (
               <section key={group.date} className="mb-8 last:mb-0">
                 {/* ── Date group header ── */}
-                {/* For the first group (today), the page header already shows
-                    "今天 MM/DD", so we only render the grouped header for
-                    non-today groups. */}
                 {!(isFirstGroup && isTodayGroup) && (
                   <div
                     className="relative timeline-dot mb-5"
-                    style={{ paddingLeft: 32 }}
+                    style={{ paddingLeft: 44 }}
                   >
                     <h2
                       className="text-sm font-medium"
                       style={{ color: 'var(--text-primary)' }}
                     >
-                      ◈ {groupLabel(group.date)}
+                      {groupLabel(group.date)}
                     </h2>
                   </div>
                 )}
@@ -346,16 +329,16 @@ export default function DiaryTimeline({
                       {/* Timeline separator line (time shown on card header) */}
                       <div
                         className="relative timeline-dot flex items-center mb-3"
-                        style={{ paddingLeft: 32 }}
+                        style={{ paddingLeft: 44 }}
                       >
                         <div
                           className="h-px w-full"
-                          style={{ background: 'var(--border-default)' }}
+                          style={{ background: 'rgba(45,74,117,0.35)' }}
                         />
                       </div>
 
-                      {/* Card */}
-                      <div style={{ paddingLeft: 32 }}>
+                      {/* Card — 浮出玻璃卡 */}
+                      <div className="timeline-card" style={{ marginLeft: 44 }}>
                         <DiaryCard
                           diary={diary}
                           onEdit={onEdit}
@@ -371,7 +354,7 @@ export default function DiaryTimeline({
 
           {/* ═══ Load more ═══ */}
           {hasMore && (
-            <div className="flex justify-center pt-6 pb-2" style={{ paddingLeft: 32 }}>
+            <div className="flex justify-center pt-6 pb-2" style={{ paddingLeft: 44 }}>
               <motion.button
                 onClick={onLoadMore}
                 disabled={loading}
@@ -403,7 +386,7 @@ export default function DiaryTimeline({
 
       {/* ═══ Inline loading indicator (loading more) ═══ */}
       {loading && groups.length > 0 && (
-        <div className="flex justify-center py-4" style={{ paddingLeft: 32 }}>
+        <div className="flex justify-center py-4" style={{ paddingLeft: 44 }}>
           <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
             <span
               className="inline-block w-2 h-2 rounded-full animate-pulse"

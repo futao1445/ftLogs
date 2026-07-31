@@ -139,6 +139,23 @@ export const api = {
   ragExtractEntities: (options: { diaryId?: number; diaryIds?: number[] } = {}) =>
     tRPCMutation<{ success: boolean; total: number; extracted: number; errors: number; message?: string }>('rag.extractEntities', options),
 
+  // 全量重建图谱（林正树 task #22）：force=true 清空重建，异步执行立即返回
+  ragRebuildGraph: (input: { force?: boolean } = { force: false }) =>
+    tRPCMutation<{ success: boolean; started: boolean; total: number; error?: string }>('rag.rebuildGraph', input),
+
+  // 图谱重建进度查询
+  ragRebuildStatus: () =>
+    tRPCQuery<{
+      running: boolean;
+      total: number;
+      processed: number;
+      current: string;
+      stage: string;
+      error?: string;
+      startedAt?: string;
+      finishedAt?: string;
+    }>('rag.rebuildStatus', {}),
+
   ragGraph: (type?: string) =>
     tRPCQuery<{
       nodes: { id: number; type: string; name: string; diaryCount: number }[];
@@ -182,6 +199,14 @@ export const api = {
 
   treeholeAsk: (sessionId: number, content: string) =>
     tRPCMutation<{ success: boolean; reply?: string; error?: string }>('treehole.ask', { sessionId, content }),
+
+  // 树洞状态轮询（林正树 #24）：thinking=AI 思考中 / saving=入库中 / summary 三态
+  treeholeStatus: (sessionId: number) =>
+    tRPCQuery<{
+      thinking: boolean;
+      saving: boolean;
+      summary: { status: 'idle' | 'processing' | 'done' | 'error'; summary?: string; error?: string; startedAt?: string; finishedAt?: string };
+    }>('treehole.status', { sessionId }),
 
   treeholeNewSession: () =>
     tRPCMutation<{ id: number; title: string }>('treehole.newSession', {}),

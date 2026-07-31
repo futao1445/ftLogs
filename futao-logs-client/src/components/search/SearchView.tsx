@@ -7,27 +7,64 @@ import DiaryCard from '../diary/DiaryCard';
 
 type SearchMode = 'keyword' | 'semantic';
 
-/* ─── Mode Toggle ─── */
+/* ─── 水面浮标 tab 切换（弃用压缩小气泡 · futao 修改③）─── */
 
 function ModeToggle({ mode, onChange }: { mode: SearchMode; onChange: (m: SearchMode) => void }) {
   return (
-    <div className="flex gap-1 mb-3">
+    <div
+      className="flex gap-1.5 mb-4 p-1.5 w-max rounded-2xl"
+      style={{
+        background: 'rgba(12,22,38,0.45)',
+        border: '1px solid rgba(45,74,117,0.5)',
+        backdropFilter: 'blur(12px)',
+      }}
+    >
       {([
-        { key: 'keyword' as const, label: '关键词搜索', icon: '🔍' },
-        { key: 'semantic' as const, label: '语义搜索', icon: '🧠' },
+        { key: 'keyword' as const, label: '关键词搜索' },
+        { key: 'semantic' as const, label: '语义搜索' },
       ]).map((m) => (
         <button
           key={m.key}
           onClick={() => onChange(m.key)}
-          className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200"
+          className="relative flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-normal tracking-wide transition-all duration-300 cursor-pointer"
           style={{
-            background: mode === m.key ? 'var(--accent)' : 'var(--bg-secondary)',
-            color: mode === m.key ? 'var(--accent-text)' : 'var(--text-secondary)',
-            border: '1px solid var(--border-default)',
+            color: mode === m.key ? '#e2ecfa' : '#8fa6c4',
+            fontFamily: 'inherit',
           }}
         >
-          <span>{m.icon}</span>
-          <span>{m.label}</span>
+          {/* 激活水面（大号水面片泛波光） */}
+          {mode === m.key && (
+            <span
+              className="absolute inset-0 rounded-xl"
+              style={{
+                background: 'linear-gradient(180deg, rgba(111,180,255,0.20) 0%, rgba(23,42,69,0.25) 100%)',
+                border: '1px solid rgba(111,180,255,0.3)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), 0 0 20px rgba(111,180,255,0.10)',
+              }}
+            />
+          )}
+          <span
+            className="relative inline-flex items-center justify-center w-[22px] h-[22px] rounded-full border transition-all duration-300"
+            style={{
+              borderColor: mode === m.key ? '#a8d0ff' : 'rgba(143,166,196,0.5)',
+              color: mode === m.key ? '#a8d0ff' : '#8fa6c4',
+              boxShadow: mode === m.key ? '0 0 10px rgba(168,208,255,0.3)' : 'none',
+            }}
+          >
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              {m.key === 'keyword' ? (
+                <>
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m21 21-4.3-4.3" />
+                </>
+              ) : (
+                <>
+                  <path d="M3 12h4l2-6 4 12 2-6h6" />
+                </>
+              )}
+            </svg>
+          </span>
+          <span className="relative z-10">{m.label}</span>
         </button>
       ))}
     </div>
@@ -56,7 +93,7 @@ function SemanticHint({ onFill }: { onFill: (q: string) => void }) {
   );
 }
 
-/* ─── Score Badge ─── */
+/* ─── Score Badge — 涟漪分数圈（倒映水镜：关联度 = 涟漪）─── */
 
 function ScoreBadge({ score }: { score: number }) {
   const pct = Math.round(score * 100);
@@ -73,6 +110,38 @@ function ScoreBadge({ score }: { score: number }) {
       {pct}%
     </span>
   );
+}
+
+/* 命中词高亮（倒映水镜：命中词泛波光）*/
+function HighlightHit({ text, query }: { text: string; query: string }) {
+  if (!query.trim()) return <span style={{ color: 'var(--text-secondary)' }}>{text}</span>;
+  try {
+    const parts = text.split(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
+    return (
+      <span style={{ color: 'var(--text-secondary)' }}>
+        {parts.map((part, i) =>
+          part.toLowerCase() === query.toLowerCase() ? (
+            <mark
+              key={i}
+              style={{
+                background: 'rgba(111,180,255,0.14)',
+                color: '#a8d0ff',
+                padding: '0 3px',
+                borderRadius: 4,
+                fontWeight: 500,
+              }}
+            >
+              {part}
+            </mark>
+          ) : (
+            part
+          )
+        )}
+      </span>
+    );
+  } catch {
+    return <span style={{ color: 'var(--text-secondary)' }}>{text}</span>;
+  }
 }
 
 /* ─── Main SearchView ─── */
@@ -105,9 +174,8 @@ export default function SearchView({ onEditDiary, onDeleteDiary, onOpenSettings 
         score: item.score,
       }));
       setSemanticResults(items);
-      // 如果后端回退到关键词搜索，显示引导提示
-      if (result.note) {
-        setError('💡 ' + result.note + '。如需真正的语义搜索，请到设置中使用 OpenAI / 阿里云等支持 embeddings 的平台');
+      if (result.error) {
+        setError('💡 ' + result.error);
       } else if (!items.length) {
         setError('没有找到语义匹配的日记，换个说法试试');
       }
@@ -120,13 +188,28 @@ export default function SearchView({ onEditDiary, onDeleteDiary, onOpenSettings 
     }
   }, []);
 
-  /* ── Keyword search (debounced) ── */
+  /* ── Keyword tab：默认全量日志浏览；输入关键词 → 真实筛选（futao 修改⑤）── */
+  const loadAllLogs = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const result = await api.diaryList({ page: 1, size: 50 });
+      setKeywordResults(result.items);
+    } catch {
+      setKeywordResults([]);
+      setError('加载日记失败，请检查网络');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (mode !== 'keyword') return;
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     setError('');
     if (!query.trim()) {
-      setKeywordResults([]);
+      // 默认态 = 全量日志（完整浏览），不做关键词筛选
+      loadAllLogs();
       return;
     }
     searchTimerRef.current = setTimeout(async () => {
@@ -134,7 +217,7 @@ export default function SearchView({ onEditDiary, onDeleteDiary, onOpenSettings 
       try {
         const result = await api.diaryList({ searchText: query, page: 1, size: 50 });
         setKeywordResults(result.items);
-        setError(result.items.length ? '' : '没找到匹配的日记');
+        setError(result.items.length ? '' : '没有找到匹配的回忆');
       } catch {
         setKeywordResults([]);
       } finally {
@@ -142,7 +225,7 @@ export default function SearchView({ onEditDiary, onDeleteDiary, onOpenSettings 
       }
     }, 300);
     return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
-  }, [query, mode]);
+  }, [query, mode, loadAllLogs]);
 
   /* ── Shared input ── */
   const handleSearch = useCallback(() => {
@@ -157,34 +240,54 @@ export default function SearchView({ onEditDiary, onDeleteDiary, onOpenSettings 
   const handleHintClick = useCallback((hint: string) => {
     setQuery(hint);
     if (mode === 'semantic') doSemanticSearch(hint);
-    else {
-      // keyword: debounce will pick it up
-    }
   }, [mode, doSemanticSearch]);
 
+  const hasResults = (mode === 'keyword' ? keywordResults.length : semanticResults.length) > 0;
+
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-12 py-4">
+      {/* ═══ 页头大标题（futao 修改③：搜索要加大标题）═══ */}
+      <div className="flex items-end justify-between mb-4" style={{ paddingTop: 12 }}>
+        <div style={{ fontSize: 30, fontWeight: 300, letterSpacing: 3, color: '#e2ecfa' }}>
+          寻找<span style={{ color: '#a8d0ff' }}>·</span><span style={{ color: '#a8d0ff', fontWeight: 400 }}>水面之下</span>
+        </div>
+        <div style={{ fontSize: 11, letterSpacing: 4, color: '#8fa6c4', textTransform: 'uppercase' }}>
+          Night Pond Search
+        </div>
+      </div>
+
       {/* Mode toggle */}
       <ModeToggle mode={mode} onChange={setMode} />
 
-      {/* Search input area */}
+      {/* ═══ 倒映水镜 · 搜索框 ═══ */}
       <div
-        className="flex items-center gap-2 px-4 h-10 rounded-xl transition-colors duration-150 mb-3"
+        className="flex items-center gap-2 px-4 h-11 rounded-2xl transition-all duration-200 mb-3 search-mirror"
         style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-default)',
+          background: 'rgba(23,42,69,0.55)',
+          border: '1px solid rgba(111,180,255,0.25)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 0 30px rgba(111,180,255,0.06)',
+          backdropFilter: 'blur(16px)',
         }}
       >
-        <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-tertiary)' }}>
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
+        {/* 镜面放大镜 */}
+        <span
+          className="w-3.5 h-3.5 rounded-full flex-shrink-0 relative"
+          style={{ border: '2px solid #a8d0ff' }}
+        >
+          <span
+            className="absolute"
+            style={{
+              width: 7, height: 2, background: '#a8d0ff',
+              transform: 'rotate(45deg)', right: -5, bottom: -3, borderRadius: 2,
+            }}
+          />
+        </span>
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={mode === 'keyword' ? '搜索日记内容...' : '用自然语言搜索，如「上周开心的事」'}
+          placeholder={mode === 'keyword' ? '向水面投一颗石子… 如「同事」' : '用自然语言搜索，如「上周开心的事」'}
           className="flex-1 bg-transparent text-sm outline-none"
           style={{ color: 'var(--text-primary)' }}
         />
@@ -192,19 +295,20 @@ export default function SearchView({ onEditDiary, onDeleteDiary, onOpenSettings 
           <button
             onClick={handleSearch}
             disabled={loading || !query.trim()}
-            className="px-3 py-1 rounded-lg text-xs font-medium transition-all"
+            className="px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer"
             style={{
-              background: 'var(--accent)',
-              color: 'var(--accent-text)',
+              background: 'linear-gradient(135deg, #6fb4ff, #a8d0ff)',
+              color: '#0a1626',
+              boxShadow: '0 4px 16px rgba(111,180,255,0.25)',
               opacity: loading || !query.trim() ? 0.5 : 1,
             }}
           >
-            {loading ? '搜索中...' : '搜索'}
+            {loading ? '泛起微波…' : '投入水中'}
           </button>
         )}
         {query && (
           <button
-            onClick={() => { setQuery(''); setError(''); setKeywordResults([]); setSemanticResults([]); }}
+            onClick={() => { setQuery(''); setError(''); setSemanticResults([]); }}
             className="p-0.5 rounded-full transition-colors hover:bg-white/5"
             style={{ color: 'var(--text-tertiary)' }}
           >
@@ -221,10 +325,19 @@ export default function SearchView({ onEditDiary, onDeleteDiary, onOpenSettings 
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-8">
-          <div
-            className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }}
-          />
+          {/* 水面呼吸点 */}
+          <div className="flex gap-1.5">
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className="w-1.5 h-1.5 rounded-full"
+                style={{
+                  background: '#4a6a94',
+                  animation: `pond-pulse 2s ease-in-out ${i * 0.3}s infinite`,
+                }}
+              />
+            ))}
+          </div>
         </div>
       )}
 
@@ -275,22 +388,44 @@ export default function SearchView({ onEditDiary, onDeleteDiary, onOpenSettings 
 
       {/* Idle state */}
       {!loading && !error && query && mode === 'keyword' && keywordResults.length === 0 && (
-        <p className="text-xs text-center py-8" style={{ color: 'var(--text-tertiary)' }}>输入关键词搜索日记内容</p>
+        <p className="text-xs text-center py-8" style={{ color: 'var(--text-tertiary)' }}>
+          {query.trim() ? '没有找到匹配的回忆' : '输入关键词，回忆会从水底浮起'}
+        </p>
       )}
 
-      {/* Keyword results */}
+      {/* ═══ 关键词结果 ═══
+          futao 修改⑤-4：默认态与命中态统一用设计稿浮起卡（金色日期标签+水纹+底部水雾），不再用普通日记卡 */}
       {!loading && mode === 'keyword' && keywordResults.map((d) => (
-        <div key={d.id} className="mb-3">
-          <DiaryCard diary={d} onEdit={onEditDiary ? () => onEditDiary(d) : undefined} onDelete={onDeleteDiary} />
-        </div>
+        <SearchHitCard key={d.id} diary={d} query={query} onEdit={onEditDiary} onDelete={onDeleteDiary} />
       ))}
 
-      {/* Semantic results */}
+      {/* ═══ 语义结果 — 水底浮起的回忆 ═══ */}
       {!loading && mode === 'semantic' && semanticResults.map((r) => (
-        <SemanticHitCard key={r.diary.id} hit={r} onEdit={onEditDiary} onDelete={onDeleteDiary} />
+        <SemanticHitCard key={r.diary.id} hit={r} onEdit={onEditDiary} onDelete={onDeleteDiary} query={query} />
       ))}
+
+      {/* 结果计数 */}
+      {!loading && query.trim() && hasResults && (
+        <p className="text-[11px] text-center mt-4 mb-2" style={{ color: 'var(--text-tertiary)' }}>
+          {mode === 'keyword' ? `找到 ${keywordResults.length} 段回忆` : `浮起 ${semanticResults.length} 段回忆`}
+        </p>
+      )}
     </div>
   );
+}
+
+/* ─── 金色日期标签（futao 修改③：搜索页所有内容标签统一设计稿样式）─── */
+
+const MONTHS_EN = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+/** date 可能是 "YYYY-MM-DD" 或 ISO 时间戳 → 统一取前 10 位解析成 "JUL 06" */
+function goldDateLabel(dateStr: string): string {
+  const ymd = (dateStr || '').slice(0, 10).split('-').map(Number);
+  if (ymd.length === 3 && ymd[0] && ymd[1] && ymd[2]) {
+    const [, mm, dd] = ymd;
+    if (mm >= 1 && mm <= 12) return `${MONTHS_EN[mm - 1]} ${String(dd).padStart(2, '0')}`;
+  }
+  return '';
 }
 
 /* ─── Semantic Hit Card ─── */
@@ -299,17 +434,29 @@ function SemanticHitCard({
   hit,
   onEdit,
   onDelete,
+  query,
 }: {
   hit: SemanticSearchResult;
   onEdit?: (d: Diary) => void;
   onDelete?: (id: number) => void;
+  query: string;
 }) {
+  const dateLabel = goldDateLabel(hit.diary.date);
   return (
     <div className="relative mb-3">
       {/* Score badge */}
       <div className="absolute top-2 right-2 z-10">
         <ScoreBadge score={hit.score} />
       </div>
+      {/* 统一金色日期标签（设计稿样式） */}
+      {dateLabel && (
+        <div
+          className="mb-1.5"
+          style={{ fontSize: 10, color: '#ffd9a0', letterSpacing: 1, fontWeight: 400 }}
+        >
+          {dateLabel}
+        </div>
+      )}
       <DiaryCard diary={hit.diary} onEdit={onEdit ? () => onEdit(hit.diary) : undefined} onDelete={onDelete} />
       {hit.matchedContent && (
         <div
@@ -317,17 +464,110 @@ function SemanticHitCard({
           style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-default)' }}
         >
           <span className="font-medium" style={{ color: 'var(--text-tertiary)' }}>匹配段落：</span>
-          <HighlightText text={hit.matchedContent} />
+          <HighlightHit text={hit.matchedContent} query={query} />
         </div>
       )}
     </div>
   );
 }
 
-/* ─── Text Highlighter ─── */
+/* ─── 关键词命中浮起卡（futao 修改⑤：按设计稿标签重做）───
+   复刻方向稿 pond-pages-direction.html 的 .search-hit：
+   金色日期标签 + 命中词波光高亮 + swirl 水纹 + 底部水雾渐变 */
 
-function HighlightText({ text }: { text: string }) {
-  // Simple heuristic: accent-color the first clause or key terms
-  // Actual backend will provide the highlighted context
-  return <span style={{ color: 'var(--text-secondary)' }}>{text}</span>;
+function SearchHitCard({
+  diary,
+  query,
+  onEdit,
+  onDelete,
+}: {
+  diary: Diary;
+  query: string;
+  onEdit?: (d: Diary) => void;
+  onDelete?: (id: number) => void;
+}) {
+  const dateLabel = goldDateLabel(diary.date);
+  const content = diary.content || '';
+  const plain = content.replace(/[#*`\[\]>|~]/g, '');
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete?.(diary.id);
+  };
+
+  return (
+    <div
+      className="search-hit-card group relative mb-3 cursor-pointer rounded-2xl overflow-hidden"
+      onClick={() => onEdit?.(diary)}
+      style={{
+        background: 'rgba(23,42,69,0.5)',
+        border: '1px solid rgba(45,74,117,0.5)',
+        transition: 'all 0.2s cubic-bezier(0.34,1.56,0.64,1)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'rgba(111,180,255,0.4)';
+        e.currentTarget.style.transform = 'translateY(-3px)';
+        e.currentTarget.style.boxShadow = '0 8px 24px rgba(2,8,20,0.45)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'rgba(45,74,117,0.5)';
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = 'none';
+      }}
+    >
+      {/* swirl 涟漪装饰（方向稿 .search-hit .swirl） */}
+      <span
+        className="absolute rounded-full pointer-events-none"
+        style={{ right: -14, top: -14, width: 60, height: 60, border: '1.5px solid rgba(168,208,255,0.25)' }}
+      />
+      <span
+        className="absolute rounded-full pointer-events-none"
+        style={{ right: 6, top: 4, width: 40, height: 40, opacity: 0.7, border: '1.5px solid rgba(168,208,255,0.25)' }}
+      />
+      <div className="relative px-4 py-3">
+        {/* 金色日期标签（方向稿 .search-hit .date：10px gold 字距 1px） */}
+        {dateLabel && (
+          <div
+            className="mb-1.5"
+            style={{ fontSize: 10, color: '#ffd9a0', letterSpacing: 1, fontWeight: 400 }}
+          >
+            {dateLabel}
+          </div>
+        )}
+        {/* 命中正文 · 波光高亮（方向稿 .search-hit .txt em） */}
+        <div
+          className="text-xs leading-relaxed"
+          style={{ color: '#e2ecfa', lineHeight: 1.7, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+        >
+          <HighlightHit text={plain.slice(0, 140)} query={query} />
+        </div>
+      </div>
+      {/* 底部水雾渐变（方向稿 .search-hit::after） */}
+      <span
+        className="absolute pointer-events-none"
+        style={{
+          left: 0, right: 0, bottom: 0, height: '40%',
+          background: 'linear-gradient(180deg, transparent, rgba(12,22,38,0.5))',
+        }}
+      />
+      {/* 编辑入口 hover 浮现 */}
+      <span
+        className="absolute right-3 bottom-2 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{ color: '#8fa6c4' }}
+      >
+        打开 ↦
+      </span>
+      {onDelete && (
+        <span
+          onClick={handleDelete}
+          className="absolute right-3 top-2 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          style={{ color: '#8fa6c4' }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = '#ffd9a0'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = '#8fa6c4'; }}
+        >
+          删除
+        </span>
+      )}
+    </div>
+  );
 }
