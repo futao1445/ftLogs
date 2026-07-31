@@ -186,14 +186,18 @@ export default function HomePage() {
 
   // ─── Delete diary ───
   const [pendingDelete, setPendingDelete] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false); // ⑧ 删除中反馈
   const handleDelete = async (id: number) => {
+    setDeleting(true); // ⑧ 删除中：文本 + UI 反馈
     try {
       await api.diaryDelete([id]);
-      loadTimeline(1);
-      if (activeTab === 'calendar') loadCalendar(calYear, calMonth);
+      await loadTimeline(1);
+      if (activeTab === 'calendar') await loadCalendar(calYear, calMonth);
+      showToast('🗑️ 已沉入水底，这条回忆删掉了', 'success'); // ⑧ 删除成功反馈
     } catch {
-      showToast('删除失败，请重试');
+      showToast('删除失败，请重试'); // 删除失败反馈
     }
+    setDeleting(false);
   };
 
   // ─── Tag filter handler ───
@@ -370,30 +374,53 @@ export default function HomePage() {
         />
       )}
 
-      {/* Toast for errors */}
+      {/* Toast（futao ⑧：删除成功/失败反馈，NIGHT POND 玻璃浮标样式） */}
       {toast && (
         <div
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm shadow-lg"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full text-sm shadow-lg flex items-center gap-2"
           style={{
-            background: toast.type === 'error' ? '#ef4444' : 'rgba(111,180,255,0.85)',
-            color: '#fff',
+            background: toast.type === 'error'
+              ? 'rgba(239,68,68,0.9)'
+              : 'rgba(23,42,69,0.9)',
+            border: toast.type === 'error'
+              ? '1px solid rgba(239,68,68,0.5)'
+              : '1px solid rgba(111,180,255,0.4)',
+            color: toast.type === 'error' ? '#fff' : '#a8d0ff',
+            backdropFilter: 'blur(20px) saturate(150%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12), 0 8px 28px rgba(2,8,20,0.5)',
           }}
         >
-          {toast.msg}
+          {toast.type === 'success' && (
+            <span
+              className="inline-block rounded-full"
+              style={{
+                width: 8,
+                height: 8,
+                background: '#ffd9a0',
+                boxShadow: '0 0 8px rgba(255,217,160,0.8)',
+              }}
+            />
+          )}
+          <span>{toast.msg}</span>
         </div>
       )}
 
-      {/* ─── NIGHT POND 删除确认弹窗（futao 第六轮①：专属设计替换原生 confirm）─── */}
+      {/* ─── NIGHT POND 删除确认弹窗（futao 第六轮①：专属设计替换原生 confirm）───
+          futao ⑧：删除中→成功完整反馈。删除中弹窗保持打开显示 busy（正在沉入水底…），成功后关闭+toast */}
       <PondConfirmModal
         open={pendingDelete !== null}
         title="沉入水底？"
         message="这篇日记删除后无法找回，确定要让它沉入水底吗？"
         confirmText="确认删除"
         cancelText="再想想"
-        onCancel={() => setPendingDelete(null)}
+        busy={deleting}
+        busyText="正在沉入水底…"
+        onCancel={() => { if (!deleting) setPendingDelete(null); }}
         onConfirm={() => {
-          if (pendingDelete !== null) handleDelete(pendingDelete);
-          setPendingDelete(null);
+          if (pendingDelete !== null && !deleting) {
+            handleDelete(pendingDelete).then(() => setPendingDelete(null));
+          }
         }}
       />
     </PageShell>

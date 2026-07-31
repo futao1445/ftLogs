@@ -271,6 +271,21 @@
 .cal-stem.on .cal-stem-label { color: #ffd9a0; }
 
 /* ═══ 涟漪页 · v3（futao 确认：参考图气质 + 3D 纵深 + 大水波动态荡漾）═══ */
+/* NIGHT POND 滚动条（futao 第3次打回④：聊天窗+会话列表两条滚动条贴合主题色，非默认灰）*/
+.pond-scroll {
+  scrollbar-width: thin;               /* Firefox */
+  scrollbar-color: rgba(168,208,255,0.30) transparent;
+}
+.pond-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.pond-scroll::-webkit-scrollbar-track { background: transparent; }
+.pond-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(168,208,255,0.35), rgba(111,180,255,0.22));
+  border-radius: 999px;
+}
+.pond-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(168,208,255,0.55), rgba(111,180,255,0.35));
+}
+.pond-scroll::-webkit-scrollbar-corner { background: transparent; }
 /* L1 深水底：铺满全页的氛围光 */
 .pond-deep-layer {
   position: absolute; inset: 0; z-index: 0; pointer-events: none;
@@ -279,57 +294,65 @@
     linear-gradient(180deg, transparent 0%, rgba(12,22,38,0.6) 85%);
 }
 
-/* L2 大水波：聊天窗「下层」水面层，四环大而疏，主体形状（清晰可见、缓缓荡漾）*/
+/* L2 大水波：叶子(聊天窗)落在水上，涟漪从入水点向四周泛开（futao ①精确语义 19:30「聊天窗口就像是一片叶子，落在水上，泛起涟漪」）
+   聊天窗底缘=入水点（涟漪中心，被聊天窗盖住一部分），水面是实心椭圆（明显亮于深底），涟漪环加宽向两侧泛开 */
 .pond-big-wave {
   position: absolute;
   left: 50%;
-  margin-left: -450px;
-  top: calc(100% - 150px); /* 从聊天窗底缘（水线）向下泛开 */
-  width: 900px;
-  height: 420px;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(1400px, 200%);
+  height: 320px;
   pointer-events: none;
-  z-index: 1;
+  z-index: 0;
   background:
-    radial-gradient(ellipse at 50% 0%, transparent 0 90px, rgba(168,208,255,0.30) 94px, transparent 102px),
-    radial-gradient(ellipse at 50% 0%, transparent 0 190px, rgba(111,180,255,0.24) 195px, transparent 206px),
-    radial-gradient(ellipse at 50% 0%, transparent 0 300px, rgba(111,180,255,0.17) 305px, transparent 320px),
-    radial-gradient(ellipse at 50% 0%, transparent 0 410px, rgba(74,106,148,0.13) 415px, transparent 430px);
+    /* 实心水面：椭圆水面圆心=水线（叶子入水点），中心不透明（真正亮于深底），向下渐入深水 */
+    radial-gradient(ellipse at 50% 170px, #36567f 0%, #36567f 18%, rgba(51,85,128,0.92) 38%, rgba(33,57,92,0.78) 58%, rgba(23,42,69,0.52) 78%, rgba(12,22,38,0) 100%),
+    /* 水光：入水点光晕（叶子与水面接触处一抹亮光） */
+    radial-gradient(ellipse at 50% 170px, rgba(168,208,255,0.38) 0%, rgba(168,208,255,0.16) 42%, transparent 64%),
+    /* 涟漪环：从入水点向外清晰泛开（粗亮 band） */
+    radial-gradient(ellipse at 50% 170px, transparent 0 74px, rgba(168,208,255,0.50) 80px, rgba(168,208,255,0.26) 92px, transparent 108px),
+    radial-gradient(ellipse at 50% 170px, transparent 0 156px, rgba(111,180,255,0.42) 162px, rgba(111,180,255,0.20) 178px, transparent 200px),
+    radial-gradient(ellipse at 50% 170px, transparent 0 248px, rgba(111,180,255,0.34) 254px, rgba(111,180,255,0.15) 274px, transparent 304px),
+    radial-gradient(ellipse at 50% 170px, transparent 0 360px, rgba(74,106,148,0.26) 366px, rgba(74,106,148,0.11) 390px, transparent 428px);
   animation: pond-big-sway 8s ease-in-out infinite;
 }
 /* 主体缓慢荡漾：轻缩放 + 微光呼吸（节奏静）*/
 @keyframes pond-big-sway {
-  0%, 100% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.03); opacity: 1; }
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.9; }
+  50% { transform: translateX(-50%) scale(1.02); opacity: 1; }
 }
 
-/* 荡漾环：涟漪从水线持续向外泛开再淡出（futao「大水波要动态荡漾」）*/
+/* 荡漾环：涟漪从入水点持续向外泛开再淡出（futao「大水波要动态荡漾」）*/
 @keyframes pond-wave-drift {
-  0%   { transform: scale(0.35); opacity: 0; }
-  25%  { opacity: 0.8; }
-  75%  { opacity: 0.25; }
-  100% { transform: scale(1.3); opacity: 0; }
+  0%   { transform: translateX(-50%) scale(0.5); opacity: 0; }
+  25%  { opacity: 0.7; }
+  75%  { opacity: 0.2; }
+  100% { transform: translateX(-50%) scale(1.3); opacity: 0; }
 }
 .pond-wave-drift {
   position: absolute;
   left: 50%;
-  margin-left: -450px;
-  top: calc(100% - 150px); /* 从水线开始，向下泛开 */
-  width: 900px;
-  height: 320px;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(1500px, 200%);
+  height: 250px;
   transform-origin: 50% 0%;
   pointer-events: none;
+  z-index: 0;
   animation: pond-wave-drift 10s cubic-bezier(0.42, 0, 0.2, 1) infinite;
 }
-.pond-wave-drift.d1 { background: radial-gradient(ellipse at 50% 0%, transparent 0 128px, rgba(168,208,255,0.34) 132px, transparent 140px); }
-.pond-wave-drift.d2 { animation-delay: 3.3s; background: radial-gradient(ellipse at 50% 0%, transparent 0 178px, rgba(111,180,255,0.26) 182px, transparent 192px); }
-.pond-wave-drift.d3 { animation-delay: 6.6s; background: radial-gradient(ellipse at 50% 0%, transparent 0 228px, rgba(111,180,255,0.20) 232px, transparent 244px); }
+.pond-wave-drift.d1 { background: radial-gradient(ellipse at 50% 0%, transparent 0 168px, rgba(168,208,255,0.32) 174px, rgba(168,208,255,0.10) 184px, transparent 196px); }
+.pond-wave-drift.d2 { animation-delay: 3.3s; background: radial-gradient(ellipse at 50% 0%, transparent 0 312px, rgba(111,180,255,0.26) 318px, rgba(111,180,255,0.08) 332px, transparent 348px); }
+.pond-wave-drift.d3 { animation-delay: 6.6s; background: radial-gradient(ellipse at 50% 0%, transparent 0 470px, rgba(111,180,255,0.20) 476px, rgba(111,180,255,0.06) 494px, transparent 514px); }
 
-/* 水面反光带：聊天窗与下层水波之间 1px 细光（聊天窗立于水上的纵深感证据）*/
+/* 水面反光带：叶子(聊天窗)入水线 —— 聊天窗底缘一道细光，标记「落水点」 */
 .pond-waterline {
   position: absolute;
-  left: 14%; right: 14%; bottom: 150px; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(168,208,255,0.30), transparent);
-  opacity: 0.5; pointer-events: none;
+  left: 4%; right: 4%; bottom: 150px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(168,208,255,0.40), transparent);
+  opacity: 0.6; pointer-events: none;
+  z-index: 1;
 }
 
 /* L4 装饰元素（散落四周留白，alpha 低退后不抢，参考图气质）
@@ -346,7 +369,11 @@
   font-size: 9px; letter-spacing: 4px; color: #ffd9a0; opacity: 0.75; margin-bottom: 10px;
 }
 .pond-poem {
-  font-size: 12px; line-height: 2.1; color: #8fa6c4;
+  font-size: 12px; line-height: 2; color: #8fa6c4;
+  text-align: center;
+  white-space: nowrap;
+  /* 立在水面上的小字，微光 */
+  text-shadow: 0 0 18px rgba(12,22,38,0.6);
 }
 .pond-poem b { color: #a8d0ff; font-weight: 400; text-shadow: 0 0 14px rgba(168,208,255,0.4); }
 .pond-guide-tag {
@@ -360,7 +387,7 @@
 .pond-guide-shuffle { opacity: 0.55; }
 .pond-guide-shuffle:hover { opacity: 1; }
 .pond-rings {
-  position: fixed; right: -30px; bottom: -40px; width: 330px; height: 330px; z-index: 20; pointer-events: none;
+  position: fixed; right: -30px; bottom: -40px; width: 330px; height: 330px; z-index: 2; pointer-events: none;
   background:
     radial-gradient(circle, transparent 0 42px, rgba(168,208,255,0.16) 44px, transparent 48px),
     radial-gradient(circle, transparent 0 98px, rgba(168,208,255,0.13) 100px, transparent 105px),
@@ -369,7 +396,7 @@
   animation: pond-rings-breathe 10s ease-in-out infinite;
 }
 .pond-moon {
-  position: fixed; width: 56px; height: 56px; z-index: 20; pointer-events: none;
+  position: fixed; width: 56px; height: 56px; z-index: 2; pointer-events: none;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #ffd9a0, #ffd9a0 38%, transparent 68%);
   box-shadow: 0 0 46px rgba(255,217,160,0.4);

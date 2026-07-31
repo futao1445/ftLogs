@@ -70,6 +70,10 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
   const rippleIdRef = useRef(0);
+  // ⑥ 批量选择/删除（futao 第3次打回⑥：涟漪对话+知识库窗口支持批量选择和删除）
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [batchDeleting, setBatchDeleting] = useState(false); // ⑧ 批量删除中反馈
 
   /* ── 水波涟漪：点击处扩散 + 月金闪光 ── */
   const handleRipple = useCallback((e: React.PointerEvent) => {
@@ -245,6 +249,47 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
     setDeleting(null);
   }, [activeSessionId, showToast]);
 
+  /* ── ⑥ 批量选择/删除对话 ── */
+  const toggleSelectMode = useCallback(() => {
+    setSelectMode(prev => {
+      if (prev) setSelectedIds(new Set());
+      return !prev;
+    });
+  }, []);
+  const toggleSelect = useCallback((id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+  const selectAll = useCallback(() => {
+    setSelectedIds(prev => {
+      if (prev.size === sessions.length) return new Set();
+      return new Set(sessions.map(s => s.id));
+    });
+  }, [sessions]);
+  const handleBatchDelete = useCallback(async () => {
+    if (selectedIds.size === 0) return;
+    setBatchDeleting(true);
+    try {
+      await api.treeholeDeleteSession([...selectedIds]);
+      setSessions(prev => prev.filter(s => !selectedIds.has(s.id)));
+      if (activeSessionId !== null && selectedIds.has(activeSessionId)) {
+        setActiveSessionId(null);
+        setMessages([]);
+        setShowGuide(true);
+      }
+      setSelectedIds(new Set());
+      setSelectMode(false);
+      showToast(`🗑️ 已沉入水底，删除 ${selectedIds.size} 段对话`);
+    } catch {
+      showToast('批量删除失败');
+    }
+    setBatchDeleting(false);
+  }, [selectedIds, activeSessionId, showToast]);
+
   /* ── New session ── */
   const handleNewSession = useCallback(async () => {
     try {
@@ -367,33 +412,79 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
           </motion.button>
 
           <div className="p-2 border-b mt-2" style={{ borderColor: 'var(--border-default)' }}>
-            <motion.button
-              onClick={handleNewSession}
-              className="w-full py-1.5 rounded-2xl text-xs font-medium cursor-pointer relative overflow-visible"
-              style={{
-                background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.25) 0%, rgba(111,180,255,0.08) 60%, rgba(111,180,255,0.02) 100%)',
-                color: '#6fb4ff',
-                border: '1px solid rgba(111,180,255,0.18)',
-                boxShadow: '0 0 4px rgba(111,180,255,0.08)',
-              }}
-              whileHover={{
-                background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.40) 0%, rgba(111,180,255,0.15) 50%, rgba(111,180,255,0.05) 100%)',
-                color: '#a8d0ff',
-                boxShadow: '0 0 20px rgba(111,180,255,0.25), 0 0 40px rgba(111,180,255,0.10)',
-              }}
-              whileTap={{
-                scale: 0.95,
-                background: 'radial-gradient(circle at 50% 50%, rgba(255,217,160,0.35) 0%, rgba(111,180,255,0.20) 50%, rgba(111,180,255,0.08) 100%)',
-                color: '#ffd9a0',
-                borderColor: 'rgba(255,217,160,0.3)',
-                boxShadow: '0 0 40px rgba(255,217,160,0.25), 0 0 80px rgba(111,180,255,0.15)',
-              }}
-              transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-            >
-              ＋ 新对话
-            </motion.button>
+            <div className="flex items-center gap-1.5">
+              <motion.button
+                onClick={handleNewSession}
+                className="flex-1 py-1.5 rounded-2xl text-xs font-medium cursor-pointer relative overflow-visible"
+                style={{
+                  background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.25) 0%, rgba(111,180,255,0.08) 60%, rgba(111,180,255,0.02) 100%)',
+                  color: '#6fb4ff',
+                  border: '1px solid rgba(111,180,255,0.18)',
+                  boxShadow: '0 0 4px rgba(111,180,255,0.08)',
+                }}
+                whileHover={{
+                  background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.40) 0%, rgba(111,180,255,0.15) 50%, rgba(111,180,255,0.05) 100%)',
+                  color: '#a8d0ff',
+                  boxShadow: '0 0 20px rgba(111,180,255,0.25), 0 0 40px rgba(111,180,255,0.10)',
+                }}
+                whileTap={{
+                  scale: 0.95,
+                  background: 'radial-gradient(circle at 50% 50%, rgba(255,217,160,0.35) 0%, rgba(111,180,255,0.20) 50%, rgba(111,180,255,0.08) 100%)',
+                  color: '#ffd9a0',
+                  borderColor: 'rgba(255,217,160,0.3)',
+                  boxShadow: '0 0 40px rgba(255,217,160,0.25), 0 0 80px rgba(111,180,255,0.15)',
+                }}
+                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+              >
+                ＋ 新对话
+              </motion.button>
+              {/* ⑥ 批量选择模式切换 */}
+              <motion.button
+                onClick={toggleSelectMode}
+                className={`px-2 py-1.5 rounded-2xl text-xs cursor-pointer ${selectMode ? 'ring-1' : ''}`}
+                style={{
+                  background: selectMode ? 'rgba(255,217,160,0.12)' : 'rgba(111,180,255,0.06)',
+                  color: selectMode ? '#ffd9a0' : '#8fa6c4',
+                  border: `1px solid ${selectMode ? 'rgba(255,217,160,0.35)' : 'rgba(74,106,148,0.4)'}`,
+                }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                title="批量选择/删除"
+              >
+                {selectMode ? '✓ 选择中' : '⧉ 批量'}
+              </motion.button>
+            </div>
+            {/* ⑥ 批量操作栏（选择模式下显示） */}
+            {selectMode && (
+              <div className="flex items-center justify-between mt-2 px-1">
+                <motion.button
+                  onClick={selectAll}
+                  className="text-[11px] cursor-pointer"
+                  style={{ color: '#a8d0ff' }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {selectedIds.size === sessions.length && sessions.length > 0 ? '取消全选' : '全选'}
+                </motion.button>
+                <span className="text-[11px]" style={{ color: '#ffd9a0' }}>
+                  已选 {selectedIds.size}
+                </span>
+                <motion.button
+                  onClick={handleBatchDelete}
+                  disabled={selectedIds.size === 0 || batchDeleting}
+                  className="text-[11px] px-2 py-1 rounded-lg cursor-pointer disabled:opacity-30 flex items-center gap-1"
+                  style={{
+                    color: selectedIds.size > 0 ? '#ef4444' : 'var(--text-tertiary)',
+                    border: selectedIds.size > 0 ? '1px solid rgba(239,68,68,0.4)' : '1px solid var(--border-default)',
+                    background: selectedIds.size > 0 ? 'rgba(239,68,68,0.08)' : 'transparent',
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {batchDeleting ? '删除中…' : '删除所选'}
+                </motion.button>
+              </div>
+            )}
           </div>
-          <div className="flex-1 overflow-y-auto p-1.5 space-y-1">
+          <div className="flex-1 overflow-y-auto p-1.5 space-y-1 pond-scroll">
             <AnimatePresence>
               {sessions.map(s => (
                 <motion.div
@@ -405,19 +496,42 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
                   className="group relative"
                 >
                   <button
-                    onClick={() => handleSelectSession(s.id)}
+                    onClick={() => selectMode ? toggleSelect(s.id) : handleSelectSession(s.id)}
                     className="w-full text-left px-2 py-2 rounded-lg text-xs transition-all pr-14 cursor-pointer"
                     style={{
-                      background: activeSessionId === s.id ? 'var(--accent-soft)' : 'transparent',
-                      color: activeSessionId === s.id ? 'var(--accent)' : 'var(--text-secondary)',
+                      background: selectMode
+                        ? (selectedIds.has(s.id) ? 'rgba(255,217,160,0.10)' : 'transparent')
+                        : (activeSessionId === s.id ? 'var(--accent-soft)' : 'transparent'),
+                      color: selectMode
+                        ? (selectedIds.has(s.id) ? '#ffd9a0' : 'var(--text-secondary)')
+                        : (activeSessionId === s.id ? 'var(--accent)' : 'var(--text-secondary)'),
+                      border: selectedIds.has(s.id) ? '1px solid rgba(255,217,160,0.3)' : '1px solid transparent',
                     }}
-                    onMouseEnter={e => { if (activeSessionId !== s.id) e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
-                    onMouseLeave={e => { if (activeSessionId !== s.id) e.currentTarget.style.background = 'transparent'; }}
+                    onMouseEnter={e => { if (!selectMode && activeSessionId !== s.id) e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
+                    onMouseLeave={e => { if (!selectMode && activeSessionId !== s.id) e.currentTarget.style.background = 'transparent'; }}
                   >
-                    <div className="truncate font-medium">{s.title}</div>
-                    <div style={{ color: 'var(--text-tertiary)', fontSize: 10 }}>{sessionTime(s.updatedAt)}</div>
+                    <div className="flex items-center gap-1.5">
+                      {/* ⑥ 选择模式复选框 */}
+                      {selectMode && (
+                        <span
+                          className="flex-shrink-0 w-3.5 h-3.5 rounded border flex items-center justify-center text-[9px]"
+                          style={{
+                            borderColor: selectedIds.has(s.id) ? '#ffd9a0' : 'rgba(74,106,148,0.6)',
+                            background: selectedIds.has(s.id) ? 'rgba(255,217,160,0.2)' : 'transparent',
+                            color: '#ffd9a0',
+                          }}
+                        >
+                          {selectedIds.has(s.id) ? '✓' : ''}
+                        </span>
+                      )}
+                      <div className="min-w-0">
+                        <div className="truncate font-medium">{s.title}</div>
+                        <div style={{ color: 'var(--text-tertiary)', fontSize: 10 }}>{sessionTime(s.updatedAt)}</div>
+                      </div>
+                    </div>
                   </button>
-                  <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {!selectMode && (
+                    <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <motion.button
                       onClick={() => handleSaveSession(s.id)}
                       disabled={savingId === s.id}
@@ -507,7 +621,8 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
                         />
                       </motion.div>
                     </motion.button>
-                  </div>
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -520,10 +635,11 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
         </div>
 
         {/* ─── Right: Chat area（L3 聊天窗：浮在 L2 大水波上，唯一焦点）─── */}
-        <div className="relative flex-1 min-w-0">
-          {/* 水面反光带：聊天窗底缘与下层水波之间的细光 */}
+        <div className="relative flex-1 min-w-0 flex flex-col">
+          {/* 水面反光带：聊天窗底缘与下层水波交界处的细光 */}
           <div className="pond-waterline" />
-          {/* L2 大水波（下层水面层）：四环主体 + 动态荡漾环（futao「大水波要动态荡漾」） */}
+          {/* L2 大水波（聊天窗「下层」水面层）：实体水面 + 波纹环 + 动态荡漾环
+              futao ①大水波在聊天窗下完整可见（不再是只有波纹）+「大水波要动态荡漾」*/}
           <div className="pond-big-wave" />
           <div className="pond-wave-drift d1" />
           <div className="pond-wave-drift d2" />
@@ -531,9 +647,14 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
           <div
             className="relative z-10 rounded-xl overflow-hidden flex flex-col"
             style={{
-              height: 'calc(100% - 150px)', /* 底部留 150px 水层，大水波从框下泛开 */
+              /* 叶子(聊天窗)落在水上：纵向完整（futao ③）+ 底部留水层让涟漪泛开（futao ①叶子落水）
+                 mx-auto 居中，两侧留白放装饰（futao ⑦ 背景文字不侵入聊天窗） */
+              height: 'calc(100% - 150px)',
+              width: 'min(100%, 680px)',
+              marginLeft: 'auto',
+              marginRight: 'auto',
               background:
-                'linear-gradient(155deg, rgba(74,106,148,0.42) 0%, rgba(33,57,92,0.62) 55%, rgba(23,42,69,0.72) 100%)',
+                'linear-gradient(155deg, rgba(74,106,148,0.34) 0%, rgba(33,57,92,0.50) 62%, rgba(23,42,69,0.58) 100%)',
               border: '1px solid rgba(168,208,255,0.22)',
               backdropFilter: 'blur(24px) saturate(150%)',
               WebkitBackdropFilter: 'blur(24px) saturate(150%)',
@@ -542,7 +663,7 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
             }}
           >
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 pond-scroll">
             <AnimatePresence mode="popLayout">
               {showGuide && (
                 <motion.div
@@ -572,6 +693,13 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
                       <p>选择想说的话，或直接在下面输入。</p>
                     </div>
                   </motion.div>
+                  {/* 话题气泡（futao 第3次打回②：在聊天窗口里，不在左下角） */}
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {bubbles.map(t => (
+                      <button key={t} onClick={() => handleGuideClick(t)} className="pond-guide-tag">{t}</button>
+                    ))}
+                    <button onClick={() => setBubbles(pickRandomBubbles(4))} className="pond-guide-tag pond-guide-shuffle">🔄 换一批</button>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -712,23 +840,19 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
         </div>
       </div>
 
-      {/* L4 装饰元素（散落四周留白，参考图气质：稀疏、退后不抢戏） */}
+      {/* L4 装饰元素（散落四周留白，参考图气质：稀疏、退后不抢戏）
+          futao ⑦：背景文字不延伸进聊天框 —— 装饰全部待在聊天窗外：
+          字标=左上留白（聊天窗左缘右侧之外）、文案=底部水面层（聊天窗下方，非侧边）、
+          同心圆/月光=聊天窗后层（z<聊天窗，玻璃盖住） */}
       <div className="pond-elem" style={{ left: 70, top: 74, zIndex: 20 }}>
         <div className="pond-kicker">NIGHT POND · TALK TO THE WATER</div>
         <div className="pond-wordmark">涟<span className="pond-wordmark-dot">.</span>漪</div>
       </div>
-      <div className="pond-elem" style={{ right: 70, top: 78, textAlign: 'right', zIndex: 20 }}>
+      {/* 三行文案：放在底部水面层（聊天窗下方），落在水上，不与聊天窗并排重叠（futao ⑦） */}
+      <div className="pond-elem" style={{ left: '50%', transform: 'translateX(-50%)', bottom: 40, textAlign: 'center', zIndex: 20 }}>
         <div className="pond-poem">
           把心里的话，<b>投进水里</b>。<br />
           水面泛起一圈圈光，有人在水下，<b>静静听</b>。
-        </div>
-      </div>
-      <div className="pond-elem" style={{ left: 70, bottom: 180, zIndex: 20 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
-          {bubbles.map(t => (
-            <button key={t} onClick={() => handleGuideClick(t)} className="pond-guide-tag">{t}</button>
-          ))}
-          <button onClick={() => setBubbles(pickRandomBubbles(4))} className="pond-guide-tag pond-guide-shuffle">🔄 换一批</button>
         </div>
       </div>
       <div className="pond-rings" />

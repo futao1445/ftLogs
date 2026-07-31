@@ -32,6 +32,8 @@ interface PondConfirmModalProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
+  busy?: boolean;
+  busyText?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -42,6 +44,8 @@ export default function PondConfirmModal({
   message,
   confirmText = '确认删除',
   cancelText = '再想想',
+  busy = false,
+  busyText = '正在沉入水底…',
   onConfirm,
   onCancel,
 }: PondConfirmModalProps) {
@@ -142,7 +146,8 @@ export default function PondConfirmModal({
               <div className="flex gap-3">
                 <motion.button
                   onClick={onCancel}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer"
+                  disabled={busy}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer disabled:opacity-40"
                   style={{
                     background: 'rgba(111,180,255,0.08)',
                     border: '1px solid rgba(74,106,148,0.5)',
@@ -154,22 +159,46 @@ export default function PondConfirmModal({
                 >
                   {cancelText}
                 </motion.button>
-                <motion.button
-                  onClick={onConfirm}
-                  onPointerDown={ripple.add}
-                  className="relative flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer overflow-hidden"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(255,217,160,0.14), rgba(255,217,160,0.05))',
-                    border: '1px solid rgba(255,217,160,0.5)',
-                    color: 'var(--gold, #ffd9a0)',
-                  }}
-                  whileHover={{ background: 'linear-gradient(135deg, rgba(255,217,160,0.22), rgba(255,217,160,0.08))' }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ duration: 0.18 }}
-                >
-                  {ripple.render()}
-                  {confirmText}
-                </motion.button>
+                {busy ? (
+                  <motion.div
+                    className="flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(255,217,160,0.14), rgba(255,217,160,0.05))',
+                      border: '1px solid rgba(255,217,160,0.5)',
+                      color: 'var(--gold, #ffd9a0)',
+                    }}
+                  >
+                    {/* ⑧ 删除中反馈：水波旋转环 */}
+                    <span
+                      className="inline-block rounded-full"
+                      style={{
+                        width: 14,
+                        height: 14,
+                        border: '2px solid rgba(255,217,160,0.25)',
+                        borderTopColor: '#ffd9a0',
+                        animation: 'save-spin 0.9s linear infinite',
+                      }}
+                    />
+                    {busyText}
+                  </motion.div>
+                ) : (
+                  <motion.button
+                    onClick={onConfirm}
+                    onPointerDown={ripple.add}
+                    className="relative flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(255,217,160,0.14), rgba(255,217,160,0.05))',
+                      border: '1px solid rgba(255,217,160,0.5)',
+                      color: 'var(--gold, #ffd9a0)',
+                    }}
+                    whileHover={{ background: 'linear-gradient(135deg, rgba(255,217,160,0.22), rgba(255,217,160,0.08))' }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    {ripple.render()}
+                    {confirmText}
+                  </motion.button>
+                )}
               </div>
             </div>
           </motion.div>

@@ -181,8 +181,9 @@ export const api = {
   knowledgeDetail: (id: number) =>
     tRPCQuery<any | null>('knowledge.detail', { id }),
 
-  knowledgeDelete: (id: number) =>
-    tRPCMutation<{ success: boolean }>('knowledge.delete', { id }),
+  // ⑥ 知识库批量删除（林正树后端已支持 {ids}）：传 number 用单条 {id}，传数组用批量 {ids}
+  knowledgeDelete: (id: number | number[]) =>
+    tRPCMutation<{ success: boolean }>('knowledge.delete', Array.isArray(id) ? { ids: id } : { id }),
 
   knowledgeUpdate: (input: { id: number; content?: string; tags?: string }) =>
     tRPCMutation<{ success: boolean }>('knowledge.update', input),
@@ -211,8 +212,9 @@ export const api = {
   treeholeNewSession: () =>
     tRPCMutation<{ id: number; title: string }>('treehole.newSession', {}),
 
-  treeholeDeleteSession: (sessionId: number) =>
-    tRPCMutation<{ success: boolean }>('treehole.deleteSession', { sessionId }),
+  // ⑥ 涟漪对话批量删除（林正树后端已支持 {ids}）：传 number 用单条 {sessionId}，传数组用批量 {ids}
+  treeholeDeleteSession: (sessionId: number | number[]) =>
+    tRPCMutation<{ success: boolean }>('treehole.deleteSession', Array.isArray(sessionId) ? { ids: sessionId } : { sessionId }),
 
   treeholeSaveToKnowledgeBase: (input: { sessionId?: number; messageIndex?: number; content?: string }) =>
     tRPCMutation<{ success: boolean; message?: string; error?: string }>('treehole.saveToKnowledgeBase', input),

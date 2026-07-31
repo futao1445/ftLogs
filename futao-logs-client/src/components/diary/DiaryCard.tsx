@@ -122,7 +122,7 @@ export default function DiaryCard({ diary, onEdit, onDelete }: DiaryCardProps) {
       )}
 
       {/* Bottom: tags + actions */}
-      <div className="flex items-center justify-between mt-3" style={{ height: 28 }}>
+      <div className="flex items-center justify-between mt-3" style={{ height: 32 }}>
         <div className="flex gap-1.5 overflow-x-auto">
           {diary.tags?.slice(0, 3).map((dt) => (
             <span
@@ -134,26 +134,24 @@ export default function DiaryCard({ diary, onEdit, onDelete }: DiaryCardProps) {
             </span>
           ))}
         </div>
+        {/* futao ⑤：点卡片本身=编辑，去掉独立编辑按钮；删除按钮加大（文案化：删除） */}
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
-            className="p-1 rounded transition-colors hover:bg-white/5"
-            style={{ color: 'var(--text-tertiary)' }}
-            onClick={(e) => { e.stopPropagation(); onEdit?.(diary); }}
-            title="编辑"
-          >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-            </svg>
-          </button>
-          <button
-            className="p-1 rounded transition-colors hover:bg-white/5"
-            style={{ color: 'var(--text-tertiary)' }}
+            className="px-2.5 py-1 rounded-lg transition-colors text-xs cursor-pointer"
+            style={{
+              color: 'var(--text-tertiary)',
+              border: '1px solid var(--border-default)',
+              background: 'var(--bg-secondary)',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.45)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.borderColor = 'var(--border-default)'; }}
             onClick={(e) => { e.stopPropagation(); onDelete?.(diary.id); }}
-            title="删除"
+            title="删除日记"
           >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="w-3.5 h-3.5 inline mr-1 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
             </svg>
+            删除
           </button>
         </div>
       </div>

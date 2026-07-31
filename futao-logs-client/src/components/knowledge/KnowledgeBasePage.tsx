@@ -26,6 +26,10 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  // ⑥ 知识库批量选择/删除（futao 第3次打回⑥）+ ⑧ 删除中反馈
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [batchDeleting, setBatchDeleting] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initRef = useRef(false);
   const entriesRef = useRef(entries);
@@ -86,10 +90,11 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
   }, [viewModal, editContent, page, load, showToast]);
 
   const handleDelete = useCallback(async (id: number) => {
+    setBatchDeleting(true); // ⑧ 删除中反馈
     try {
       await api.knowledgeDelete(id);
       setDeleteConfirm(null);
-      showToast('已删除');
+      showToast('🗑️ 已沉入水底');
       // Use refs to get fresh values, avoiding stale closure
       const currentEntries = entriesRef.current;
       const currentPage = pageRef.current;
@@ -98,7 +103,44 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
     } catch {
       showToast('删除失败');
     }
+    setBatchDeleting(false);
   }, [load, showToast]);
+
+  // ⑥ 批量选择/删除知识库记忆瓶
+  const toggleSelectMode = useCallback(() => {
+    setSelectMode(prev => {
+      if (prev) setSelectedIds(new Set());
+      return !prev;
+    });
+  }, []);
+  const toggleSelect = useCallback((id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+  const selectAll = useCallback(() => {
+    setSelectedIds(prev => {
+      if (prev.size === entries.length) return new Set();
+      return new Set(entries.map(e => e.id));
+    });
+  }, [entries]);
+  const handleBatchDelete = useCallback(async () => {
+    if (selectedIds.size === 0) return;
+    setBatchDeleting(true);
+    try {
+      await api.knowledgeDelete([...selectedIds]);
+      setSelectedIds(new Set());
+      setSelectMode(false);
+      showToast(`🗑️ 已沉入水底，删除 ${selectedIds.size} 支记忆瓶`);
+      load(page);
+    } catch {
+      showToast('批量删除失败');
+    }
+    setBatchDeleting(false);
+  }, [selectedIds, page, load, showToast]);
 
   return (
     <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-12 py-6">
@@ -143,8 +185,67 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
           <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
             共 {entries.length} 支记忆瓶
           </span>
+          {/* ⑥ 批量选择模式 */}
+          <motion.button
+            onClick={toggleSelectMode}
+            className="px-2.5 py-1.5 rounded-2xl text-xs cursor-pointer"
+            style={{
+              background: selectMode ? 'rgba(255,217,160,0.12)' : 'rgba(111,180,255,0.06)',
+              color: selectMode ? '#ffd9a0' : '#8fa6c4',
+              border: `1px solid ${selectMode ? 'rgba(255,217,160,0.35)' : 'rgba(74,106,148,0.4)'}`,
+            }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+          >
+            {selectMode ? '✓ 选择中' : '⧉ 批量'}
+          </motion.button>
         </div>
       </div>
+
+      {/* ⑥ 批量操作栏 */}
+      {selectMode && entries.length > 0 && (
+        <div
+          className="flex items-center justify-between mb-3 px-3 py-2 rounded-xl"
+          style={{
+            background: 'rgba(12,22,38,0.5)',
+            border: '1px solid rgba(255,217,160,0.2)',
+          }}
+        >
+          <motion.button
+            onClick={selectAll}
+            className="text-xs cursor-pointer"
+            style={{ color: '#a8d0ff' }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {selectedIds.size === entries.length ? '取消全选' : '全选'}
+          </motion.button>
+          <span className="text-xs" style={{ color: '#ffd9a0' }}>已选 {selectedIds.size}</span>
+          <motion.button
+            onClick={handleBatchDelete}
+            disabled={selectedIds.size === 0 || batchDeleting}
+            className="text-xs px-3 py-1 rounded-lg cursor-pointer disabled:opacity-30 flex items-center gap-1.5"
+            style={{
+              color: selectedIds.size > 0 ? '#ef4444' : 'var(--text-tertiary)',
+              border: selectedIds.size > 0 ? '1px solid rgba(239,68,68,0.4)' : '1px solid var(--border-default)',
+              background: selectedIds.size > 0 ? 'rgba(239,68,68,0.08)' : 'transparent',
+            }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {batchDeleting && (
+              <span
+                className="inline-block rounded-full"
+                style={{
+                  width: 10, height: 10,
+                  border: '1.5px solid rgba(239,68,68,0.25)',
+                  borderTopColor: '#ef4444',
+                  animation: 'save-spin 0.9s linear infinite',
+                }}
+              />
+            )}
+            {batchDeleting ? '正在沉入水底…' : `删除所选 ${selectedIds.size}`}
+          </motion.button>
+        </div>
+      )}
 
       {/* Entries — 池底记忆瓶阵列 */}
       {loading ? (
@@ -229,12 +330,29 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
                   style={{
                     borderRadius: 18,
                     background: 'linear-gradient(160deg, rgba(23,42,69,0.75) 0%, rgba(12,22,38,0.85) 100%)',
-                    border: '1px solid rgba(74,106,148,0.35)',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 12px 32px rgba(0,0,0,0.25)',
+                    border: selectedIds.has(entry.id)
+                      ? '1px solid rgba(255,217,160,0.5)'
+                      : '1px solid rgba(74,106,148,0.35)',
+                    boxShadow: selectedIds.has(entry.id)
+                      ? '0 0 20px rgba(255,217,160,0.15), inset 0 1px 0 rgba(255,255,255,0.05), 0 12px 32px rgba(0,0,0,0.25)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.05), 0 12px 32px rgba(0,0,0,0.25)',
                     backdropFilter: 'blur(12px)',
                   }}
-                  onClick={() => handleView(entry)}
+                  onClick={() => selectMode ? toggleSelect(entry.id) : handleView(entry)}
                 >
+                  {/* ⑥ 选择模式复选框 */}
+                  {selectMode && (
+                    <div
+                      className="absolute left-2.5 top-2.5 w-4 h-4 rounded border flex items-center justify-center text-[10px] z-10"
+                      style={{
+                        borderColor: selectedIds.has(entry.id) ? '#ffd9a0' : 'rgba(74,106,148,0.7)',
+                        background: selectedIds.has(entry.id) ? 'rgba(255,217,160,0.22)' : 'rgba(12,22,38,0.5)',
+                        color: '#ffd9a0',
+                      }}
+                    >
+                      {selectedIds.has(entry.id) ? '✓' : ''}
+                    </div>
+                  )}
                   {/* 瓶口（月金微光）*/}
                   <div
                     style={{
@@ -270,6 +388,8 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
                         {new Date(entry.updatedAt).toLocaleDateString('zh-CN')} · {entry.source === 'treehole' ? '涟漪对话' : entry.source}
                       </span>
                       <div className="flex items-center gap-1">
+                        {!selectMode && (
+                          <>
                         <motion.button
                           onClick={(e) => { e.stopPropagation(); handleView(entry); }}
                           className="text-[11px] px-1.5 py-0.5 rounded transition-all cursor-pointer"
@@ -290,6 +410,8 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
                         >
                           删除
                         </motion.button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -433,7 +555,8 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
               <div className="flex justify-end gap-3">
                 <motion.button
                   onClick={() => setDeleteConfirm(null)}
-                  className="px-4 py-2 rounded-lg text-sm cursor-pointer"
+                  disabled={batchDeleting}
+                  className="px-4 py-2 rounded-lg text-sm cursor-pointer disabled:opacity-40"
                   style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
                   whileTap={{ scale: 0.95, backgroundColor: 'rgba(111,180,255,0.15)' }}
                   transition={{ duration: 0.1 }}
@@ -442,13 +565,25 @@ export default function KnowledgeBasePage({ onBack }: { onBack: () => void }) {
                 </motion.button>
                 <motion.button
                   onClick={() => handleDelete(deleteConfirm)}
-                  className="px-4 py-2 rounded-lg text-sm text-white cursor-pointer"
+                  disabled={batchDeleting}
+                  className="px-4 py-2 rounded-lg text-sm text-white cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
                   style={{ background: '#ef4444' }}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.95, backgroundColor: '#dc2626', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.4)' }}
                   transition={{ duration: 0.1 }}
                 >
-                  确认删除
+                  {batchDeleting && (
+                    <span
+                      className="inline-block rounded-full"
+                      style={{
+                        width: 11, height: 11,
+                        border: '1.5px solid rgba(255,255,255,0.3)',
+                        borderTopColor: '#fff',
+                        animation: 'save-spin 0.9s linear infinite',
+                      }}
+                    />
+                  )}
+                  {batchDeleting ? '正在沉入水底…' : '确认删除'}
                 </motion.button>
               </div>
             </motion.div>
