@@ -163,7 +163,7 @@ export default function AISummaryCard() {
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.15 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
         >
           {/* ── Loading spinner ── */}
           {isLoading && (
@@ -190,15 +190,31 @@ export default function AISummaryCard() {
               <p className="text-xs mb-4" style={{ color: 'var(--text-tertiary)' }}>
                 点击下方按钮由 AI 自动生成
               </p>
-              <button
+              <motion.button
                 onClick={() => generate()}
-                className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-                style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent-hover)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'var(--accent)'; }}
+                className="px-4 py-2 rounded-2xl text-sm font-medium cursor-pointer relative overflow-visible"
+                style={{
+                  background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.25) 0%, rgba(111,180,255,0.08) 60%, rgba(111,180,255,0.02) 100%)',
+                  color: '#6fb4ff',
+                  border: '1px solid rgba(111,180,255,0.18)',
+                  boxShadow: '0 0 4px rgba(111,180,255,0.08)',
+                }}
+                whileHover={{
+                  background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.40) 0%, rgba(111,180,255,0.15) 50%, rgba(111,180,255,0.05) 100%)',
+                  color: '#a8d0ff',
+                  boxShadow: '0 0 20px rgba(111,180,255,0.25), 0 0 40px rgba(111,180,255,0.10)',
+                }}
+                whileTap={{
+                  scale: 0.96,
+                  background: 'radial-gradient(circle at 50% 50%, rgba(255,217,160,0.40) 0%, rgba(111,180,255,0.20) 50%, rgba(111,180,255,0.08) 100%)',
+                  color: '#ffd9a0',
+                  borderColor: 'rgba(255,217,160,0.35)',
+                  boxShadow: '0 0 40px rgba(255,217,160,0.30), 0 0 80px rgba(111,180,255,0.15)',
+                }}
+                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
               >
                 ✨ 生成{levelDef.label}总结
-              </button>
+              </motion.button>
             </div>
           )}
 
@@ -206,17 +222,29 @@ export default function AISummaryCard() {
           {!isLoading && error && (
             <div className="text-center py-4">
               <p className="text-xs mb-3" style={{ color: 'var(--accent)' }}>{error}</p>
-              <button
+              <motion.button
                 onClick={() => generate()}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
+                className="px-3 py-1.5 rounded-2xl text-xs font-medium cursor-pointer relative overflow-visible"
                 style={{
-                  background: 'var(--bg-secondary)',
+                  background: 'linear-gradient(135deg, rgba(23,42,69,0.6) 0%, rgba(33,57,92,0.4) 100%)',
                   color: 'var(--text-secondary)',
-                  border: '1px solid var(--border-default)',
+                  border: '1px solid rgba(45,74,117,0.45)',
                 }}
+                whileHover={{
+                  borderColor: 'rgba(168,208,255,0.45)',
+                  color: '#a8d0ff',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), 0 0 16px rgba(111,180,255,0.12)',
+                }}
+                whileTap={{
+                  scale: 0.96,
+                  background: 'radial-gradient(circle at 50% 50%, rgba(255,217,160,0.30) 0%, rgba(111,180,255,0.15) 60%, rgba(23,42,69,0.6) 100%)',
+                  color: '#ffd9a0',
+                  borderColor: 'rgba(255,217,160,0.35)',
+                }}
+                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
               >
                 重试
-              </button>
+              </motion.button>
             </div>
           )}
 
@@ -294,17 +322,28 @@ export default function AISummaryCard() {
 
               {/* Footer: refine button + version */}
               <div className="flex items-center gap-2">
-                <button
+                <motion.button
                   onClick={() => setShowRefine(!showRefine)}
-                  className="text-xs px-3 py-1.5 rounded-lg transition-all duration-200"
+                  className="text-xs px-3 py-1.5 rounded-2xl cursor-pointer relative overflow-visible"
                   style={{
-                    background: 'var(--bg-secondary)',
+                    background: 'linear-gradient(135deg, rgba(23,42,69,0.6) 0%, rgba(33,57,92,0.4) 100%)',
                     color: 'var(--text-tertiary)',
-                    border: '1px solid var(--border-default)',
+                    border: '1px solid rgba(45,74,117,0.45)',
                   }}
+                  whileHover={{
+                    borderColor: 'rgba(168,208,255,0.45)',
+                    color: '#a8d0ff',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), 0 0 16px rgba(111,180,255,0.12)',
+                  }}
+                  whileTap={{
+                    scale: 0.96,
+                    color: '#ffd9a0',
+                    borderColor: 'rgba(255,217,160,0.35)',
+                  }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 22 }}
                 >
                   ✏️ 修改总结
-                </button>
+                </motion.button>
                 <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
                   v{data.version} · {data.periodKey}
                 </span>
@@ -330,28 +369,42 @@ export default function AISummaryCard() {
                     }}
                   />
                   <div className="flex justify-end gap-2 mt-2">
-                    <button
+                    <motion.button
                       onClick={() => { setShowRefine(false); setFeedbackInput(''); }}
-                      className="px-3 py-1.5 rounded-lg text-xs"
+                      className="px-3 py-1.5 rounded-2xl text-xs cursor-pointer"
                       style={{ color: 'var(--text-tertiary)' }}
+                      whileTap={{ scale: 0.96 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 22 }}
                     >
                       取消
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       onClick={handleRefine}
                       disabled={refining || !feedbackInput.trim()}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
+                      className="px-3 py-1.5 rounded-2xl text-xs font-medium cursor-pointer relative overflow-visible disabled:opacity-40 disabled:cursor-not-allowed"
                       style={{
-                        background:
-                          refining || !feedbackInput.trim()
-                            ? 'var(--bg-tertiary)'
-                            : 'var(--accent)',
-                        color: 'var(--accent-text)',
-                        opacity: refining || !feedbackInput.trim() ? 0.6 : 1,
+                        background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.25) 0%, rgba(111,180,255,0.08) 60%, rgba(111,180,255,0.02) 100%)',
+                        color: '#6fb4ff',
+                        border: '1px solid rgba(111,180,255,0.18)',
+                        boxShadow: '0 0 4px rgba(111,180,255,0.08)',
+                        opacity: refining || !feedbackInput.trim() ? 0.4 : 1,
                       }}
+                      whileHover={refining || !feedbackInput.trim() ? {} : {
+                        background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.40) 0%, rgba(111,180,255,0.15) 50%, rgba(111,180,255,0.05) 100%)',
+                        color: '#a8d0ff',
+                        boxShadow: '0 0 20px rgba(111,180,255,0.25), 0 0 40px rgba(111,180,255,0.10)',
+                      }}
+                      whileTap={refining || !feedbackInput.trim() ? {} : {
+                        scale: 0.96,
+                        background: 'radial-gradient(circle at 50% 50%, rgba(255,217,160,0.40) 0%, rgba(111,180,255,0.20) 50%, rgba(111,180,255,0.08) 100%)',
+                        color: '#ffd9a0',
+                        borderColor: 'rgba(255,217,160,0.35)',
+                        boxShadow: '0 0 40px rgba(255,217,160,0.30), 0 0 80px rgba(111,180,255,0.15)',
+                      }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 22 }}
                     >
                       {refining ? '修改中…' : '确认修改'}
-                    </button>
+                    </motion.button>
                   </div>
                 </motion.div>
               )}
