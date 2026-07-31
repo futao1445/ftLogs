@@ -558,15 +558,24 @@ function SearchHitCard({
         打开 ↦
       </span>
       {onDelete && (
-        <span
+        <button
           onClick={handleDelete}
-          className="absolute right-3 top-2 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-          style={{ color: '#8fa6c4' }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = '#ffd9a0'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = '#8fa6c4'; }}
+          title="删除这条日志"
+          className="absolute right-3 top-2 text-[11px] px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+          style={{
+            color: 'var(--text-tertiary)',
+            border: '1px solid var(--border-default)',
+            background: 'var(--bg-secondary)',
+            zIndex: 2,
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.45)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.borderColor = 'var(--border-default)'; }}
         >
+          <svg className="w-3 h-3 inline mr-1 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+          </svg>
           删除
-        </span>
+        </button>
       )}
     </div>
   );
