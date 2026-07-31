@@ -12,6 +12,7 @@ import MoodChart from '../common/MoodChart';
 import AISummaryTab from '../ai-summary/AISummaryTab';
 import SearchView from '../search/SearchView';
 import TreeholePage from '../treehole/TreeholePage';
+import PondHero from '../common/PondHero';
 
 export default function HomePage() {
   // Tab state
@@ -232,6 +233,21 @@ export default function HomePage() {
       openSettings={openSettings}
       onSettingsClosed={() => setTriggerSettings(0)}
     >
+      {/* ─── Pond Hero 首屏：层叠卡片 + 宽空白 ─── */}
+      {activeTab === 'diary' && (
+        <PondHero
+          groups={groups}
+          totalCount={totalCount}
+          streak={streak}
+          onWrite={() => setEditingDiary('new')}
+          onOpenDiary={(d) => {
+            api.diaryDetail(d.id).then((full) => {
+              if (full) setEditingDiary(full);
+            });
+          }}
+        />
+      )}
+
       {/* ─── Timeline Tab ─── */}
       {activeTab === 'diary' && (
         <DiaryTimeline
