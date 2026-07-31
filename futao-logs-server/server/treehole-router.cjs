@@ -152,10 +152,19 @@ function createTreeholeRouter(t, prisma, readLLMConfig) {
     }),
 
     deleteSession: t.procedure
-      .input(z.object({ sessionId: z.number() }))
+      .input(z.object({
+        ids: z.array(z.number()).optional(),
+        sessionId: z.number().optional(),
+      }))
       .mutation(async function({ input }) {
-        await prisma.$executeRawUnsafe('DELETE FROM treehole_sessions WHERE id = ?', input.sessionId);
-        return { success: true };
+        // 兼容单条 { sessionId } 与批量 { ids: number[] }（futao 第六轮⑥：涟漪对话批量删除）
+        const ids = input.ids && input.ids.length ? input.ids : (input.sessionId !== undefined ? [input.sessionId] : []);
+        if (!ids.length) return { success: false, error: '缺少要删除的 sessionId' };
+        const placeholders = ids.map(() => '?').join(',');
+        const result = await prisma.$executeRawUnsafe(
+          `DELETE FROM treehole_sessions WHERE id IN (${placeholders})`, ...ids
+        );
+        return { success: true, deleted: result };
       }),
 
     saveToKnowledgeBase: t.procedure

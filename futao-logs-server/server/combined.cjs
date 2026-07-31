@@ -1116,10 +1116,19 @@ const knowledgeRouter = t.router({
       return { ...row, entityIds: (() => { try { return JSON.parse(row.entityIds || '[]'); } catch { return []; } })() };
     }),
   delete: t.procedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({
+      ids: z.array(z.number()).optional(),
+      id: z.number().optional(),
+    }))
     .mutation(async ({ input }) => {
-      await prisma.$executeRawUnsafe('DELETE FROM knowledge_entries WHERE id = ?', input.id);
-      return { success: true };
+      // 兼容单条 { id } 与批量 { ids: number[] }（futao 第六轮⑥：知识库批量删除）
+      const ids = input.ids && input.ids.length ? input.ids : (input.id !== undefined ? [input.id] : []);
+      if (!ids.length) return { success: false, error: '缺少要删除的 id' };
+      const placeholders = ids.map(() => '?').join(',');
+      const result = await prisma.$executeRawUnsafe(
+        `DELETE FROM knowledge_entries WHERE id IN (${placeholders})`, ...ids
+      );
+      return { success: true, deleted: result };
     }),
   update: t.procedure
     .input(z.object({ id: z.number(), content: z.string().optional(), tags: z.string().optional() }))
