@@ -163,10 +163,10 @@ export default function PondHero({
         }}
       />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 lg:px-12">
+      <div className="relative z-10 max-w-[1240px] mx-auto px-6 lg:px-12">
         <div
           className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center"
-          style={{ padding: '88px 0 120px' }}
+          style={{ padding: '96px 0 120px' }}
         >
           {/* ── 左侧文案 ── */}
           <div>
