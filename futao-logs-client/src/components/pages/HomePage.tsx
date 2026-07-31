@@ -11,10 +11,11 @@ import DiaryCard from '../diary/DiaryCard';
 import MoodChart from '../common/MoodChart';
 import AISummaryTab from '../ai-summary/AISummaryTab';
 import SearchView from '../search/SearchView';
+import TreeholePage from '../treehole/TreeholePage';
 
 export default function HomePage() {
   // Tab state
-  const [activeTab, setActiveTab] = useState<'diary' | 'calendar' | 'search' | 'summary'>('diary');
+  const [activeTab, setActiveTab] = useState<'diary' | 'calendar' | 'search' | 'summary' | 'treehole'>('diary');
 
   // Data
   const [groups, setGroups] = useState<TimelineGroup[]>([]);
@@ -35,6 +36,16 @@ export default function HomePage() {
 
   // Editor
   const [editingDiary, setEditingDiary] = useState<Diary | null | 'new'>(null);
+  // Toast
+  const [toast, setToast] = useState<{ msg: string; type: 'error' | 'success' } | null>(null);
+  const showToast = useCallback((msg: string, type: 'error' | 'success' = 'error') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  // Settings external trigger (from SearchView)
+  const [triggerSettings, setTriggerSettings] = useState(0);
+  const openSettings = triggerSettings > 0;
 
   // On This Day
   const [onThisDay, setOnThisDay] = useState<{ id: number; preview: string; year: number } | null>(null);
@@ -134,24 +145,28 @@ export default function HomePage() {
     tags: number[];
     attachments: File[];
   }) => {
-    const diaryId = editingDiary && editingDiary !== 'new' ? editingDiary.id : undefined;
-    await api.diaryUpsert({
-      content: input.content,
-      date: input.date,
-      mood: input.mood,
-      tags: input.tags,
-      id: diaryId,
-    });
+    try {
+      const diaryId = editingDiary && editingDiary !== 'new' ? editingDiary.id : undefined;
+      await api.diaryUpsert({
+        content: input.content,
+        date: input.date,
+        mood: input.mood,
+        tags: input.tags,
+        id: diaryId,
+      });
 
-    // Upload files if any
-    for (const file of input.attachments) {
-      await api.uploadFile(file);
+      // Upload files if any
+      for (const file of input.attachments) {
+        await api.uploadFile(file);
+      }
+
+      setEditingDiary(null);
+      loadTimeline(1);
+      loadOnThisDay();
+      if (activeTab === 'calendar') loadCalendar(calYear, calMonth);
+    } catch {
+      showToast('保存失败，请检查网络后重试');
     }
-
-    setEditingDiary(null);
-    loadTimeline(1);
-    loadOnThisDay();
-    if (activeTab === 'calendar') loadCalendar(calYear, calMonth);
   };
 
   // ─── Delete diary ───
@@ -162,7 +177,7 @@ export default function HomePage() {
       loadTimeline(1);
       if (activeTab === 'calendar') loadCalendar(calYear, calMonth);
     } catch {
-      // ignore
+      showToast('删除失败，请重试');
     }
   };
 
@@ -210,10 +225,12 @@ export default function HomePage() {
   return (
     <PageShell
       activeTab={activeTab}
-      onTabChange={(tab: 'diary' | 'calendar' | 'search' | 'summary') => {
+      onTabChange={(tab: 'diary' | 'calendar' | 'search' | 'summary' | 'treehole') => {
         setActiveTab(tab);
       }}
       onNewDiary={() => setEditingDiary('new')}
+      openSettings={openSettings}
+      onSettingsClosed={() => setTriggerSettings(0)}
     >
       {/* ─── Timeline Tab ─── */}
       {activeTab === 'diary' && (
@@ -302,11 +319,14 @@ export default function HomePage() {
 
       {/* ─── Search Tab ─── */}
       {activeTab === 'search' && (
-        <SearchView onEditDiary={(d) => setEditingDiary(d)} onDeleteDiary={handleDelete} />
+        <SearchView onEditDiary={(d) => setEditingDiary(d)} onDeleteDiary={handleDelete} onOpenSettings={() => setTriggerSettings(n => n + 1)} />
       )}
 
       {/* ─── AI Summary Tab ─── */}
       {activeTab === 'summary' && <AISummaryTab />}
+
+      {/* ─── Treehole Tab ─── */}
+      {activeTab === 'treehole' && <TreeholePage />}
 
       {/* ─── Editor Modal ─── */}
       {editingDiary && (
@@ -315,6 +335,19 @@ export default function HomePage() {
           onSave={handleSave}
           onClose={() => setEditingDiary(null)}
         />
+      )}
+
+      {/* Toast for errors */}
+      {toast && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm shadow-lg"
+          style={{
+            background: toast.type === 'error' ? '#ef4444' : 'rgba(111,180,255,0.85)',
+            color: '#fff',
+          }}
+        >
+          {toast.msg}
+        </div>
       )}
     </PageShell>
   );
