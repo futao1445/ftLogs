@@ -156,4 +156,39 @@ export const api = {
   // ── Export history ──
   exportHistory: () =>
     tRPCQuery<{ format: string; status: string; filePath: string; diaryCount: number; createdAt: string }[]>('export.history', {}),
+
+  // ── Knowledge Base ──
+  knowledgeList: (input: { page?: number; size?: number; source?: string; searchText?: string } = {}) =>
+    tRPCQuery<{ items: any[]; total: number; page: number; size: number; totalPages: number }>('knowledge.list', input),
+
+  knowledgeDetail: (id: number) =>
+    tRPCQuery<any | null>('knowledge.detail', { id }),
+
+  knowledgeDelete: (id: number) =>
+    tRPCMutation<{ success: boolean }>('knowledge.delete', { id }),
+
+  knowledgeUpdate: (input: { id: number; content?: string; tags?: string }) =>
+    tRPCMutation<{ success: boolean }>('knowledge.update', input),
+
+  treeholeSummarizeSession: (sessionId: number) =>
+    tRPCMutation<{ success: boolean; summary?: string; error?: string }>('treehole.summarizeSession', { sessionId }),
+
+  // ── Treehole ──
+  treeholeSessions: () =>
+    tRPCQuery<{ id: number; title: string; updatedAt: string }[]>('treehole.sessions', {}),
+
+  treeholeMessages: (sessionId: number) =>
+    tRPCQuery<{ id: number; title: string; messages: { role: string; content: string }[] }>('treehole.messages', { sessionId }),
+
+  treeholeAsk: (sessionId: number, content: string) =>
+    tRPCMutation<{ success: boolean; reply?: string; error?: string }>('treehole.ask', { sessionId, content }),
+
+  treeholeNewSession: () =>
+    tRPCMutation<{ id: number; title: string }>('treehole.newSession', {}),
+
+  treeholeDeleteSession: (sessionId: number) =>
+    tRPCMutation<{ success: boolean }>('treehole.deleteSession', { sessionId }),
+
+  treeholeSaveToKnowledgeBase: (input: { sessionId?: number; messageIndex?: number; content?: string }) =>
+    tRPCMutation<{ success: boolean; message?: string; error?: string }>('treehole.saveToKnowledgeBase', input),
 };

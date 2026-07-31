@@ -90,7 +90,7 @@ export default function SearchView({ onEditDiary, onDeleteDiary }: SearchViewPro
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [dataFetched, setDataFetched] = useState(false);
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* ── Semantic search ── */
   const doSemanticSearch = useCallback(async (q: string) => {
