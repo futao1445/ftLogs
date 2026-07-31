@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { type Diary, type TimelineGroup, type Tag } from '../../lib/types';
 import DiaryCard from './DiaryCard';
 import OnThisDay from '../common/OnThisDay';
