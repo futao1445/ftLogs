@@ -304,7 +304,9 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
 
   /* ── Auto scroll ── */
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // block:'nearest'：消息区不满/底部已可见时不滚动任何容器，
+    // 避免 scrollIntoView 把外层 overflow-hidden 容器顶出（futao 反馈「聊天窗被顶上去截断」根因）
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages, sending]);
 
   /* ── Key handler ── */
