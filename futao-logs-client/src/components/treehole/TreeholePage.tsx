@@ -468,10 +468,18 @@ export default function TreeholePage() {
           </div>
         </div>
 
-        {/* ─── Right: Chat area (深水区，气泡从水底浮上来) ─── */}
+        {/* ─── Right: Chat area (玻璃前景对话卡 — pond-premium card-chat) ─── */}
         <div
           className="flex-1 rounded-xl overflow-hidden flex flex-col"
-          style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-default)', boxShadow: 'inset 0 0 60px rgba(23,42,69,0.25)' }}
+          style={{
+            background:
+              'linear-gradient(150deg, rgba(74,106,148,0.42) 0%, rgba(33,57,92,0.62) 100%)',
+            border: '1px solid rgba(168,208,255,0.22)',
+            backdropFilter: 'blur(28px) saturate(160%)',
+            WebkitBackdropFilter: 'blur(28px) saturate(160%)',
+            boxShadow:
+              'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.04), 0 32px 80px rgba(2,8,20,0.5)',
+          }}
         >
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">

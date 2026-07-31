@@ -339,8 +339,22 @@ export default function PondHero({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                       >
-                        <div className="h-full flex flex-col items-center justify-center">
-                          <span className="text-2xl mb-3" style={{ opacity: 0.5 }}>🪷</span>
+                        <div className="h-full flex flex-col items-center justify-center gap-3">
+                          {/* 抽象水波环（不用 emoji，守住 10 色纪律） */}
+                          <span className="relative w-10 h-10">
+                            <span
+                              className="absolute inset-0 rounded-full"
+                              style={{ border: '1px solid rgba(168,208,255,0.2)' }}
+                            />
+                            <span
+                              className="absolute inset-1 rounded-full"
+                              style={{ border: '1px solid rgba(111,180,255,0.18)' }}
+                            />
+                            <span
+                              className="absolute inset-2.5 rounded-full"
+                              style={{ background: 'rgba(168,208,255,0.10)' }}
+                            />
+                          </span>
                           <span className="text-xs" style={{ color: 'rgba(143,166,196,0.6)' }}>
                             {depth === 0 ? '沉底的回忆' : depth === 1 ? '浮起的水面' : '等你写下今天'}
                           </span>

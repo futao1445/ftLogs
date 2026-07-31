@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import ThemeToggle from './ThemeToggle';
 import OfflineBanner from './OfflineBanner';
 import SettingsDrawer from '../settings/SettingsDrawer';
+import { useRipples } from './useRipples';
 
 type Tab = 'diary' | 'calendar' | 'search' | 'summary' | 'treehole';
 
@@ -27,6 +28,7 @@ export default function PageShell({
 }: PageShellProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   useEffect(() => { if (openSettings) setSettingsOpen(true); }, [openSettings]);
+  const ripple = useRipples();
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
@@ -73,10 +75,11 @@ export default function PageShell({
                 </svg>
               </motion.button>
               <ThemeToggle />
-              {/* 写日记 — 水光蓝主按钮 */}
+              {/* 写日记 — 水光蓝主按钮（月金涟漪） */}
               <motion.button
                 onClick={onNewDiary}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm cursor-pointer relative overflow-hidden"
+                onPointerDown={ripple.add}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm cursor-pointer relative overflow-visible"
                 style={{
                   background: 'linear-gradient(135deg, #6fb4ff 0%, #a8d0ff 100%)',
                   color: '#0a1626',
@@ -92,6 +95,7 @@ export default function PageShell({
                 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 22 }}
               >
+                {ripple.render()}
                 <span className="text-sm">✒️</span>
                 <span className="text-xs font-medium">写日记</span>
               </motion.button>
@@ -117,9 +121,11 @@ function TabButton({
   onClick: () => void;
   label: string;
 }) {
+  const ripple = useRipples();
   return (
     <motion.button
       onClick={onClick}
+      onPointerDown={ripple.add}
       className="relative flex items-center px-3 py-1.5 rounded-full text-sm cursor-pointer"
       style={{ color: active ? '#a8d0ff' : 'var(--text-tertiary)' }}
       whileHover={{ color: active ? '#a8d0ff' : 'var(--text-secondary)' }}
@@ -139,6 +145,7 @@ function TabButton({
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
         />
       )}
+      {ripple.render()}
       <span className="relative z-10 text-xs whitespace-nowrap">{label}</span>
     </motion.button>
   );
