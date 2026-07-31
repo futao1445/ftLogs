@@ -30,3 +30,6 @@ uploads/
 exports/
 *.db
 *.db-journal
+
+# Build artifacts (deploy script manages these; do not track)
+futao-logs-server/server/public/assets/
