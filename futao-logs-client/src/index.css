@@ -286,6 +286,22 @@
   background: linear-gradient(180deg, rgba(168,208,255,0.55), rgba(111,180,255,0.35));
 }
 .pond-scroll::-webkit-scrollbar-corner { background: transparent; }
+/* 全局页面滚动条也主题化（futao 第3次打回④：页面那条也要 pond-scroll 贴合主题，Emma 复验指出 body 仍默认灰）
+   —— html 是 body 滚动容器，加上同款 NIGHT POND 蓝 thumb + 透明 track */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168,208,255,0.30) transparent;
+}
+html::-webkit-scrollbar { width: 8px; height: 8px; }
+html::-webkit-scrollbar-track { background: transparent; }
+html::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(168,208,255,0.35), rgba(111,180,255,0.22));
+  border-radius: 999px;
+}
+html::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(168,208,255,0.55), rgba(111,180,255,0.35));
+}
+html::-webkit-scrollbar-corner { background: transparent; }
 /* L1 深水底：铺满全页的氛围光 */
 .pond-deep-layer {
   position: absolute; inset: 0; z-index: 0; pointer-events: none;
