@@ -680,13 +680,14 @@ export default function TreeholePage() {
                       top: `${r.y}%`,
                       translateX: '-50%',
                       translateY: '-50%',
-                      width: 12,
-                      height: 12,
-                      border: '1.5px solid rgba(255,217,160,0.55)',
-                      boxShadow: '0 0 6px rgba(255,217,160,0.35), inset 0 0 4px rgba(168,208,255,0.25)',
+                      width: 14,
+                      height: 14,
+                      border: '2px solid rgba(255,217,160,0.7)',
+                      background: 'rgba(255,217,160,0.10)',
+                      boxShadow: '0 0 8px rgba(255,217,160,0.45), inset 0 0 4px rgba(168,208,255,0.25)',
                     }}
                     initial={{ scale: 0.35, opacity: 0.9 }}
-                    animate={{ scale: 1.6, opacity: 0 }}
+                    animate={{ scale: 2.4, opacity: 0 }}
                     transition={{ duration: 0.65, ease: [0.34, 1.56, 0.64, 1] }}
                     onAnimationComplete={() => removeRipple(r.id)}
                   />
