@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>涟漪页重构 · v3 方向稿（参考图气质 + 3D 空间纵深）</title>
+<style>
+/* ═══════════════ 池塘涟漪 10 色体系（锁定）═══════════════ */
+:root {
+  --deep: #0c1626; --mid: #172a45; --near: #21395c; --line: #2d4a75;
+  --glass: #4a6a94; --ripple: #6fb4ff; --shine: #a8d0ff;
+  --foam: #e2ecfa; --mist: #8fa6c4; --gold: #ffd9a0;
+  --spring: cubic-bezier(0.34,1.56,0.64,1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--deep); font-family:'Inter','Noto Sans SC',system-ui,sans-serif; color:var(--foam); }
+.wrap { max-width:1280px; margin:0 auto; padding:48px 40px 88px; }
+
+.head .kicker { font-size:11px; letter-spacing:4px; color:var(--gold); margin-bottom:12px; }
+.head h1 { font-size:28px; font-weight:200; letter-spacing:5px; margin-bottom:12px; }
+.head p { font-size:14px; color:var(--mist); line-height:1.9; max-width:78ch; }
+.head .base { margin-top:14px; font-size:12px; color:var(--mist); background:rgba(23,42,69,0.5); border:1px solid rgba(45,74,117,0.4); border-radius:10px; padding:12px 16px; line-height:1.9; }
+.head .base b { color:var(--shine); font-weight:400; }
+.head .key { margin-top:10px; font-size:12px; color:var(--gold); opacity:0.9; line-height:1.9; }
+.head .key b { font-weight:400; }
+
+/* ─── 静态稿舞台 ─── */
+.stage {
+  position:relative; height:620px; border-radius:16px; margin-top:36px;
+  overflow:hidden; border:1px solid rgba(45,74,117,0.55);
+  background:
+    linear-gradient(180deg, rgba(33,57,92,0.28) 0%, rgba(23,42,69,0.10) 260px, rgba(12,22,38,0.0) 100%),
+    var(--deep);
+}
+
+/* ═══ 3D 纵深水层（核心：futao 17:02「下层堆叠」）═══ */
+/* 第 1 层（最深）：深水底 + 微弱氛围 */
+.layer-deep {
+  position:absolute; inset:0; z-index:0;
+  background:
+    radial-gradient(ellipse at 50% 108%, rgba(111,180,255,0.06) 0%, transparent 55%),
+    linear-gradient(180deg, transparent 0%, rgba(12,22,38,0.6) 85%);
+}
+/* 第 2 层：大水波（涟漪主体，退在聊天窗「下层」水面上）——大而疏、缓慢呼吸 */
+.layer-wave {
+  position:absolute; left:50%; bottom:-70px; z-index:1;
+  width:900px; height:420px; margin-left:-450px; pointer-events:none;
+  background:
+    radial-gradient(ellipse at 50% 0%, transparent 0 90px, rgba(168,208,255,0.16) 94px, transparent 102px),
+    radial-gradient(ellipse at 50% 0%, transparent 0 190px, rgba(111,180,255,0.11) 195px, transparent 206px),
+    radial-gradient(ellipse at 50% 0%, transparent 0 300px, rgba(111,180,255,0.07) 305px, transparent 320px),
+    radial-gradient(ellipse at 50% 0%, transparent 0 410px, rgba(74,106,148,0.05) 415px, transparent 430px);
+  animation: wave-breathe 9s ease-in-out infinite;
+}
+@keyframes wave-breathe {
+  0%,100% { transform:scale(1); opacity:0.45; }
+  50% { transform:scale(1.025); opacity:0.7; }
+}
+/* 水面反光带：聊天窗与下层水波之间的一条细光 */
+.waterline {
+  position:absolute; left:14%; right:14%; bottom:96px; height:1px; z-index:2;
+  background:linear-gradient(90deg, transparent, rgba(168,208,255,0.30), transparent);
+  opacity:0.5;
+}
+/* 第 3 层：聊天窗（唯一焦点，浮在水面上方，前后叠压出纵深感） */
+.chat {
+  position:absolute; left:50%; top:56px; bottom:150px; z-index:3;
+  width:640px; margin-left:-320px;
+  display:flex; flex-direction:column;
+  border-radius:14px;
+  background:linear-gradient(155deg, rgba(74,106,148,0.50) 0%, rgba(33,57,92,0.70) 55%, rgba(23,42,69,0.80) 100%);
+  border:1px solid rgba(168,208,255,0.22);
+  backdrop-filter:blur(24px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    inset 0 -20px 40px rgba(12,22,38,0.25),
+    0 30px 70px rgba(2,8,20,0.55),
+    0 6px 24px rgba(12,22,38,0.4);
+}
+/* 聊天窗底部：浸入水中的渐变，产生「浮在波上」的立体感 */
+.chat::after {
+  content:''; position:absolute; left:0; right:0; bottom:0; height:46px;
+  border-radius:0 0 14px 14px;
+  background:linear-gradient(180deg, transparent, rgba(33,57,92,0.55));
+  pointer-events:none;
+}
+.chat-head { padding:16px 20px 10px; }
+.chat-head .title { font-size:13px; letter-spacing:2px; color:var(--foam); }
+.chat-msg { flex:1; padding:8px 20px; display:flex; flex-direction:column; gap:10px; overflow:hidden; }
+.bub { max-width:72%; padding:9px 13px; border-radius:13px; font-size:12px; line-height:1.7; background:rgba(74,106,148,0.30); border:1px solid rgba(168,208,255,0.30); color:var(--foam); }
+.bub.ai { align-self:flex-start; }
+.bub.me { align-self:flex-end; background:rgba(111,180,255,0.14); }
+.chat-input { margin:0 16px 18px; padding:10px 14px; border-radius:11px; font-size:12px; color:var(--mist); background:rgba(12,22,38,0.4); border:1px solid rgba(45,74,117,0.5); }
+
+/* 第 4 层：装饰元素（最前，散落在四周留白，不抢聊天窗） */
+.kicker-txt { font-size:9px; letter-spacing:4px; color:var(--gold); opacity:0.75; }
+.big-txt { font-size:34px; font-weight:200; letter-spacing:10px; color:var(--foam); }
+.big-txt .dot { color:var(--shine); }
+.line-txt { font-size:12px; color:var(--mist); line-height:2.1; }
+.line-txt b { color:var(--shine); font-weight:400; }
+/* 字标：左上角稀疏一处 */
+.elem-wordmark { position:absolute; left:70px; top:74px; z-index:4; }
+/* 三行文案：右上角稀疏一处 */
+.elem-poem { position:absolute; right:70px; top:78px; z-index:4; text-align:right; opacity:0.9; }
+/* 引导话题：散在左下角水面，稀疏如浮标，不密集 */
+.elem-tags { position:absolute; left:70px; bottom:180px; z-index:4; display:flex; flex-direction:column; gap:10px; align-items:flex-start; opacity:0.9; }
+.tag-pill { font-size:10px; letter-spacing:1px; padding:5px 14px; border-radius:999px; color:var(--gold); background:rgba(255,217,160,0.08); border:1px solid rgba(255,217,160,0.22); cursor:pointer; white-space:nowrap; }
+.tag-pill.shuf { opacity:0.55; }
+/* 同心圆涟漪：右下角大而疏，退到最深背景层 */
+.elem-rings {
+  position:absolute; right:-30px; bottom:-40px; width:330px; height:330px; z-index:1; pointer-events:none;
+  background:
+    radial-gradient(circle, transparent 0 42px, rgba(168,208,255,0.16) 44px, transparent 48px),
+    radial-gradient(circle, transparent 0 98px, rgba(168,208,255,0.13) 100px, transparent 105px),
+    radial-gradient(circle, transparent 0 160px, rgba(111,180,255,0.10) 162px, transparent 169px),
+    radial-gradient(circle, transparent 0 228px, rgba(111,180,255,0.07) 230px, transparent 240px);
+  animation: rings-breathe 10s ease-in-out infinite;
+}
+@keyframes rings-breathe {
+  0%,100% { transform:scale(1); opacity:0.45; }
+  50% { transform:scale(1.03); opacity:0.65; }
+}
+/* 月光：左上角淡淡氛围 */
+.elem-moon {
+  position:absolute; left:120px; bottom:110px; width:56px; height:56px; z-index:2; pointer-events:none;
+  border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, var(--gold), var(--gold) 38%, transparent 68%);
+  box-shadow:0 0 46px rgba(255,217,160,0.4);
+  opacity:0.5;
+}
+
+/* ─── 说明 ─── */
+.foot { margin-top:48px; padding-top:24px; border-top:1px solid rgba(45,74,117,0.4); font-size:12px; color:var(--mist); line-height:2; }
+.foot b { color:var(--gold); font-weight:400; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="kicker">NIGHT POND · DESIGN DIRECTION V3</div>
+    <h1>涟漪页重构 · 方向稿 v3（参考图气质 + 3D 空间纵深）</h1>
+    <p>futao 两次打回：「比上个版本还乱」（元素堆砌无留白）+「全部设计都是平面化的」（无 3D 空间结构）。小恒基线（msg 38fa2bde + 450f8ffe）为唯一准绳。</p>
+    <div class="base"><b>双基准</b>：① <b>参考图气质</b>（futao-ripple-ref.png）：深海夜底铺满 + 大留白 + 聊天窗居中唯一焦点 + 装饰疏朗退后 + 水波缓慢呼吸 ② <b>3D 空间纵深</b>（futao 17:02）：大水波在聊天窗「下层」水层，聊天窗浮在波上，装饰散在不同深度，前后叠压、非平面拼贴。</div>
+    <div class="key"><b>本稿核心</b>：4 个纵深水层——深水底(最深) → 大水波(下层水面) → 聊天窗(浮于波上，焦点) → 装饰元素(最前散落留白)。每层有明暗/尺寸/前后关系，水波「缓慢呼吸」节奏静。</div>
+  </div>
+
+  <!-- ════ 方向稿静态舞台 ════ -->
+  <div class="stage">
+    <!-- L1 深水底 -->
+    <div class="layer-deep"></div>
+    <!-- L2 大水波（下层水面，聊天窗浮其上） -->
+    <div class="layer-wave"></div>
+    <!-- 水面反光带 -->
+    <div class="waterline"></div>
+    <!-- L3 聊天窗（唯一焦点） -->
+    <div class="chat">
+      <div class="chat-head"><span class="title">涟漪 · 今晚</span></div>
+      <div class="chat-msg">
+        <div class="bub ai">选择想说的话，或直接在下面输入。</div>
+        <div class="bub me">工作上的事，压得我有点喘不过气……</div>
+        <div class="bub ai">辛苦了。愿意说说最重的那件吗？</div>
+      </div>
+      <div class="chat-input">把心里的话，投进水里……</div>
+    </div>
+    <!-- L4 装饰元素（散落留白，前后层次） -->
+    <div class="elem-wordmark"><div class="kicker-txt" style="margin-bottom:10px;">NIGHT POND · TALK TO THE WATER</div><div class="big-txt">涟<span class="dot">.</span>漪</div></div>
+    <div class="elem-poem"><div class="line-txt">把心里的话，<b>投进水里</b>。<br/>水面泛起一圈圈光，有人在水下，<b>静静听</b>。</div></div>
+    <div class="elem-tags">
+      <span class="tag-pill">🧠 压力来源</span>
+      <span class="tag-pill">❤️ 情绪状态</span>
+      <span class="tag-pill">🌙 睡眠</span>
+      <span class="tag-pill shuf">🔄 换一批</span>
+    </div>
+    <div class="elem-rings"></div>
+    <div class="elem-moon"></div>
+  </div>
+
+  <div class="foot">
+    <b>对照 taste-skill 三要素</b>：① 宽空白——聊天窗四周大留白，装饰稀疏散落 ② 层叠层级——4 个纵深水层 + 聊天窗浮波上（暗→明→更暗的叠压）③ 弹簧动画——大水波/同心圆 9-10s 缓慢呼吸，节奏静不抢。<br/>
+    <b>与上版区别</b>：上版=元素堆满左列 + 水波 4s 快速心跳（平面+密集）；本稿=装饰退散留白 + 水波 9s 慢呼吸 + 聊天窗浮在下层水波上（空间纵深）。<br/>
+    <b>仍待 futao 确认</b>：futao 对照参考图说「对，就是这个气质」才算过。
+  </div>
+</div>
+</body>
+</html>

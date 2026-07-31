@@ -327,8 +327,12 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
 
   return (
     <div className="max-w-[1240px] mx-auto px-3 sm:px-4 lg:px-6 relative overflow-hidden" style={{ height: 'calc(100vh - 56px)' }}>
+      {/* L1 深水底（3D 纵深最底层）：铺满全页的氛围光 */}
+      <div className="pond-deep-layer" />
+      {/* 水面反光带：聊天窗与下层水波之间的细光（立于水上的纵深感） */}
+      <div className="pond-waterline" />
       <div className="flex h-full gap-3 pt-3 pb-14 relative z-10">
-        {/* ─── Left: 会话列表 + 大标签页元素（方向 A：拆分到左侧背景，不占聊天窗）─── */}
+        {/* ─── Left: 会话列表 ─── */}
         <div className="w-56 sm:w-60 lg:w-72 flex-shrink-0 flex flex-col gap-3">
           {/* 会话列表（上） */}
           <div
@@ -513,47 +517,25 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
           </div>
         </div>
 
-        {/* ─── Left · 大标签页元素（方向 A：拆分到背景空白，不占聊天窗）─── */}
-        <div className="pond-bg-elems w-52 sm:w-56 lg:w-64 flex-1 relative">
-          <div className="pond-bg-elems-inner">
-            <div className="pond-kicker">NIGHT POND · TALK TO THE WATER</div>
-            <div className="pond-wordmark">涟<span className="pond-wordmark-dot">.</span>漪</div>
-            <div className="pond-poem">
-              把心里的话，<b>投进水里</b>。<br />
-              水面泛起一圈圈光，<br />
-              有人在水下，<b>静静听</b>。
-            </div>
-            {/* 月金引导话题（4 随机 + 换一批）——像岸边的话题石，不嵌聊天窗 */}
-            <div className="pond-guide-tags">
-              {bubbles.map(t => (
-                <button key={t} onClick={() => handleGuideClick(t)} className="pond-guide-tag">
-                  {t}
-                </button>
-              ))}
-              <button onClick={() => setBubbles(pickRandomBubbles(4))} className="pond-guide-tag pond-guide-shuffle">
-                🔄 换一批
-              </button>
-            </div>
-          </div>
-          <div className="pond-rings" />
-          <div className="pond-moon" />
-        </div>
         </div>
 
-        {/* ─── Right: Chat area (玻璃前景对话卡 — pond-premium card-chat) ─── */}
+        {/* ─── Right: Chat area（L3 聊天窗：浮在 L2 大水波上，唯一焦点）─── */}
         <div className="relative flex-1 min-w-0">
-          {/* 大水波：聊天框坐下水面上（futao 手绘布局：动态大水波泛在框下） */}
+          {/* L2 大水波（下层水面层）：四环主体 + 动态荡漾环（futao「大水波要动态荡漾」） */}
           <div className="pond-big-wave" />
+          <div className="pond-wave-drift d1" />
+          <div className="pond-wave-drift d2" />
+          <div className="pond-wave-drift d3" />
           <div
             className="relative z-10 h-full rounded-xl overflow-hidden flex flex-col"
             style={{
               background:
-                'linear-gradient(150deg, rgba(74,106,148,0.42) 0%, rgba(33,57,92,0.62) 100%)',
+                'linear-gradient(155deg, rgba(74,106,148,0.42) 0%, rgba(33,57,92,0.62) 55%, rgba(23,42,69,0.72) 100%)',
               border: '1px solid rgba(168,208,255,0.22)',
-              backdropFilter: 'blur(28px) saturate(160%)',
-              WebkitBackdropFilter: 'blur(28px) saturate(160%)',
+              backdropFilter: 'blur(24px) saturate(150%)',
+              WebkitBackdropFilter: 'blur(24px) saturate(150%)',
               boxShadow:
-                'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(255,255,255,0.04), 0 32px 80px rgba(2,8,20,0.5)',
+                'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -20px 40px rgba(12,22,38,0.25), 0 32px 70px rgba(2,8,20,0.55), 0 6px 24px rgba(12,22,38,0.4)',
             }}
           >
           {/* Messages */}
@@ -726,6 +708,28 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
           </div>
         </div>
       </div>
+
+      {/* L4 装饰元素（散落四周留白，参考图气质：稀疏、退后不抢戏） */}
+      <div className="pond-elem" style={{ left: 70, top: 74, zIndex: 20 }}>
+        <div className="pond-kicker">NIGHT POND · TALK TO THE WATER</div>
+        <div className="pond-wordmark">涟<span className="pond-wordmark-dot">.</span>漪</div>
+      </div>
+      <div className="pond-elem" style={{ right: 70, top: 78, textAlign: 'right', zIndex: 20 }}>
+        <div className="pond-poem">
+          把心里的话，<b>投进水里</b>。<br />
+          水面泛起一圈圈光，有人在水下，<b>静静听</b>。
+        </div>
+      </div>
+      <div className="pond-elem" style={{ left: 70, bottom: 180, zIndex: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
+          {bubbles.map(t => (
+            <button key={t} onClick={() => handleGuideClick(t)} className="pond-guide-tag">{t}</button>
+          ))}
+          <button onClick={() => setBubbles(pickRandomBubbles(4))} className="pond-guide-tag pond-guide-shuffle">🔄 换一批</button>
+        </div>
+      </div>
+      <div className="pond-rings" />
+      <div className="pond-moon" style={{ left: 120, bottom: 110 }} />
 
       {/* Toast */}
       <AnimatePresence>

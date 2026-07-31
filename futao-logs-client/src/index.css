@@ -270,123 +270,101 @@
 .cal-stem:hover .cal-stem-label { color: #e2ecfa; }
 .cal-stem.on .cal-stem-label { color: #ffd9a0; }
 
-/* ═══ 涟漪页 · 大标签页元素拆到背景 + 底部大水波（task #54 方向 A · futao 手绘布局）═══ */
-/* 大水波：聊天窗坐于水面上，一道动态大涟漪从框下泛开（wave-pulse 心跳缩放） */
-@keyframes pond-wave-pulse {
-  0% { transform: scale(0.93); opacity: 0.55; }
-  50% { transform: scale(1.07); opacity: 0.9; }
-  100% { transform: scale(0.93); opacity: 0.55; }
+/* ═══ 涟漪页 · v3（futao 确认：参考图气质 + 3D 纵深 + 大水波动态荡漾）═══ */
+/* L1 深水底：铺满全页的氛围光 */
+.pond-deep-layer {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 108%, rgba(111,180,255,0.06) 0%, transparent 55%),
+    linear-gradient(180deg, transparent 0%, rgba(12,22,38,0.6) 85%);
 }
-@keyframes pond-rings-breathe {
-  0%, 100% { transform: scale(1); opacity: 0.42; }
-  50% { transform: scale(1.04); opacity: 0.6; }
-}
+
+/* L2 大水波：聊天窗「下层」水面层，四环大而疏，主体形状 */
 .pond-big-wave {
   position: absolute;
   left: 50%;
-  margin-left: -300px;
+  margin-left: -450px;
   top: calc(100% + 2px);
-  width: 600px;
-  height: 230px;
+  width: 900px;
+  height: 420px;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
   background:
-    radial-gradient(ellipse at 50% 0%, transparent 0 30px, rgba(168,208,255,0.34) 32px, transparent 38px),
-    radial-gradient(ellipse at 50% 0%, transparent 0 76px, rgba(168,208,255,0.22) 78px, transparent 85px),
-    radial-gradient(ellipse at 50% 0%, transparent 0 126px, rgba(111,180,255,0.14) 128px, transparent 137px),
-    radial-gradient(ellipse at 50% 0%, transparent 0 182px, rgba(111,180,255,0.09) 184px, transparent 195px);
-  animation: pond-wave-pulse 4s ease-in-out infinite;
+    radial-gradient(ellipse at 50% 0%, transparent 0 90px, rgba(168,208,255,0.15) 94px, transparent 102px),
+    radial-gradient(ellipse at 50% 0%, transparent 0 190px, rgba(111,180,255,0.11) 195px, transparent 206px),
+    radial-gradient(ellipse at 50% 0%, transparent 0 300px, rgba(111,180,255,0.08) 305px, transparent 320px),
+    radial-gradient(ellipse at 50% 0%, transparent 0 410px, rgba(74,106,148,0.06) 415px, transparent 430px);
 }
 
-/* 大标签页元素：字标/三行文案/月金引导话题 竖排左侧背景，像「池塘岸边的字」 */
-.pond-bg-elems {
-  padding: 10px 2px 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+/* 荡漾环：涟漪从水线持续向外泛开再淡出（futao「大水波要动态荡漾」）*/
+@keyframes pond-wave-drift {
+  0%   { transform: scale(0.45); opacity: 0; }
+  20%  { opacity: 0.85; }
+  80%  { opacity: 0.30; }
+  100% { transform: scale(1.16); opacity: 0; }
 }
-.pond-bg-elems-inner {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: flex-start;
+.pond-wave-drift {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  margin-left: -450px;
+  width: 900px;
+  height: 320px;
+  transform-origin: 50% 100%;
+  pointer-events: none;
+  animation: pond-wave-drift 10s cubic-bezier(0.42, 0, 0.2, 1) infinite;
 }
-.pond-kicker {
-  font-size: 9px;
-  letter-spacing: 4px;
-  color: #ffd9a0;
-  opacity: 0.85;
+.pond-wave-drift.d1 { background: radial-gradient(ellipse at 50% 100%, transparent 0 118px, rgba(168,208,255,0.20) 122px, transparent 130px); }
+.pond-wave-drift.d2 { animation-delay: 3.3s; background: radial-gradient(ellipse at 50% 100%, transparent 0 168px, rgba(111,180,255,0.15) 172px, transparent 182px); }
+.pond-wave-drift.d3 { animation-delay: 6.6s; background: radial-gradient(ellipse at 50% 100%, transparent 0 218px, rgba(111,180,255,0.11) 222px, transparent 234px); }
+
+/* 水面反光带：聊天窗与下层水波之间 1px 细光（聊天窗立于水上的纵深感证据）*/
+.pond-waterline {
+  position: absolute;
+  left: 14%; right: 14%; bottom: 96px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(168,208,255,0.30), transparent);
+  opacity: 0.5; pointer-events: none;
+}
+
+/* L4 装饰元素（散落四周留白，alpha 低退后不抢，参考图气质）*/
+.pond-elem {
+  position: absolute; z-index: 4; pointer-events: none;
 }
 .pond-wordmark {
-  font-size: 40px;
-  font-weight: 200;
-  letter-spacing: 10px;
-  line-height: 1;
-  color: #e2ecfa;
-  text-shadow: 0 0 24px rgba(168,208,255,0.22);
+  font-size: 34px; font-weight: 200; letter-spacing: 10px; line-height: 1;
+  color: #e2ecfa; text-shadow: 0 0 24px rgba(168,208,255,0.22);
 }
 .pond-wordmark-dot { color: #a8d0ff; }
+.pond-kicker {
+  font-size: 9px; letter-spacing: 4px; color: #ffd9a0; opacity: 0.75; margin-bottom: 10px;
+}
 .pond-poem {
-  font-size: 13px;
-  line-height: 2;
-  color: #8fa6c4;
+  font-size: 12px; line-height: 2.1; color: #8fa6c4;
 }
 .pond-poem b { color: #a8d0ff; font-weight: 400; text-shadow: 0 0 14px rgba(168,208,255,0.4); }
-.pond-guide-tags {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 7px;
-  margin-top: 6px;
-}
 .pond-guide-tag {
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  color: #ffd9a0;
-  background: rgba(255,217,160,0.06);
-  border: 1px solid rgba(255,217,160,0.18);
-  cursor: pointer;
-  white-space: nowrap;
+  font-size: 10px; letter-spacing: 0.5px; padding: 5px 14px; border-radius: 999px;
+  color: #ffd9a0; background: rgba(255,217,160,0.08); border: 1px solid rgba(255,217,160,0.22);
+  cursor: pointer; white-space: nowrap;
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: auto;
 }
-.pond-guide-tag:hover {
-  background: rgba(255,217,160,0.14);
-  border-color: rgba(255,217,160,0.38);
-  transform: translateX(3px);
-  box-shadow: 0 0 16px rgba(255,217,160,0.18);
-}
-.pond-guide-tag:active { transform: scale(0.95); }
+.pond-guide-tag:hover { background: rgba(255,217,160,0.14); border-color: rgba(255,217,160,0.38); transform: translateX(3px); box-shadow: 0 0 16px rgba(255,217,160,0.18); }
 .pond-guide-shuffle { opacity: 0.55; }
 .pond-guide-shuffle:hover { opacity: 1; }
-
-/* 同心圆（抽象水纹，非生物 SVG）+ 月光 */
 .pond-rings {
-  position: absolute;
-  right: -6px;
-  bottom: -20px;
-  width: 190px;
-  height: 190px;
-  pointer-events: none;
+  position: absolute; right: -30px; bottom: -40px; width: 330px; height: 330px; z-index: 1; pointer-events: none;
   background:
-    radial-gradient(circle, transparent 0 20px, rgba(168,208,255,0.11) 21px, transparent 22px),
-    radial-gradient(circle, transparent 0 48px, rgba(168,208,255,0.09) 49px, transparent 50px),
-    radial-gradient(circle, transparent 0 80px, rgba(111,180,255,0.07) 81px, transparent 82px),
-    radial-gradient(circle, transparent 0 116px, rgba(111,180,255,0.05) 117px, transparent 118px);
-  animation: pond-rings-breathe 6s ease-in-out infinite;
+    radial-gradient(circle, transparent 0 42px, rgba(168,208,255,0.16) 44px, transparent 48px),
+    radial-gradient(circle, transparent 0 98px, rgba(168,208,255,0.13) 100px, transparent 105px),
+    radial-gradient(circle, transparent 0 160px, rgba(111,180,255,0.10) 162px, transparent 169px),
+    radial-gradient(circle, transparent 0 228px, rgba(111,180,255,0.07) 230px, transparent 240px);
+  animation: pond-rings-breathe 10s ease-in-out infinite;
 }
 .pond-moon {
-  position: absolute;
-  right: 14px;
-  top: -16px;
-  width: 40px;
-  height: 40px;
+  position: absolute; width: 56px; height: 56px; z-index: 2; pointer-events: none;
   border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(circle at 35% 30%, #ffd9a0, #ffd9a0 40%, transparent 70%);
-  box-shadow: 0 0 30px rgba(255,217,160,0.4);
-  opacity: 0.65;
+  background: radial-gradient(circle at 35% 30%, #ffd9a0, #ffd9a0 38%, transparent 68%);
+  box-shadow: 0 0 46px rgba(255,217,160,0.4);
+  opacity: 0.5;
 }

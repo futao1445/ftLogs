@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>涟漪页重构 · 布局方向稿 v2（futao 手绘参考）</title>
+<style>
+/* ═══════════════ 池塘涟漪 10 色体系 ═══════════════ */
+:root {
+  --deep: #0c1626; --mid: #172a45; --near: #21395c; --line: #2d4a75;
+  --glass: #4a6a94; --ripple: #6fb4ff; --shine: #a8d0ff;
+  --foam: #e2ecfa; --mist: #8fa6c4; --gold: #ffd9a0;
+  --spring: cubic-bezier(0.34,1.56,0.64,1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--deep); font-family:'Inter','Noto Sans SC',system-ui,sans-serif; color:var(--foam); }
+.wrap { max-width:1240px; margin:0 auto; padding:56px 48px 96px; }
+
+/* ─── 页头 ─── */
+.head .kicker { font-size:11px; letter-spacing:4px; color:var(--gold); margin-bottom:14px; }
+.head h1 { font-size:30px; font-weight:200; letter-spacing:6px; margin-bottom:12px; }
+.head p { font-size:14px; color:var(--mist); line-height:1.9; max-width:72ch; }
+.head .base { margin-top:16px; font-size:12px; color:var(--mist); background:rgba(23,42,69,0.5); border:1px solid rgba(45,74,117,0.4); border-radius:10px; padding:12px 16px; line-height:1.8; }
+.head .base b { color:var(--shine); font-weight:400; }
+.head .sketch-note { margin-top:10px; font-size:12px; color:var(--gold); opacity:0.85; line-height:1.8; }
+
+/* ─── 涟漪同心圆 / 月光（拆到背景的元素复用） ─── */
+.rings {
+  pointer-events:none; position:absolute;
+  background:
+    radial-gradient(circle, transparent 0 20px, rgba(168,208,255,0.12) 21px, transparent 22px),
+    radial-gradient(circle, transparent 0 48px, rgba(168,208,255,0.10) 49px, transparent 50px),
+    radial-gradient(circle, transparent 0 80px, rgba(111,180,255,0.08) 81px, transparent 82px),
+    radial-gradient(circle, transparent 0 116px, rgba(111,180,255,0.06) 117px, transparent 118px);
+}
+.moon {
+  pointer-events:none; position:absolute; width:46px; height:46px; border-radius:50%;
+  background: radial-gradient(circle at 35% 30%, var(--gold), var(--gold) 40%, transparent 70%);
+  box-shadow:0 0 34px rgba(255,217,160,0.45); opacity:0.7;
+}
+.kicker-txt { font-size:9px; letter-spacing:4px; color:var(--gold); }
+.big-txt { font-size:42px; font-weight:200; letter-spacing:12px; color:var(--foam); }
+.big-txt .dot { color:var(--shine); }
+.line-txt { font-size:13px; color:var(--mist); line-height:2; }
+.line-txt b { color:var(--shine); font-weight:400; }
+.tag-pill { font-size:10px; letter-spacing:1px; padding:4px 12px; border-radius:999px; color:var(--gold); background:rgba(255,217,160,0.07); border:1px solid rgba(255,217,160,0.18); cursor:pointer; white-space:nowrap; }
+
+/* ─── 大水波动画 ─── */
+@keyframes wave-breath {
+  0%,100% { transform:scale(1); opacity:0.5; }
+  50% { transform:scale(1.03); opacity:0.75; }
+}
+@keyframes wave-pulse {
+  0% { transform:scale(0.9); opacity:0.6; }
+  50% { transform:scale(1.06); opacity:0.9; }
+  100% { transform:scale(0.9); opacity:0.6; }
+}
+@keyframes bob {
+  0%,100% { transform:translateY(0); }
+  50% { transform:translateY(-4px); }
+}
+
+/* ─── 方向区块 ─── */
+.dir { margin-top:64px; }
+.dir-head { display:flex; align-items:baseline; gap:16px; margin-bottom:6px; }
+.dir-num { font-size:12px; letter-spacing:3px; color:var(--gold); }
+.dir-title { font-size:21px; font-weight:300; letter-spacing:4px; }
+.dir-one { font-size:13px; color:var(--mist); line-height:1.9; max-width:80ch; margin-bottom:20px; }
+.dir-one b { color:var(--shine); font-weight:400; }
+
+/* ─── 涟漪页舞台（模拟真实页面） ─── */
+.stage {
+  position:relative; height:560px; border-radius:16px; overflow:hidden;
+  border:1px solid rgba(45,74,117,0.55);
+  background:
+    linear-gradient(180deg, rgba(33,57,92,0.30) 0%, rgba(23,42,69,0.08) 220px, transparent 100%),
+    var(--deep);
+}
+/* 侧栏（会话列表） */
+.stage .side {
+  position:absolute; left:14px; top:14px; bottom:14px; width:132px; z-index:3;
+  border-radius:12px; background:rgba(23,42,69,0.75); border:1px solid rgba(45,74,117,0.5);
+  padding:10px; display:flex; flex-direction:column; gap:8px;
+}
+.side .kb { font-size:10px; text-align:center; padding:6px 0; border-radius:9px; color:var(--ripple); border:1px solid rgba(111,180,255,0.2); background:rgba(111,180,255,0.06); }
+.side .new { font-size:10px; text-align:center; padding:6px 0; border-radius:9px; color:var(--ripple); border:1px solid rgba(111,180,255,0.2); background:rgba(111,180,255,0.06); }
+.side .item { font-size:10px; padding:7px 9px; border-radius:8px; color:var(--mist); background:rgba(45,74,117,0.25); }
+.side .item.active { color:var(--shine); background:rgba(111,180,255,0.10); }
+
+/* ─── 方向 A：左岸浮标（最贴草图） ─── */
+.dirA .stage { background:
+    linear-gradient(180deg, rgba(33,57,92,0.30) 0%, rgba(23,42,69,0.08) 220px, transparent 100%),
+    var(--deep); }
+/* 左栏加宽：上=会话列表，下=大标签页元素 */
+.dirA .left-col {
+  position:absolute; left:14px; top:14px; bottom:14px; width:300px; z-index:3;
+  display:flex; flex-direction:column;
+}
+.dirA .left-col .side {
+  position:relative; left:auto; top:auto; bottom:auto; width:100%; flex-shrink:0;
+  border-radius:12px; background:rgba(23,42,69,0.75); border:1px solid rgba(45,74,117,0.5);
+  padding:10px; display:flex; flex-direction:column; gap:8px;
+}
+.dirA .bg-elems {
+  position:relative; flex:1; margin-top:14px;
+  display:flex; flex-direction:column; justify-content:flex-start; gap:12px;
+  padding:6px 2px;
+}
+.dirA .bg-elems .rings { width:170px; height:170px; left:4px; bottom:-26px; opacity:0.5; animation:wave-breath 5s ease-in-out infinite; }
+.dirA .bg-elems .moon { right:10px; top:-12px; }
+.dirA .chat { position:absolute; left:330px; top:26px; right:14px; bottom:14px; z-index:2; display:flex; flex-direction:column; border-radius:12px;
+  background:linear-gradient(150deg, rgba(74,106,148,0.42) 0%, rgba(33,57,92,0.62) 100%);
+  border:1px solid rgba(168,208,255,0.22); backdrop-filter:blur(28px) saturate(160%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.12), 0 32px 80px rgba(2,8,20,0.5);
+}
+.dirA .chat-msg { flex:1; padding:16px 18px; display:flex; flex-direction:column; gap:10px; overflow:hidden; }
+.dirA .bub { max-width:70%; padding:9px 13px; border-radius:13px; font-size:12px; line-height:1.7; background:rgba(74,106,148,0.28); border:1px solid rgba(168,208,255,0.3); color:var(--foam); }
+.dirA .bub.ai { align-self:flex-start; }
+.dirA .bub.me { align-self:flex-end; background:rgba(111,180,255,0.16); }
+.dirA .chat-input { margin:0 14px 14px; padding:10px 14px; border-radius:12px; font-size:12px; color:var(--mist); background:rgba(12,22,38,0.4); border:1px solid rgba(45,74,117,0.5); }
+.dirA .big-wave {
+  position:absolute; left:50%; bottom:-120px; z-index:0; pointer-events:none;
+  width:620px; height:300px; transform:translateX(-50%);
+  background:
+    radial-gradient(ellipse at 50% 0%, transparent 0 60px, rgba(168,208,255,0.10) 62px, transparent 66px),
+    radial-gradient(ellipse at 50% 0%, transparent 0 120px, rgba(111,180,255,0.08) 122px, transparent 128px),
+    radial-gradient(ellipse at 50% 0%, transparent 0 190px, rgba(111,180,255,0.05) 192px, transparent 200px);
+  animation:wave-pulse 4s ease-in-out infinite;
+}
+
+/* ─── 方向 B：水底漫游（元素散落四周） ─── */
+.dirB .bg-elems .elem-word { position:absolute; left:176px; top:24px; z-index:1; }
+.dirB .bg-elems .elem-poem { position:absolute; right:28px; top:24px; z-index:1; text-align:right; opacity:0.85; }
+.dirB .bg-elems .rings { width:180px; height:180px; right:-40px; bottom:-20px; opacity:0.5; animation:wave-breath 6s ease-in-out infinite; }
+.dirB .bg-elems .moon { right:24px; top:8px; }
+.dirB .bg-elems .tags { position:absolute; left:176px; top:118px; display:flex; gap:7px; flex-wrap:wrap; max-width:340px; opacity:0.9; }
+.dirB .chat {
+  position:absolute; left:176px; right:14px; top:180px; bottom:14px; z-index:2;
+  display:flex; flex-direction:column; border-radius:12px;
+  background:linear-gradient(150deg, rgba(74,106,148,0.46) 0%, rgba(33,57,92,0.66) 100%);
+  border:1px solid rgba(168,208,255,0.22); backdrop-filter:blur(28px) saturate(160%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.12), 0 32px 80px rgba(2,8,20,0.5);
+  animation:bob 7s ease-in-out infinite;
+}
+.dirB .chat-msg { flex:1; padding:16px 18px; display:flex; flex-direction:column; gap:10px; overflow:hidden; }
+.dirB .bub { max-width:70%; padding:9px 13px; border-radius:13px; font-size:12px; line-height:1.7; background:rgba(74,106,148,0.28); border:1px solid rgba(168,208,255,0.3); color:var(--foam); }
+.dirB .bub.ai { align-self:flex-start; }
+.dirB .bub.me { align-self:flex-end; background:rgba(111,180,255,0.16); }
+.dirB .chat-input { margin:0 14px 14px; padding:10px 14px; border-radius:12px; font-size:12px; color:var(--mist); background:rgba(12,22,38,0.4); border:1px solid rgba(45,74,117,0.5); }
+.dirB .big-wave {
+  position:absolute; left:50%; bottom:-110px; z-index:0; pointer-events:none;
+  width:640px; height:280px; transform:translateX(-50%);
+  background:
+    radial-gradient(ellipse at 50% 0%, transparent 0 64px, rgba(168,208,255,0.11) 66px, transparent 70px),
+    radial-gradient(ellipse at 50% 0%, transparent 0 128px, rgba(111,180,255,0.09) 130px, transparent 136px),
+    radial-gradient(ellipse at 50% 0%, transparent 0 200px, rgba(111,180,255,0.06) 202px, transparent 210px);
+  animation:wave-pulse 5s ease-in-out infinite;
+}
+
+/* ─── 方向 C：夜泊涟漪（水印最克制） ─── */
+.dirC .watermark {
+  position:absolute; left:50%; top:44%; transform:translate(-50%,-50%); z-index:0; pointer-events:none;
+  font-size:170px; font-weight:200; letter-spacing:36px; color:rgba(168,208,255,0.045); white-space:nowrap;
+}
+.dirC .rings { width:260px; height:260px; right:-30px; bottom:-50px; opacity:0.4; animation:wave-breath 6s ease-in-out infinite; }
+.dirC .moon { left:30px; top:22px; opacity:0.55; }
+.dirC .poem-foot { position:absolute; left:176px; bottom:24px; z-index:1; }
+.dirC .chat {
+  position:absolute; left:176px; right:14px; top:26px; bottom:64px; z-index:2;
+  display:flex; flex-direction:column; border-radius:12px;
+  background:linear-gradient(150deg, rgba(74,106,148,0.46) 0%, rgba(33,57,92,0.66) 100%);
+  border:1px solid rgba(168,208,255,0.22); backdrop-filter:blur(28px) saturate(160%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.12), 0 32px 80px rgba(2,8,20,0.5);
+}
+.dirC .chat-msg { flex:1; padding:16px 18px; display:flex; flex-direction:column; gap:10px; overflow:hidden; }
+.dirC .bub { max-width:70%; padding:9px 13px; border-radius:13px; font-size:12px; line-height:1.7; background:rgba(74,106,148,0.28); border:1px solid rgba(168,208,255,0.3); color:var(--foam); }
+.dirC .bub.ai { align-self:flex-start; }
+.dirC .bub.me { align-self:flex-end; background:rgba(111,180,255,0.16); }
+.dirC .chat-input { margin:0 14px 14px; padding:10px 14px; border-radius:12px; font-size:12px; color:var(--mist); background:rgba(12,22,38,0.4); border:1px solid rgba(45,74,117,0.5); }
+.dirC .wave-band {
+  position:absolute; left:10px; right:10px; bottom:8px; z-index:0; pointer-events:none; height:56px;
+  background:
+    radial-gradient(ellipse 60% 28px at 20% 100%, transparent 0 12px, rgba(168,208,255,0.10) 14px, transparent 16px),
+    radial-gradient(ellipse 60% 28px at 50% 100%, transparent 0 12px, rgba(111,180,255,0.10) 14px, transparent 16px),
+    radial-gradient(ellipse 60% 28px at 80% 100%, transparent 0 12px, rgba(168,208,255,0.10) 14px, transparent 16px);
+  animation:wave-pulse 4.5s ease-in-out infinite;
+}
+
+/* ─── 底部 ─── */
+.foot { margin-top:72px; padding-top:28px; border-top:1px solid rgba(45,74,117,0.4); font-size:12px; color:var(--mist); line-height:2; }
+.foot b { color:var(--gold); font-weight:400; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="kicker">NIGHT POND · DESIGN DIRECTION V2</div>
+    <h1>涟漪页重构 · 布局方向稿（futao 手绘参考）</h1>
+    <p>futao 打回上一版方向 B：重构不美观，聊天窗口只有中间窄窄一条，标签嵌入生硬，没改善美观反而影响阅读。</p>
+    <div class="base"><b>futao 核心思路（手绘 2 张草图 + 小恒基线 msg 6d250652）</b>：① 大标签页元素（涟.漪 字标 / 三行文案 / 同心圆 / 月光）<b>从聊天窗拆出，散放到聊天窗之外的背景空白</b>（如左侧）② 聊天框<b>底下泛起动态大水波</b>（动态大涟漪，聊天框坐在涟漪上）③ 聊天窗<b>完整宽敞</b>，不被压窄、元素不硬嵌、不挡阅读。草图仅表达意图，由 Miky 专业重构，非照抄。</div>
+    <div class="sketch-note">◆ 三个方向都保证：聊天窗完整宽敞（不嵌标签）+ 元素全在窗外背景 + 底部大水波动效。差异只在「元素怎么散」和「水波怎么泛」的叙事感。</div>
+  </div>
+
+  <!-- ════ 方向 A：左岸浮标（最贴草图） ════ -->
+  <section class="dir dirA">
+    <div class="dir-head"><span class="dir-num">方向 A</span><h2 class="dir-title">左岸浮标 · 元素竖排左侧背景</h2></div>
+    <p class="dir-one"><b>一句话</b>：最贴 futao 草图——大标签页元素整齐竖排在聊天窗<b>左侧背景</b>（字标在上、三行文案居中、同心圆+月光做底），像「池塘岸边的字」；聊天窗完整宽敞坐右侧，底部一道大水波从窗下向左下/右下荡开。<b>引导话题标签</b>也放左侧元素区底部（像岸边的话题石），不嵌聊天窗。</p>
+    <div class="stage">
+      <div class="big-wave"></div>
+      <div class="left-col">
+        <div class="side">
+          <div class="kb">📚 知识库</div>
+          <div class="new">＋ 新对话</div>
+          <div class="item active">今天的心事</div>
+          <div class="item">关于工作</div>
+        </div>
+        <div class="bg-elems">
+          <div class="kicker-txt">NIGHT POND · TALK TO THE WATER</div>
+          <div class="big-txt">涟<span class="dot">.</span>漪</div>
+          <div class="line-txt">把心里的话，<b>投进水里</b>。<br/>水面泛起一圈圈光，<br/>有人在水下，<b>静静听</b>。</div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; position:relative; z-index:1;">
+            <span class="tag-pill">🧠 压力来源</span>
+            <span class="tag-pill">❤️ 情绪状态</span>
+            <span class="tag-pill">⏰ 作息</span>
+            <span class="tag-pill" style="opacity:0.55;">🔄 换一批</span>
+          </div>
+          <div class="rings"></div>
+          <div class="moon"></div>
+        </div>
+      </div>
+      <div class="chat">
+        <div class="chat-msg">
+          <div class="bub ai">选择想说的话，或直接在下面输入。</div>
+          <div class="bub me">工作上的事，压得我有点喘不过气……</div>
+          <div class="bub ai">辛苦了。听起来像很多事同时压着你，愿意说说最重的那件吗？</div>
+        </div>
+        <div class="chat-input">把心里的话，投进水里……</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ 方向 B：水底漫游（元素散落四周） ════ -->
+  <section class="dir dirB">
+    <div class="dir-head"><span class="dir-num">方向 B</span><h2 class="dir-title">水底漫游 · 元素散落四周背景</h2></div>
+    <p class="dir-one"><b>一句话</b>：大标签页元素<b>散落到四周背景</b>——涟.漪 字标在左上角、三行文案在右上、同心圆+月光在右上角、引导话题标签散落在聊天窗上方的水面上（像浮标），聊天窗完整坐下方<b>浮在水波上缓缓起伏</b>（水底活水感最足）。</p>
+    <div class="stage">
+      <div class="side">
+        <div class="kb">📚 知识库</div>
+        <div class="new">＋ 新对话</div>
+        <div class="item active">今天的心事</div>
+        <div class="item">关于工作</div>
+      </div>
+      <div class="big-wave"></div>
+      <div class="bg-elems">
+        <div class="elem-word"><div class="kicker-txt" style="margin-bottom:6px;">NIGHT POND · TALK TO THE WATER</div><div class="big-txt" style="font-size:36px; letter-spacing:9px;">涟<span class="dot">.</span>漪</div></div>
+        <div class="elem-poem"><div class="line-txt" style="text-align:right;">把心里的话，<b>投进水里</b>。<br/>水面泛起一圈圈光，有人在水下，<b>静静听</b>。</div></div>
+        <div class="tags">
+          <span class="tag-pill">🧠 压力来源</span>
+          <span class="tag-pill">❤️ 情绪状态</span>
+          <span class="tag-pill">⏰ 作息</span>
+          <span class="tag-pill" style="opacity:0.55;">🔄 换一批</span>
+        </div>
+        <div class="rings"></div>
+        <div class="moon"></div>
+      </div>
+      <div class="chat">
+        <div class="chat-msg">
+          <div class="bub ai">选择想说的话，或直接在下面输入。</div>
+          <div class="bub me">工作上的事，压得我有点喘不过气……</div>
+          <div class="bub ai">辛苦了。愿意说说最重的那件吗？</div>
+        </div>
+        <div class="chat-input">把心里的话，投进水里……</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ 方向 C：夜泊涟漪（水印最克制） ════ -->
+  <section class="dir dirC">
+    <div class="dir-head"><span class="dir-num">方向 C</span><h2 class="dir-title">夜泊涟漪 · 元素退为背景水印</h2></div>
+    <p class="dir-one"><b>一句话</b>：最克制高级——涟.漪 字标退成<b>超大背景水印</b>（淡淡印在聊天窗后方水面上），同心圆+月光点缀角落，三行文案落到聊天窗<b>下方</b>一行小字，引导话题标签放窗底<b>水波带</b>里；聊天窗完整居中，底部一道水波横向泛开。最「融进背景」，但图案不完整呈现。</p>
+    <div class="stage">
+      <div class="side">
+        <div class="kb">📚 知识库</div>
+        <div class="new">＋ 新对话</div>
+        <div class="item active">今天的心事</div>
+        <div class="item">关于工作</div>
+      </div>
+      <div class="watermark">涟.漪</div>
+      <div class="rings"></div>
+      <div class="moon"></div>
+      <div class="wave-band"></div>
+      <div class="poem-foot">
+        <div class="kicker-txt" style="margin-bottom:5px;">NIGHT POND · TALK TO THE WATER</div>
+        <div class="line-txt">把心里的话，<b>投进水里</b>。水面泛起一圈圈光，有人在水下，<b>静静听</b>。</div>
+        <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;">
+          <span class="tag-pill">🧠 压力来源</span>
+          <span class="tag-pill">❤️ 情绪状态</span>
+          <span class="tag-pill" style="opacity:0.55;">🔄 换一批</span>
+        </div>
+      </div>
+      <div class="chat">
+        <div class="chat-msg">
+          <div class="bub ai">选择想说的话，或直接在下面输入。</div>
+          <div class="bub me">工作上的事，压得我有点喘不过气……</div>
+          <div class="bub ai">辛苦了。愿意说说最重的那件吗？</div>
+        </div>
+        <div class="chat-input">把心里的话，投进水里……</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <b>三个方向都满足 futao 三点意图</b>：元素拆出聊天窗外（背景空白）+ 底部动态大水波 + 聊天窗完整宽敞。差异在叙事感——<br/>
+    <b>A 左岸浮标</b>：最贴草图，元素整齐竖排左侧，最好理解，像「站在岸边投话」；<br/>
+    <b>B 水底漫游</b>：元素散落四周，聊天窗浮在活水上起伏，最「活」，但元素分布要仔细调避免杂乱；<br/>
+    <b>C 夜泊涟漪</b>：最克制高级，元素退为水印几乎不占视觉，最「融」，但图案不完整呈现。<br/>
+    <b>miky 推荐</b>：<b>方向 A</b>——futao 手绘正是「左侧拆分 + 中央聊天窗 + 底部水波」，A 最贴合他的直觉，也最好落地；若 futao 想更「活水」感则 B。
+  </div>
+</div>
+</body>
+</html>
