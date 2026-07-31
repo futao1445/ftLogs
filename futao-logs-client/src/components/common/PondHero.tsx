@@ -62,14 +62,18 @@ function MemoryCard({
       ? { rotate: 1.6, x: 6, y: 2 }
       : { rotate: 0, x: 0, y: 0 };
 
+  // hover 时旋转回正 + 浮起
+  const hoverPose =
+    depth === 0 ? { rotate: -1, y: -8 } : depth === 1 ? { rotate: 0.5, y: -8 } : { rotate: 0, y: -6 };
+
   return (
     <motion.div
       className="absolute rounded-[22px] cursor-pointer overflow-hidden"
       style={{ inset: 0, ...layerStyle }}
-      initial={{ opacity: 0, y: 60, scale: 0.94 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, y: 60, scale: 0.94, rotate: pose.rotate, x: pose.x }}
+      animate={{ opacity: 1, y: pose.y, scale: 1, rotate: pose.rotate, x: pose.x }}
       transition={{ ...SPRING, delay: 0.25 + depth * 0.2 }}
-      whileHover={{ y: -8, rotate: depth === 0 ? -1 : depth === 1 ? 0.5 : 0 }}
+      whileHover={{ ...hoverPose, scale: 1.02 }}
       onClick={() => onOpen?.(diary)}
     >
       <div className="h-full flex flex-col" style={{ padding: depth === 2 ? '22px 24px' : '20px 22px' }}>
