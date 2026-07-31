@@ -329,8 +329,6 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
     <div className="max-w-[1240px] mx-auto px-3 sm:px-4 lg:px-6 relative overflow-hidden" style={{ height: 'calc(100vh - 56px)' }}>
       {/* L1 深水底（3D 纵深最底层）：铺满全页的氛围光 */}
       <div className="pond-deep-layer" />
-      {/* 水面反光带：聊天窗与下层水波之间的细光（立于水上的纵深感） */}
-      <div className="pond-waterline" />
       <div className="flex h-full gap-3 pt-3 pb-14 relative z-10">
         {/* ─── Left: 会话列表 ─── */}
         <div className="w-56 sm:w-60 lg:w-72 flex-shrink-0 flex flex-col gap-3">
@@ -521,14 +519,17 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
 
         {/* ─── Right: Chat area（L3 聊天窗：浮在 L2 大水波上，唯一焦点）─── */}
         <div className="relative flex-1 min-w-0">
+          {/* 水面反光带：聊天窗底缘与下层水波之间的细光 */}
+          <div className="pond-waterline" />
           {/* L2 大水波（下层水面层）：四环主体 + 动态荡漾环（futao「大水波要动态荡漾」） */}
           <div className="pond-big-wave" />
           <div className="pond-wave-drift d1" />
           <div className="pond-wave-drift d2" />
           <div className="pond-wave-drift d3" />
           <div
-            className="relative z-10 h-full rounded-xl overflow-hidden flex flex-col"
+            className="relative z-10 rounded-xl overflow-hidden flex flex-col"
             style={{
+              height: 'calc(100% - 150px)', /* 底部留 150px 水层，大水波从框下泛开 */
               background:
                 'linear-gradient(155deg, rgba(74,106,148,0.42) 0%, rgba(33,57,92,0.62) 55%, rgba(23,42,69,0.72) 100%)',
               border: '1px solid rgba(168,208,255,0.22)',
