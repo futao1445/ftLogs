@@ -148,7 +148,7 @@ function MemoryCard({
                 心情 {diary.mood}
               </span>
             )}
-            {/* 右下角：回到第一张（置顶） */}
+            {/* 右下角：回到第一张（回到水面 = 回最新一张/首页） */}
             <motion.button
               onClick={(e) => {
                 e.stopPropagation();
@@ -164,7 +164,7 @@ function MemoryCard({
                 <path d="M8 11l4-4 4 4" />
                 <path d="M8 17l4-4 4 4" />
               </svg>
-              <span>置顶</span>
+              <span>回到水面</span>
             </motion.button>
           </div>
         )}

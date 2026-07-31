@@ -12,6 +12,7 @@ import AISummaryTab from '../ai-summary/AISummaryTab';
 import SearchView from '../search/SearchView';
 import TreeholePage from '../treehole/TreeholePage';
 import PondHero from '../common/PondHero';
+import PondConfirmModal from '../common/PondConfirmModal';
 
 export default function HomePage() {
   // Tab state
@@ -184,8 +185,8 @@ export default function HomePage() {
   };
 
   // ─── Delete diary ───
+  const [pendingDelete, setPendingDelete] = useState<number | null>(null);
   const handleDelete = async (id: number) => {
-    if (!confirm('确定删除这篇日记？')) return;
     try {
       await api.diaryDelete([id]);
       loadTimeline(1);
@@ -301,7 +302,7 @@ export default function HomePage() {
           loading={loading}
           hasMore={hasMore}
           onEdit={(d) => setEditingDiary(d)}
-          onDelete={handleDelete}
+          onDelete={(id) => setPendingDelete(id)}
           onLoadMore={() => loadTimeline(page + 1)}
           totalCount={totalCount}
           streak={streak}
@@ -349,7 +350,7 @@ export default function HomePage() {
 
       {/* ─── Search Tab ─── */}
       {activeTab === 'search' && (
-        <SearchView onEditDiary={(d) => setEditingDiary(d)} onDeleteDiary={handleDelete} onOpenSettings={() => setTriggerSettings(n => n + 1)} />
+        <SearchView onEditDiary={(d) => setEditingDiary(d)} onDeleteDiary={(id) => setPendingDelete(id)} onOpenSettings={() => setTriggerSettings(n => n + 1)} />
       )}
 
       {/* ─── AI Summary Tab ─── */}
@@ -381,6 +382,20 @@ export default function HomePage() {
           {toast.msg}
         </div>
       )}
+
+      {/* ─── NIGHT POND 删除确认弹窗（futao 第六轮①：专属设计替换原生 confirm）─── */}
+      <PondConfirmModal
+        open={pendingDelete !== null}
+        title="沉入水底？"
+        message="这篇日记删除后无法找回，确定要让它沉入水底吗？"
+        confirmText="确认删除"
+        cancelText="再想想"
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => {
+          if (pendingDelete !== null) handleDelete(pendingDelete);
+          setPendingDelete(null);
+        }}
+      />
     </PageShell>
   );
 }
