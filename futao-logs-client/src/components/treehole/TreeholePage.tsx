@@ -382,12 +382,22 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
           {/* 会话列表（上） */}
           <div
             className="flex-none rounded-xl overflow-hidden flex flex-col"
-            style={{ maxHeight: '40%', background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}
+            style={{
+              maxHeight: '40%',
+              /* v5 侧栏玻璃：半透明深色 + backdrop blur（小恒基线①：rgba(10,19,34,0.66)+blur 18px，非实色） */
+              background: 'rgba(10,19,34,0.66)',
+              border: '1px solid rgba(45,74,117,0.4)',
+              backdropFilter: 'blur(18px) saturate(140%)',
+              WebkitBackdropFilter: 'blur(18px) saturate(140%)',
+              boxShadow: 'inset 0 1px 0 rgba(168,208,255,0.06), 0 20px 44px rgba(2,8,20,0.4)',
+            }}
           >
+          {/* THREADS · 静夜对话（v5 侧栏标题，s-title 低存在感） */}
+          <div className="px-3 pt-3 text-[9px] tracking-[3px]" style={{ color: '#8fa6c4', opacity: 0.55 }}>THREADS · 静夜对话</div>
           {/* Knowledge base entry — 黑猫守夜（v5 落地：抽象几何剪影 + 独月眼 + 尾尖落水涟漪） */}
           <motion.button
             onClick={() => setShowKnowledge(true)}
-            className="kb-cat-wrap flex items-center gap-2.5 px-2.5 py-2 mx-2 mt-2 rounded-2xl cursor-pointer relative overflow-hidden"
+            className="kb-cat-wrap flex items-center gap-3 px-3 py-2.5 mx-2.5 mt-2 rounded-2xl cursor-pointer relative overflow-hidden"
             style={{
               background: 'rgba(12,22,38,0.5)',
               border: '1px solid rgba(45,74,117,0.35)',
@@ -402,7 +412,7 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
             transition={{ duration: 0.35, type: 'spring', stiffness: 260, damping: 24 }}
             title="知识库"
           >
-            <svg className="cat-svg" viewBox="0 0 132 96" width="46" height="34" aria-hidden="true" style={{ flexShrink: 0 }}>
+            <svg className="cat-svg" viewBox="0 0 132 96" width="56" height="41" aria-hidden="true" style={{ flexShrink: 0 }}>
               <defs>
                 <filter id="cat-blur" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.4" /></filter>
               </defs>
@@ -426,7 +436,7 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
               </g>
             </svg>
             <div className="text-left">
-              <div className="text-xs tracking-[2px]" style={{ color: '#8fa6c4' }}>知识库</div>
+              <div className="text-[11px] tracking-[2px]" style={{ color: '#8fa6c4' }}>知识库</div>
               <div className="text-[9px] tracking-[1px]" style={{ color: '#8fa6c4', opacity: 0.5, marginTop: 2 }}>MEMORY · 水面记下的</div>
             </div>
           </motion.button>
@@ -656,6 +666,14 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
 
         {/* ─── Right: Chat area（L3 聊天窗：浮在水面光池+大水波上，唯一焦点）─── */}
         <div className="relative flex-1 min-w-0 flex flex-col">
+          <div
+            className="relative flex flex-col"
+            style={{
+              /* 水池/细弧/入水线对齐聊天窗（同宽同 left，水波相对聊天窗居中） */
+              width: 'min(730px, calc(100vw - 600px))',
+              marginLeft: 24,
+            }}
+          >
           {/* L1 水面光池 + L2 大水波（对照设计稿 v5：柔光池渐隐无硬边 + 4 条细弧，底部全静，无右下同心圆） */}
           <div className="pond-water-wrap">
             <div className="pond-pool" />
@@ -674,9 +692,10 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
                  v5 落地：聊天窗往下再拓展一点（futao 08:46）→ 底部留白收到 ~70px（14px flex 内 + 56px 容器 pb），
                  水线/波心随之下移（bottom 150→70px，波心 250px=320-70），叶子更占满水面 */
               height: 'calc(100% - 14px)',
-              width: 'min(100%, 680px)',
-              marginLeft: 'auto',
-              marginRight: 'auto',
+              /* v5 落地：聊天窗加宽（680→730）+ 左移贴近左侧知识库栏（futao ②）
+                 宽度响应式：窄屏收窄避免溢出 + 给右侧诗句/moon 留白 */
+              width: 'min(730px, calc(100vw - 600px))',
+              marginLeft: 24,
               background:
                 'linear-gradient(160deg, rgba(111,180,255,0.34) 0%, rgba(74,106,148,0.44) 52%, rgba(45,74,117,0.52) 100%)',
               border: '1px solid rgba(168,208,255,0.32)',
@@ -867,14 +886,15 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
             </div>
           </div>
           </div>
+          </div>
         </div>
       </div>
 
       {/* L4 装饰元素（v5 落地：字标/右侧竖排，低存在感、不侵入聊天窗）
-          v5 气质：字标=左上（进左栏顶部作品牌水印）、右侧竖排=留白处 */}
-      <div className="pond-elem" style={{ left: 36, top: 74, zIndex: 20 }}>
-        <div className="pond-kicker" style={{ color: '#ffd9a0', opacity: 0.20, marginBottom: 10 }}>涟漪 · 静夜</div>
+          v5 气质：字标=左上（进左栏顶部作品牌水印，wordmark 上 kicker 下，对照设计稿 top 40/76） */}
+      <div className="pond-elem" style={{ left: 36, top: 40, zIndex: 20 }}>
         <div className="pond-wordmark" style={{ fontSize: 24, letterSpacing: 11, opacity: 0.12 }}>涟<span className="pond-wordmark-dot">.</span>漪</div>
+        <div className="pond-kicker" style={{ color: '#ffd9a0', opacity: 0.20, marginBottom: 0, marginTop: 12 }}>涟漪 · 静夜</div>
       </div>
       {/* 右侧竖排一句（留白处，低存在感） */}
       <div className="pond-elem" style={{ right: 66, bottom: 150, zIndex: 20, fontSize: 10, lineHeight: 2.1, color: '#8fa6c4', opacity: 0.18, letterSpacing: 3, textAlign: 'right', whiteSpace: 'nowrap' }}>

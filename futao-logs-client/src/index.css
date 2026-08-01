@@ -314,7 +314,10 @@ html::-webkit-scrollbar-corner { background: transparent; }
    叶子(聊天窗)底缘=入水点，水池中心=水线 bottom 70px；无硬矩形区块、无右下同心圆（futao 打回 10:54/10:55 修）*/
 .pond-water-wrap {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
@@ -326,7 +329,7 @@ html::-webkit-scrollbar-corner { background: transparent; }
   bottom: 70px;
   transform: translateX(-50%);
   z-index: 1;
-  width: 760px;
+  width: 800px;
   height: 250px;
   pointer-events: none;
   background: radial-gradient(ellipse at 50% 8%, rgba(74,106,148,0.28) 0%, rgba(33,57,92,0.14) 42%, transparent 72%);
@@ -391,8 +394,12 @@ html::-webkit-scrollbar-corner { background: transparent; }
 .pond-guide-shuffle { opacity: 0.55; }
 .pond-guide-shuffle:hover { opacity: 1; }
 
-/* v5 落地：知识库入口 · 黑猫守夜 hover —— 月眼亮起 + 尾尖涟漪泛开 */
-.kb-cat-wrap { display: contents; }
+/* v5 落地：知识库入口 · 黑猫守夜 hover —— 月眼亮起 + 尾尖涟漪泛开
+   黑猫按钮是设计稿 .kb-cat 卡片盒（bg rgba(12,22,38,0.5)+border 1px）——不可用 display:contents 破坏盒模型 */
+.kb-cat-wrap {
+  background: rgba(12,22,38,0.5);
+  border: 1px solid rgba(45,74,117,0.35);
+}
 .kb-cat-wrap .cat-svg .cat-eye { transition: all 0.35s ease; }
 .kb-cat-wrap:hover .cat-svg .cat-eye { filter: drop-shadow(0 0 6px rgba(255,217,160,0.9)); }
 .kb-cat-wrap .cat-svg .tail-ring { opacity: 0; transition: opacity 0.3s ease; }
