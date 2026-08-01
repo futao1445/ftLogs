@@ -33,3 +33,10 @@ exports/
 
 # Build artifacts (deploy script manages these; do not track)
 futao-logs-server/server/public/assets/
+
+# Runtime/tunnel temp files
+cf-*.txt
+*.bak-pm-*
+
+# Dev screenshots (runtime artifacts)
+.pond-shots/
