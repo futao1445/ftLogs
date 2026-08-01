@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>静夜涟漪 · 完整设计稿（v5）</title>
+<style>
+/* ═══════════════ 池塘涟漪 10 色体系（锁定）═══════════════ */
+:root {
+  --deep: #0c1626; --mid: #172a45; --near: #21395c; --line: #2d4a75;
+  --glass: #4a6a94; --ripple: #6fb4ff; --shine: #a8d0ff;
+  --foam: #e2ecfa; --mist: #8fa6c4; --gold: #ffd9a0;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#060b14; font-family:'Inter','Noto Sans SC',system-ui,sans-serif; color:var(--foam); }
+.wrap { max-width:1360px; margin:0 auto; padding:48px 36px 100px; }
+
+.head .kicker { font-size:11px; letter-spacing:4px; color:var(--gold); margin-bottom:14px; }
+.head h1 { font-size:26px; font-weight:200; letter-spacing:5px; margin-bottom:16px; }
+.head .intro { font-size:13px; color:var(--mist); line-height:2; max-width:96ch; }
+.head .crit { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:20px; }
+.head .crit div { background:rgba(23,42,69,0.35); border:1px solid rgba(45,74,117,0.45); border-radius:10px; padding:12px 14px; font-size:11px; color:var(--mist); line-height:1.8; }
+.head .crit b { color:var(--gold); font-weight:400; display:block; margin-bottom:3px; font-size:12px; letter-spacing:1px; }
+
+.panel { margin-top:36px; }
+.panel .tag { font-size:11px; letter-spacing:3px; color:var(--gold); opacity:0.85; margin-bottom:10px; }
+.panel .tag b { font-weight:400; color:var(--shine); }
+.stage { position:relative; width:1280px; max-width:100%; height:607px; border-radius:14px; overflow:hidden; border:1px solid rgba(45,74,117,0.5); background:var(--deep); }
+.stage.clean { border:none; border-radius:0; }
+.stage img.ref { position:absolute; inset:0; width:100%; height:100%; object-fit:fill; }
+.stage .note { position:absolute; left:14px; bottom:12px; z-index:60; font-size:10px; letter-spacing:1px; color:#8fa6c4; opacity:0.7; background:rgba(6,11,20,0.55); padding:5px 10px; border-radius:6px; }
+
+/* ═══════════════ 完整设计稿舞台（1280×607）═══════════════ */
+/* L0 深水底：深海夜底 + 一束天光从上方斜落 */
+.l0 { position:absolute; inset:0; z-index:0;
+  background: radial-gradient(ellipse at 50% -6%, rgba(168,208,255,0.06) 0%, transparent 40%), var(--deep); }
+
+/* L1 水面光池（聊天窗底缘入水处一抹光） */
+.l1-pool { position:absolute; left:50%; bottom:70px; z-index:1; width:760px; height:250px; transform:translateX(-50%);
+  background: radial-gradient(ellipse at 50% 8%, rgba(74,106,148,0.28) 0%, rgba(33,57,92,0.14) 42%, transparent 72%); pointer-events:none; }
+
+/* L2 大水波 · 大而疏：4 条 clip 弧，贴窗两侧泛开，底部全静（入水点=聊天窗底缘 waterline=bottom70px） */
+.l2-ring { position:absolute; left:50%; z-index:1; border-radius:50%; pointer-events:none; transform:translateX(-50%); animation: ring-breathe 14s ease-in-out infinite; }
+.l2-ring.r1 { border:1px solid rgba(168,208,255,0.12); width:860px; height:300px; bottom:-80px; clip-path:inset(0 0 42% 0); }
+.l2-ring.r2 { border:1px solid rgba(111,180,255,0.09); width:620px; height:240px; bottom:-50px; clip-path:inset(0 0 42% 0); animation-delay:-3.5s; }
+.l2-ring.r3 { border:1px solid rgba(111,180,255,0.065); width:420px; height:180px; bottom:-20px; clip-path:inset(0 0 42% 0); animation-delay:-7s; }
+.l2-ring.r4 { border:1px solid rgba(74,106,148,0.06); width:260px; height:140px; bottom:0px; clip-path:inset(0 0 42% 0); animation-delay:-10.5s; }
+@keyframes ring-breathe { 0%,100% { transform:translateX(-50%) scale(1); opacity:1; } 50% { transform:translateX(-50%) scale(1.015); opacity:0.78; } }
+
+/* 入水线 */
+.waterline { position:absolute; left:24%; right:24%; bottom:70px; z-index:5; height:1px; background:linear-gradient(90deg, transparent, rgba(168,208,255,0.34), transparent); opacity:0.55; pointer-events:none; }
+
+/* ═══ 左侧栏（会话列表 + 知识库入口）═══
+   深色玻璃 · 低存在感：是夜色的一部分，不抢中央焦点（参考图：四周留白） */
+.sidebar {
+  position:absolute; left:24px; top:104px; bottom:52px; z-index:12;
+  width:232px; border-radius:16px;
+  background:rgba(10,19,34,0.66);
+  backdrop-filter:blur(18px) saturate(140%);
+  border:1px solid rgba(45,74,117,0.4);
+  box-shadow: inset 0 1px 0 rgba(168,208,255,0.06), 0 20px 44px rgba(2,8,20,0.4);
+  padding:14px 12px;
+  display:flex; flex-direction:column; gap:8px;
+}
+.sidebar .s-title { font-size:9px; letter-spacing:3px; color:var(--mist); opacity:0.55; margin:0 2px 2px; }
+
+/* 知识库入口 · 黑猫守夜（抽象几何：圆拱身+双耳+独月眼+尾落水起涟漪）
+   剪影深于夜色（#0d1b30），唯一亮色 = 月眼（--gold）
+   黑猫是「水面记忆的守夜者」：尾尖落水泛起涟漪 = 每一次保存都让水面记下 */
+.kb-cat {
+  position:relative; display:flex; align-items:center; gap:10px;
+  padding:10px 12px; border-radius:14px; cursor:pointer;
+  background:rgba(12,22,38,0.5); border:1px solid rgba(45,74,117,0.35);
+  transition:all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  overflow:hidden;
+}
+.kb-cat:hover { background:rgba(17,29,49,0.7); border-color:rgba(111,180,255,0.35); box-shadow:0 0 22px rgba(111,180,255,0.10), inset 0 0 18px rgba(111,180,255,0.05); }
+.kb-cat .cat-svg { flex-shrink:0; }
+.kb-cat .cat-moon { fill:var(--gold); }
+.kb-cat .kb-label { font-size:11px; letter-spacing:2px; color:var(--mist); transition:color 0.3s ease; }
+.kb-cat:hover .kb-label { color:var(--foam); }
+.kb-cat .kb-sub { font-size:8px; letter-spacing:1.5px; color:var(--mist); opacity:0.5; margin-top:2px; }
+/* 黑猫 hover：月眼亮起 + 尾尖涟漪泛开 + 猫身浮起 */
+.kb-cat .cat-svg .cat-eye { transition:all 0.35s ease; }
+.kb-cat:hover .cat-svg .cat-eye { filter:drop-shadow(0 0 6px rgba(255,217,160,0.9)); }
+.kb-cat .cat-svg .tail-ring { opacity:0; transition:opacity 0.3s ease; }
+.kb-cat:hover .cat-svg .tail-ring { opacity:1; animation:tail-ripple 1.6s ease-out infinite; }
+@keyframes tail-ripple { 0% { opacity:0; transform:scale(0.6); } 35% { opacity:0.5; } 100% { opacity:0; transform:scale(1.6); } }
+
+/* 侧栏按钮（＋ 新对话 / ⧉ 批量） */
+.side-btn {
+  display:flex; align-items:center; justify-content:center; gap:5px;
+  padding:7px 0; border-radius:11px; font-size:11px; letter-spacing:1px; cursor:pointer;
+  background:rgba(111,180,255,0.06); color:var(--mist);
+  border:1px solid rgba(74,106,148,0.35);
+  transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+.side-btn:hover { background:rgba(111,180,255,0.14); color:var(--shine); border-color:rgba(111,180,255,0.3); box-shadow:0 0 14px rgba(111,180,255,0.08); }
+.side-btn .plus { color:var(--shine); }
+.side-btn.active { color:var(--gold); border-color:rgba(255,217,160,0.35); background:rgba(255,217,160,0.08); }
+.side-row { display:flex; gap:8px; }
+.side-row .side-btn { flex:1; }
+
+/* 会话项（低存在感，hover 才现保存/删除） */
+.session {
+  position:relative; border-radius:10px; padding:8px 10px; cursor:pointer;
+  border:1px solid transparent; transition:all 0.2s ease;
+}
+.session:hover { background:rgba(23,42,69,0.5); border-color:rgba(45,74,117,0.35); }
+.session .s-name { font-size:11px; color:var(--foam); opacity:0.75; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.session .s-time { font-size:8px; color:var(--mist); opacity:0.45; margin-top:3px; }
+.session .s-ops { position:absolute; right:8px; top:50%; transform:translateY(-50%); display:flex; gap:4px; opacity:0; transition:opacity 0.2s ease; }
+.session:hover .s-ops { opacity:1; }
+.s-op { width:22px; height:22px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:10px; cursor:pointer; background:rgba(12,22,38,0.7); border:1px solid rgba(45,74,117,0.4); color:var(--mist); transition:all 0.2s ease; }
+.s-op.save:hover { color:var(--shine); border-color:rgba(111,180,255,0.4); box-shadow:0 0 8px rgba(111,180,255,0.2); }
+.s-op.del:hover { color:#ef5f6f; border-color:rgba(239,95,111,0.45); }
+/* 水滴保存按钮（生产：一滴沉入水面的水光） */
+.drop { width:9px; height:9px; border-radius:60% 60% 55% 55%; background:radial-gradient(circle at 35% 30%, rgba(168,208,255,0.5), rgba(111,180,255,0.12) 60%, rgba(74,106,148,0.15)); box-shadow:inset 0 1px 1px rgba(255,255,255,0.3); }
+
+/* ═══ 聊天窗（唯一焦点 · 一束光，纵向占满往下延伸——futao 08:46「聊天窗口要往下再拓展一点」）═══ */
+.chat {
+  position:absolute; left:50%; top:48px; z-index:10; width:min(680px,53%); height:calc(100% - 118px);
+  transform:translateX(-50%); border-radius:16px;
+  background: linear-gradient(160deg, rgba(111,180,255,0.34) 0%, rgba(74,106,148,0.44) 52%, rgba(45,74,117,0.52) 100%);
+  border:1px solid rgba(168,208,255,0.32);
+  backdrop-filter:blur(20px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.20), inset 0 -24px 44px rgba(12,22,38,0.18),
+    0 26px 54px rgba(2,8,20,0.5), 0 60px 120px rgba(2,8,20,0.3), 0 0 60px rgba(111,180,255,0.10), 0 0 160px rgba(168,208,255,0.06);
+  display:flex; flex-direction:column;
+}
+.chat .c-top { padding:14px 20px 0; display:flex; align-items:baseline; gap:8px; }
+.chat .c-top .dot { width:6px; height:6px; border-radius:50%; background:var(--gold); opacity:0.9; box-shadow:0 0 8px rgba(255,217,160,0.7); }
+.chat .c-top .name { font-size:13px; letter-spacing:2px; color:var(--foam); font-weight:300; }
+.chat .c-top .sub { font-size:10px; letter-spacing:1px; color:var(--shine); opacity:0.7; }
+.chat .c-body { flex:1; overflow:hidden; padding:18px 22px; display:flex; flex-direction:column; gap:14px; }
+.bubble { max-width:82%; padding:9px 14px; border-radius:14px; font-size:12px; line-height:1.9; background:rgba(74,106,148,0.30); color:var(--foam); border:1px solid rgba(168,208,255,0.20); }
+.bubble.ai { align-self:flex-start; }
+.bubble.user { align-self:flex-end; background:rgba(23,42,69,0.55); border-color:rgba(111,180,255,0.35); }
+.guide { display:flex; flex-wrap:wrap; gap:8px; margin-top:2px; }
+.guide span { font-size:11px; letter-spacing:0.5px; padding:5px 13px; border-radius:999px; color:var(--mist); opacity:0.75; background:rgba(74,106,148,0.16); border:1px solid rgba(74,106,148,0.35); }
+.chat .c-input { padding:0 20px 18px; }
+.chat .c-input .in { height:38px; border-radius:12px; border:1px solid rgba(111,180,255,0.35); background:rgba(12,22,38,0.42); display:flex; align-items:center; padding:0 14px; font-size:12px; color:var(--shine); opacity:0.8; letter-spacing:0.5px; }
+
+/* L4 背景文案 · 低存在感（不侵入聊天窗：futao ⑦） */
+.l4 { position:absolute; z-index:20; pointer-events:none; }
+.wordmark { left:36px; top:40px; font-size:24px; font-weight:100; letter-spacing:11px; color:var(--foam); opacity:0.12; }
+.wordmark .dot { color:var(--shine); }
+.kicker { left:38px; top:76px; font-size:8px; letter-spacing:4px; color:var(--gold); opacity:0.20; white-space:nowrap; }
+.poem-b { right:66px; bottom:150px; font-size:10px; line-height:2.1; color:var(--mist); opacity:0.18; letter-spacing:3px; text-align:right; }
+.poem-b b { color:var(--shine); font-weight:300; opacity:0.7; }
+.moon { right:90px; top:96px; width:44px; height:44px; border-radius:50%; z-index:20;
+  background: radial-gradient(circle at 36% 32%, var(--gold), var(--gold) 40%, transparent 68%);
+  box-shadow:0 0 34px rgba(255,217,160,0.28); opacity:0.24; }
+
+/* 保存进度提示（知识库控件 · 生产已落地 NIGHT POND 玻璃） */
+.save-panel {
+  position:absolute; left:50%; bottom:24px; transform:translateX(-50%); z-index:40;
+  display:flex; align-items:center; gap:12px; padding:10px 16px; border-radius:14px;
+  background:rgba(12,22,38,0.82); backdrop-filter:blur(24px) saturate(160%);
+  border:1px solid rgba(111,180,255,0.22); box-shadow:inset 0 1px 0 rgba(255,255,255,0.06), 0 16px 40px rgba(0,0,0,0.35);
+}
+.save-panel .sp-dot { width:8px; height:8px; border-radius:50%; background:var(--gold); box-shadow:0 0 10px rgba(255,217,160,0.8); animation:pond-pulse 1.6s ease-in-out infinite; }
+.save-panel .sp-t { font-size:11px; color:var(--foam); }
+.save-panel .sp-s { font-size:9px; color:var(--mist); opacity:0.7; margin-top:2px; letter-spacing:0.5px; }
+@keyframes pond-pulse { 0%,100% { transform:scale(1); opacity:0.5; } 50% { transform:scale(1.5); opacity:1; } }
+
+.note-list { margin-top:40px; font-size:12px; color:var(--mist); line-height:2.1; }
+.note-list table { width:100%; border-collapse:collapse; margin-top:10px; }
+.note-list th { text-align:left; font-weight:400; color:var(--gold); font-size:11px; letter-spacing:1px; padding:8px 10px; border-bottom:1px solid rgba(45,74,117,0.5); }
+.note-list td { padding:8px 10px; border-bottom:1px solid rgba(23,42,69,0.8); vertical-align:top; }
+.note-list .hl { color:var(--shine); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div class="kicker">RIPPLE PAGE · COMPLETE DESIGN v5</div>
+    <h1>静夜涟漪 · 完整设计稿 v5</h1>
+    <p class="intro">
+      futao 已认可 v5 方向（「下面那个完整设计稿 v5不错」），并按两点继续打磨：
+      ① <b style="color:var(--shine);font-weight:400">聊天窗口往下再拓展一点</b>（纵向占满）；
+      ② <b style="color:var(--shine);font-weight:400">futao-ripple-ref.png 参考图作废</b>——不再作为基准，v5 本身就是方向。
+    </p>
+    <div class="crit">
+      <div><b>① 空旷静谧</b>深海夜底全铺留白，聊天窗是唯一焦点；左栏为夜色的一部分（深玻璃），不抢戏。</div>
+      <div><b>② 大水波大而疏</b>4 条细环、间隔 160-220px、alpha 0.06-0.16、14s 缓慢呼吸。</div>
+      <div><b>③ 背景文案低存在感</b>字标 0.12 / kicker 0.20 / 文案 0.18，且不延伸进聊天窗。</div>
+      <div><b>④ 知识库入口 = 黑猫</b>抽象几何剪影（圆拱+双耳+独月眼+尾尖落水起涟漪），有想象力。</div>
+    </div>
+  </div>
+
+  <!-- ════════ 完整设计稿 v5（futao 已认可方向；futao-ripple-ref.png 已作废不作基准）════════ -->
+  <div class="panel">
+    <div class="tag">完整设计稿 v5 · <b>futao 已认可 · 参考图已作废</b>（1280×607）</div>
+    <div class="stage clean">
+
+      <!-- L0 深水底 -->
+      <div class="l0"></div>
+      <!-- L1 水面光池 -->
+      <div class="l1-pool"></div>
+      <!-- L2 大水波 · 大而疏 -->
+      <div class="l2-ring r4"></div>
+      <div class="l2-ring r3"></div>
+      <div class="l2-ring r2"></div>
+      <div class="l2-ring r1"></div>
+      <!-- 入水线 -->
+      <div class="waterline"></div>
+
+      <!-- L6 左侧栏：会话列表 + 知识库黑猫入口 -->
+      <div class="sidebar">
+        <div class="s-title">THREADS · 静夜对话</div>
+        <!-- 知识库入口 · 黑猫守夜（futao ④） -->
+        <div class="kb-cat" title="知识库">
+          <svg class="cat-svg" viewBox="0 0 132 96" width="46" height="34" aria-hidden="true">
+            <defs>
+              <filter id="cat-blur" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.4" /></filter>
+            </defs>
+            <!-- 水面线 -->
+            <line x1="10" y1="84" x2="124" y2="84" stroke="rgba(168,208,255,0.12)" stroke-width="1" />
+            <!-- 猫身剪影：圆拱 + 双耳 -->
+            <path d="M40 82 C 32 66, 36 48, 46 38 L 50 26 L 58 36 C 62 32, 78 32, 82 36 L 90 26 L 94 38 C 104 48, 108 66, 100 82 Z"
+                  fill="#0d1b30" stroke="rgba(74,106,148,0.55)" stroke-width="1" />
+            <!-- 尾：向右下卷出，触水 -->
+            <path d="M100 66 C 112 64, 118 74, 112 82" fill="none" stroke="#0d1b30" stroke-width="5" stroke-linecap="round" />
+            <!-- 尾尖落水涟漪 -->
+            <circle class="tail-ring" cx="112" cy="84" r="5" fill="none" stroke="rgba(255,217,160,0.5)" stroke-width="1.2" />
+            <circle class="tail-ring" cx="112" cy="84" r="10" fill="none" stroke="rgba(255,217,160,0.25)" stroke-width="0.9" style="animation-delay:.4s" />
+            <!-- 月眼（唯一亮色） -->
+            <circle class="cat-eye" cx="70" cy="48" r="3" fill="#ffd9a0" opacity="0.95" />
+            <circle cx="70" cy="48" r="7" fill="rgba(255,217,160,0.14)" />
+            <!-- 水中倒影（向下镜像，淡 + 模糊） -->
+            <g filter="url(#cat-blur)" opacity="0.3">
+              <path d="M40 82 C 32 66, 36 48, 46 38 L 50 26 L 58 36 C 62 32, 78 32, 82 36 L 90 26 L 94 38 C 104 48, 108 66, 100 82 Z"
+                    fill="rgba(74,106,148,0.5)" transform="scale(1,-1) translate(0,-168)" />
+            </g>
+          </svg>
+          <div>
+            <div class="kb-label">知识库</div>
+            <div class="kb-sub">MEMORY · 水面记下的</div>
+          </div>
+        </div>
+        <!-- ＋ 新对话 / ⧉ 批量 -->
+        <div class="side-row">
+          <div class="side-btn"><span class="plus">＋</span> 新对话</div>
+          <div class="side-btn">⧉ 批量</div>
+        </div>
+        <!-- 会话列表 -->
+        <div class="s-title" style="margin-top:4px;">最近对话</div>
+        <div class="session"><div class="s-name">今晚的月亮很亮…</div><div class="s-time">21:02</div>
+          <div class="s-ops"><span class="s-op save"><span class="drop"></span></span><span class="s-op del">✕</span></div></div>
+        <div class="session" style="border-color:rgba(111,180,255,0.22); background:rgba(23,42,69,0.35);"><div class="s-name">想找人说说话</div><div class="s-time">20:47</div>
+          <div class="s-ops"><span class="s-op save"><span class="drop"></span></span><span class="s-op del">✕</span></div></div>
+        <div class="session"><div class="s-name">水面微微晃了晃</div><div class="s-time">19:30</div>
+          <div class="s-ops"><span class="s-op save"><span class="drop"></span></span><span class="s-op del">✕</span></div></div>
+      </div>
+
+      <!-- L3 聊天窗（静夜涟漪 · 唯一焦点） -->
+      <div class="chat">
+        <div class="c-top">
+          <span class="dot"></span>
+          <span class="name">静夜涟漪</span>
+          <span class="sub">把话轻轻放进水里</span>
+        </div>
+        <div class="c-body">
+          <div class="bubble ai">今晚的月亮很亮，像一颗沉在湖底的银币。</div>
+          <div class="bubble user">嗯，我想把今天的事也说给水面听。</div>
+          <div class="guide"><span>最近有点累</span><span>想找人说说话</span><span>试试新的树洞</span></div>
+          <div class="bubble ai">水面微微晃了晃——它接住了你的话。</div>
+        </div>
+        <div class="c-input"><div class="in">把想说的话，投进水里…</div></div>
+      </div>
+
+      <!-- L4 背景文案 · 低存在感 -->
+      <div class="l4 wordmark">涟<span class="dot">.</span>漪</div>
+      <div class="l4 kicker">涟漪 · 静夜</div>
+      <div class="l4 poem-b">有人在水下，<b>静静听</b>。</div>
+      <div class="l4 moon"></div>
+
+      <!-- 保存进度提示（知识库控件 · 保存会话时浮现） -->
+      <div class="save-panel">
+        <div class="sp-dot"></div>
+        <div>
+          <div class="sp-t">正在把这段对话收进水面…</div>
+          <div class="sp-s">AI 正在整理成一条记忆</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════ 迭代对照（futao-ripple-ref.png 已作废，v5 即方向）════════ -->
+  <div class="note-list">
+    <div class="tag">v5 迭代点（futao 反馈 → 落实）</div>
+    <table>
+      <tr><th style="width:24%">futao 反馈</th><th style="width:76%">v5 落实</th></tr>
+      <tr><td class="hl">聊天窗口往下再拓展</td><td>聊天窗高由 `calc(100%-174px)` → `calc(100%-118px)`，底缘水线/涟漪随之下移（bottom 126→70px），纵向更占满</td></tr>
+      <tr><td class="hl">参考图作废</td><td>futao-ripple-ref.png 不再作为基准（废案），v5 完整稿即方向；已从页面移除参考图对比栏</td></tr>
+      <tr><td class="hl">名字</td><td>「静夜树洞」→ <b class="hl">「静夜涟漪」</b></td></tr>
+      <tr><td class="hl">左上文字不侵入聊天窗</td><td>kicker 缩为「涟漪 · 静夜」；实测右缘 x146 ≪ 窗左缘 x320</td></tr>
+      <tr><td class="hl">知识库控件补进</td><td>左侧栏：知识库入口（黑猫）+ 会话列表 + 水滴保存/删除 + 保存进度玻璃面板</td></tr>
+      <tr><td class="hl">知识库入口 = 黑猫</td><td><b class="hl">黑猫守夜</b>：圆拱剪影+双耳+独月眼+尾尖落水涟漪；剪影深于夜色，唯一亮色月眼；hover 月眼亮+涟漪泛开；倒影入水</td></tr>
+    </table>
+    <p style="margin-top:14px; font-size:11px; color:var(--mist); opacity:0.75; line-height:2;">
+      底部水面保持全静；左栏为深玻璃（夜色一部分），四角留白不破「空旷静谧」。聊天窗 avg 65 / 底部静 / 四角安静。
+    </p>
+  </div>
+
+</div>
+</body>
+</html>

@@ -322,15 +322,16 @@ html::-webkit-scrollbar-corner { background: transparent; }
   pointer-events: none;
   z-index: 0;
   background:
-    /* 实心水面：椭圆水面圆心=水线（叶子入水点），中心不透明（真正亮于深底），向下渐入深水 */
-    radial-gradient(ellipse at 50% 170px, #36567f 0%, #36567f 18%, rgba(51,85,128,0.92) 38%, rgba(33,57,92,0.78) 58%, rgba(23,42,69,0.52) 78%, rgba(12,22,38,0) 100%),
+    /* 实心水面：椭圆水面圆心=水线（叶子入水点），中心不透明（真正亮于深底），向下渐入深水
+       v5 落地：聊天窗往下拓展 → 水线下移 bottom 150→70px，波心随之下移（250px = 320-70，中心仍=入水点） */
+    radial-gradient(ellipse at 50% 250px, #36567f 0%, #36567f 18%, rgba(51,85,128,0.92) 38%, rgba(33,57,92,0.78) 58%, rgba(23,42,69,0.52) 78%, rgba(12,22,38,0) 100%),
     /* 水光：入水点光晕（叶子与水面接触处一抹亮光） */
-    radial-gradient(ellipse at 50% 170px, rgba(168,208,255,0.38) 0%, rgba(168,208,255,0.16) 42%, transparent 64%),
+    radial-gradient(ellipse at 50% 250px, rgba(168,208,255,0.38) 0%, rgba(168,208,255,0.16) 42%, transparent 64%),
     /* 涟漪环：从入水点向外清晰泛开（粗亮 band） */
-    radial-gradient(ellipse at 50% 170px, transparent 0 74px, rgba(168,208,255,0.50) 80px, rgba(168,208,255,0.26) 92px, transparent 108px),
-    radial-gradient(ellipse at 50% 170px, transparent 0 156px, rgba(111,180,255,0.42) 162px, rgba(111,180,255,0.20) 178px, transparent 200px),
-    radial-gradient(ellipse at 50% 170px, transparent 0 248px, rgba(111,180,255,0.34) 254px, rgba(111,180,255,0.15) 274px, transparent 304px),
-    radial-gradient(ellipse at 50% 170px, transparent 0 360px, rgba(74,106,148,0.26) 366px, rgba(74,106,148,0.11) 390px, transparent 428px);
+    radial-gradient(ellipse at 50% 250px, transparent 0 74px, rgba(168,208,255,0.50) 80px, rgba(168,208,255,0.26) 92px, transparent 108px),
+    radial-gradient(ellipse at 50% 250px, transparent 0 156px, rgba(111,180,255,0.42) 162px, rgba(111,180,255,0.20) 178px, transparent 200px),
+    radial-gradient(ellipse at 50% 250px, transparent 0 248px, rgba(111,180,255,0.34) 254px, rgba(111,180,255,0.15) 274px, transparent 304px),
+    radial-gradient(ellipse at 50% 250px, transparent 0 360px, rgba(74,106,148,0.26) 366px, rgba(74,106,148,0.11) 390px, transparent 428px);
   animation: pond-big-sway 8s ease-in-out infinite;
 }
 /* 主体缓慢荡漾：轻缩放 + 微光呼吸（节奏静）*/
@@ -402,6 +403,18 @@ html::-webkit-scrollbar-corner { background: transparent; }
 .pond-guide-tag:hover { background: rgba(255,217,160,0.14); border-color: rgba(255,217,160,0.38); transform: translateX(3px); box-shadow: 0 0 16px rgba(255,217,160,0.18); }
 .pond-guide-shuffle { opacity: 0.55; }
 .pond-guide-shuffle:hover { opacity: 1; }
+
+/* v5 落地：知识库入口 · 黑猫守夜 hover —— 月眼亮起 + 尾尖涟漪泛开 */
+.kb-cat-wrap { display: contents; }
+.kb-cat-wrap .cat-svg .cat-eye { transition: all 0.35s ease; }
+.kb-cat-wrap:hover .cat-svg .cat-eye { filter: drop-shadow(0 0 6px rgba(255,217,160,0.9)); }
+.kb-cat-wrap .cat-svg .tail-ring { opacity: 0; transition: opacity 0.3s ease; }
+.kb-cat-wrap:hover .cat-svg .tail-ring { opacity: 1; animation: tail-ripple 1.6s ease-out infinite; }
+@keyframes tail-ripple {
+  0% { opacity: 0; transform: scale(0.6); }
+  35% { opacity: 0.5; }
+  100% { opacity: 0; transform: scale(1.6); }
+}
 .pond-rings {
   position: fixed; right: -30px; bottom: -40px; width: 330px; height: 330px; z-index: 2; pointer-events: none;
   background:

@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>涟漪页 · v4 方向稿（参考图气质为唯一基准）</title>
+<style>
+/* ═══════════════ 池塘涟漪 10 色体系（锁定，与生产一致）═══════════════ */
+:root {
+  --deep: #0c1626; --mid: #172a45; --near: #21395c; --line: #2d4a75;
+  --glass: #4a6a94; --ripple: #6fb4ff; --shine: #a8d0ff;
+  --foam: #e2ecfa; --mist: #8fa6c4; --gold: #ffd9a0;
+  --spring: cubic-bezier(0.34,1.56,0.64,1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#060b14; font-family:'Inter','Noto Sans SC',system-ui,sans-serif; color:var(--foam); }
+.wrap { max-width:1320px; margin:0 auto; padding:48px 36px 100px; }
+
+/* ─── 头部说明 ─── */
+.head .kicker { font-size:11px; letter-spacing:4px; color:var(--gold); margin-bottom:14px; }
+.head h1 { font-size:26px; font-weight:200; letter-spacing:5px; margin-bottom:16px; }
+.head .intro { font-size:14px; color:var(--mist); line-height:2; max-width:92ch; }
+.head .base { margin-top:16px; font-size:12px; color:var(--mist); background:rgba(23,42,69,0.45); border:1px solid rgba(45,74,117,0.4); border-radius:12px; padding:14px 18px; line-height:2.1; }
+.head .base b { color:var(--shine); font-weight:400; }
+.head .crit { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:18px; }
+.head .crit div { background:rgba(23,42,69,0.35); border:1px solid rgba(45,74,117,0.45); border-radius:10px; padding:12px 14px; font-size:11px; color:var(--mist); line-height:1.8; }
+.head .crit b { color:var(--gold); font-weight:400; display:block; margin-bottom:3px; font-size:12px; letter-spacing:1px; }
+
+/* ─── 对照面板 ─── */
+.panel { margin-top:36px; }
+.panel .tag { font-size:11px; letter-spacing:3px; color:var(--gold); opacity:0.85; margin-bottom:10px; }
+.panel .tag b { font-weight:400; color:var(--shine); }
+.stage {
+  position:relative; width:1280px; max-width:100%; height:607px; border-radius:14px;
+  overflow:hidden; border:1px solid rgba(45,74,117,0.5);
+  background:var(--deep); /* 深海夜底 */
+}
+/* 新版舞台（第二个 stage）：去掉边框——参考图无边框，量化测量不被 1px 边框角污染（Emma gate） */
+.stage.clean { border:none; border-radius:0; }
+.stage img.ref { position:absolute; inset:0; width:100%; height:100%; object-fit:fill; }
+.stage .note {
+  position:absolute; left:14px; bottom:12px; z-index:40; font-size:10px; letter-spacing:1px;
+  color:#8fa6c4; opacity:0.7; background:rgba(6,11,20,0.55); padding:5px 10px; border-radius:6px;
+}
+
+/* ═══════════════════════════════════════════════
+   v4 新版 · 涟漪页方向（1280×607 舞台，生产同比例）
+   ═══════════════════════════════════════════════ */
+
+/* ── L0 深水底：深海夜底，全铺留白，只有一束天光从上方斜斜落下（参考图气质）
+   底部保持全静暗（参考图底部 max=19，比深底还暗）——不设底部光晕 */
+.l0 {
+  position:absolute; inset:0; z-index:0;
+  background:
+    /* 一束天光从上方落下（参考图：中央一束光打在水面） */
+    radial-gradient(ellipse at 50% -6%, rgba(168,208,255,0.06) 0%, transparent 40%),
+    var(--deep);
+}
+
+/* ── L1 水面光池：聊天窗底缘入水处的一抹光（参考图：中央一束光打在水面）
+   收敛到窗下——是聊天窗投在水面的光晕，不是铺向底部的亮带；
+   四周水面保持全静（Emma gate：底部 max 应≈19 接近全暗） */
+.l1-pool {
+  position:absolute; left:50%; bottom:110px; z-index:1;
+  width:760px; height:250px; transform:translateX(-50%);
+  background: radial-gradient(ellipse at 50% 8%, rgba(74,106,148,0.28) 0%, rgba(33,57,92,0.14) 42%, transparent 72%);
+  pointer-events:none;
+}
+
+/* ── L2 大水波 · 大而疏（参考图：涟漪稀疏、间隔大、缓慢呼吸）──
+   4 条同心宽椭圆细环，环心 = 聊天窗底缘（叶子入水点），聊天窗盖住环心。
+   关键：clip-path 裁掉椭圆下半（只保留侧弧），弧贴着聊天窗两侧泛开，
+   绝不垂入底部空水面 → 底部保持全静（Emma gate：参考图底部 max=19 全静）
+   每条环：细(1px)、间隔极大、alpha 很低、14s 缓慢呼吸 */
+.l2-ring {
+  position:absolute; left:50%; z-index:1;
+  border-radius:50%;
+  pointer-events:none;
+  transform:translateX(-50%);
+  animation: ring-breathe 14s ease-in-out infinite;
+}
+/* 环心固定在水线（bottom=126px），各环为同心宽椭圆；clip 保留上半 58%（侧弧垂入水面但止于静水带之上，Emma gate：底部保持全静） */
+.l2-ring.r1 { border:1px solid rgba(168,208,255,0.12); width:860px; height:300px; bottom:-24px; clip-path:inset(0 0 42% 0); }
+.l2-ring.r2 { border:1px solid rgba(111,180,255,0.09); width:620px; height:240px; bottom:6px; clip-path:inset(0 0 42% 0); animation-delay:-3.5s; }
+.l2-ring.r3 { border:1px solid rgba(111,180,255,0.065); width:420px; height:180px; bottom:36px; clip-path:inset(0 0 42% 0); animation-delay:-7s; }
+.l2-ring.r4 { border:1px solid rgba(74,106,148,0.06); width:260px; height:140px; bottom:56px; clip-path:inset(0 0 42% 0); animation-delay:-10.5s; }
+@keyframes ring-breathe {
+  0%, 100% { transform:translateX(-50%) scale(1); opacity:1; }
+  50% { transform:translateX(-50%) scale(1.015); opacity:0.78; }
+}
+
+/* ── L3 聊天窗（唯一焦点 · 一束光）：浮在光池与涟漪之上，底部浸入水面 ──
+   参考图：聊天窗宽 52% / 高 71% / 底部 252px 空水留白 —— 等比映射到 1280×607
+   Emma gate：窗要「亮」起来成为唯一光源——窗内 avg 接近参考图 63，
+   相对背景对比度 +42（不是压在中间亮度）——提亮玻璃 + 收紧内衬对比 */
+.chat {
+  position:absolute; left:50%; top:48px; z-index:10;
+  width:min(680px, 53%); height:calc(100% - 174px);
+  transform:translateX(-50%);
+  border-radius:16px;
+  background: linear-gradient(160deg, rgba(111,180,255,0.34) 0%, rgba(74,106,148,0.44) 52%, rgba(45,74,117,0.52) 100%);
+  border:1px solid rgba(168,208,255,0.32);
+  backdrop-filter:blur(20px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.20),
+    inset 0 -24px 44px rgba(12,22,38,0.18),
+    /* 纵深：向水面投下的阴影——叶子压在水面上，边缘渗开 */
+    0 26px 54px rgba(2,8,20,0.5),
+    0 60px 120px rgba(2,8,20,0.3),
+    /* 一束光：窗自身发光，成为水面唯一光源 */
+    0 0 60px rgba(111,180,255,0.10),
+    0 0 160px rgba(168,208,255,0.06);
+  display:flex; flex-direction:column;
+}
+/* 聊天窗顶部：极简，无亮条 header */
+.chat .c-top { padding:14px 20px 0; display:flex; align-items:baseline; gap:8px; }
+.chat .c-top .dot { width:6px; height:6px; border-radius:50%; background:var(--gold); opacity:0.9; box-shadow:0 0 8px rgba(255,217,160,0.7); }
+.chat .c-top .name { font-size:13px; letter-spacing:2px; color:var(--foam); opacity:1; font-weight:300; }
+.chat .c-top .sub { font-size:10px; letter-spacing:1px; color:var(--shine); opacity:0.7; }
+.chat .c-body { flex:1; overflow:hidden; padding:18px 22px; display:flex; flex-direction:column; gap:14px; }
+/* 气泡：窗内亮度提升（跟随窗成为光源），低对比、透明玻璃感 */
+.bubble {
+  max-width:82%; padding:9px 14px; border-radius:14px; font-size:12px; line-height:1.9;
+  background:rgba(74,106,148,0.30); color:var(--foam); opacity:1;
+  border:1px solid rgba(168,208,255,0.20);
+}
+.bubble.ai { align-self:flex-start; }
+.bubble.user { align-self:flex-end; background:rgba(23,42,69,0.55); border-color:rgba(111,180,255,0.35); opacity:1; }
+/* 引导气泡：窗内、低存在感（功能②保留：在聊天窗内） */
+.guide { display:flex; flex-wrap:wrap; gap:8px; margin-top:2px; }
+.guide span {
+  font-size:11px; letter-spacing:0.5px; padding:5px 13px; border-radius:999px;
+  color:var(--mist); opacity:0.75; background:rgba(74,106,148,0.16);
+  border:1px solid rgba(74,106,148,0.35);
+}
+.chat .c-input { padding:0 20px 18px; }
+.chat .c-input .in {
+  height:38px; border-radius:12px; border:1px solid rgba(111,180,255,0.35);
+  background:rgba(12,22,38,0.42); display:flex; align-items:center; padding:0 14px;
+  font-size:12px; color:var(--shine); opacity:0.8; letter-spacing:0.5px;
+}
+
+/* ── L4 背景文案 · 低存在感（参考图：弱对比、散落留白、退后不抢）
+   参考图 copy 分布：左栏竖排 x595-799 + 右下方 x1680-1932 —— 底部中央保持全静水面（Emma gate） */
+.l4 { position:absolute; z-index:20; pointer-events:none; }
+/* 背景文案统一再降一档（Emma gate：参考图左上仅 5.4，字标极淡低存在感）——
+   字标 0.22→0.12、kicker 0.30→0.20、左竖排 0.30→0.22、右下 0.24→0.18 */
+.wordmark {
+  left:56px; top:52px;
+  font-size:26px; font-weight:100; letter-spacing:12px; color:var(--foam); opacity:0.12;
+}
+.wordmark .dot { color:var(--shine); }
+.kicker {
+  left:58px; top:92px; font-size:8px; letter-spacing:5px; color:var(--gold); opacity:0.20;
+  white-space:nowrap;
+}
+/* 左栏竖排文案：字标下方，像水边的小字（参考图左栏竖排） */
+.poem-a { left:58px; top:126px; font-size:10px; line-height:2.3; color:var(--mist); opacity:0.22; letter-spacing:3px; writing-mode:vertical-rl; }
+.poem-a b { color:var(--shine); font-weight:300; opacity:0.8; }
+/* 右下文案：散落在右下留白（参考图右下方），远离聊天窗与底部中央 */
+.poem-b { right:66px; bottom:150px; font-size:10px; line-height:2.1; color:var(--mist); opacity:0.18; letter-spacing:3px; text-align:right; }
+.poem-b b { color:var(--shine); font-weight:300; opacity:0.7; }
+
+/* ── L5 月光 + 同心圆（氛围，非堆砌）：极弱、一角 ── */
+.moon { right:90px; top:96px; width:44px; height:44px; border-radius:50%; z-index:20;
+  background: radial-gradient(circle at 36% 32%, var(--gold), var(--gold) 40%, transparent 68%);
+  box-shadow:0 0 34px rgba(255,217,160,0.28);
+  opacity:0.24; }
+.ring-bg { display:none; } /* 参考图底部全静，无右下角同心圆（Emma gate：底部保持安静水面）*/
+
+/* ── 水面反光带：聊天窗底缘入水线（叶子与水面接触处一道细光，纵深证据）── */
+.waterline {
+  position:absolute; left:24%; right:24%; bottom:126px; z-index:5; height:1px;
+  background: linear-gradient(90deg, transparent, rgba(168,208,255,0.34), transparent);
+  opacity:0.55; pointer-events:none;
+}
+
+/* 对照标注（覆盖在新版上，用于审核：标注 4 项气质要求落实点） */
+.mk { position:absolute; z-index:50; font-size:10px; letter-spacing:1px; color:var(--gold); opacity:0.85;
+  background:rgba(6,11,20,0.62); border:1px dashed rgba(255,217,160,0.3); padding:4px 8px; border-radius:6px; white-space:nowrap; }
+.mk.m1 { left:50%; top:14px; transform:translateX(-50%); }
+.mk.m2 { left:14px; top:50%; transform:translateY(-50%); }
+.mk.m3 { right:14px; top:50%; transform:translateY(-50%); }
+.mk.m4 { left:50%; bottom:14px; transform:translateX(-50%); }
+
+.diff { margin-top:40px; font-size:12px; color:var(--mist); line-height:2.1; }
+.diff table { width:100%; border-collapse:collapse; margin-top:10px; }
+.diff th { text-align:left; font-weight:400; color:var(--gold); font-size:11px; letter-spacing:1px; padding:8px 10px; border-bottom:1px solid rgba(45,74,117,0.5); }
+.diff td { padding:8px 10px; border-bottom:1px solid rgba(23,42,69,0.8); vertical-align:top; }
+.diff td.old { color:#a8738f; }
+.diff td.new { color:var(--foam); }
+.diff .hl { color:var(--shine); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div class="kicker">RIPPLE PAGE · v4 DIRECTION</div>
+    <h1>涟漪页重做 · 方向稿 v4</h1>
+    <p class="intro">
+      本轮不打回功能，打回<b style="color:var(--shine);font-weight:400">气质</b>。以下方向稿<b style="color:var(--shine);font-weight:400">不落地代码</b>，
+      以参考图 <b style="color:var(--shine);font-weight:400">futao-ripple-ref.png</b> 为唯一视觉基准，逐项对照「空旷静谧 / 大水波大而疏 / 背景文案低存在感 / 3D 空间纵深」。
+      小恒先核气质，Emma 用「像不像参考图」核，futao 说「就是这个气质」才落地。
+    </p>
+    <div class="crit">
+      <div><b>① 空旷静谧</b>深海夜底全铺留白，四周只有天光与水面，聊天窗是唯一焦点。不是把元素全塞进来。</div>
+      <div><b>② 大水波大而疏</b>3-4 条细环、间隔 160-220px、alpha 0.06-0.16、14s 缓慢呼吸。不是密集成片。</div>
+      <div><b>③ 背景文案低存在感</b>字标/文案弱对比(0.12-0.22)、散落留白、退后不抢焦点。不是过实抢戏。</div>
+      <div><b>④ 3D 空间纵深</b>聊天窗浮在涟漪水层上、投下水面阴影、水波藏在窗后只露水纹。不是平面拼贴。</div>
+    </div>
+  </div>
+
+  <!-- ════════ 参考图（唯一基准）════════ -->
+  <div class="panel">
+    <div class="tag">参考图 · <b>唯一基准</b>（futao-ripple-ref.png 2549×1209）</div>
+    <div class="stage">
+      <img class="ref" src="./futao-ripple-ref.png" alt="futao-ripple-ref.png" />
+      <div class="note">参考图：深海夜底、中央一束光、四周空旷、涟漪大而疏、文案低存在感</div>
+    </div>
+  </div>
+
+  <!-- ════════ 新版 v4 方向（对照落实 4 项气质）════════ -->
+  <div class="panel">
+    <div class="tag">新版 v4 · <b>方向稿</b>（1280×607，与参考图同比例直对）</div>
+    <div class="stage clean">
+
+      <!-- L0 深水底 -->
+      <div class="l0"></div>
+
+      <!-- L1 水面光池（聊天窗所在水面的一束光） -->
+      <div class="l1-pool"></div>
+
+      <!-- L2 大水波 · 大而疏（中心被聊天窗盖住 → 叶子落水） -->
+      <div class="l2-ring r4"></div>
+      <div class="l2-ring r3"></div>
+      <div class="l2-ring r2"></div>
+      <div class="l2-ring r1"></div>
+
+      <!-- 水面反光带：入水线 -->
+      <div class="waterline"></div>
+
+      <!-- L3 聊天窗（唯一焦点，浮在涟漪水层上） -->
+      <div class="chat">
+        <div class="c-top">
+          <span class="dot"></span>
+          <span class="name">静夜涟漪</span>
+          <span class="sub">把话轻轻放进水里</span>
+        </div>
+        <div class="c-body">
+          <div class="bubble ai">今晚的月亮很亮，像一颗沉在湖底的银币。</div>
+          <div class="bubble user">嗯，我想把今天的事也说给水面听。</div>
+          <div class="guide"><span>最近有点累</span><span>想找人说说话</span><span>试试新的树洞</span></div>
+          <div class="bubble ai">水面微微晃了晃——它接住了你的话。</div>
+        </div>
+        <div class="c-input"><div class="in">把想说的话，投进水里…</div></div>
+      </div>
+
+      <!-- L4 背景文案 · 低存在感 -->
+      <div class="l4 wordmark">涟<span class="dot">.</span>漪</div>
+      <div class="l4 kicker">涟漪 · 静夜</div>
+      <div class="l4 poem-a">月光落在水面上，<br/>水面泛起一圈圈光。</div>
+      <div class="l4 poem-b">有人在水下，<b>静静听</b>。</div>
+
+      <!-- L5 月光 + 同心圆（一角氛围） -->
+      <div class="l4 moon"></div>
+      <div class="l4 ring-bg"></div>
+
+      <!-- 对照标注：从舞台内移除，避免污染量化测量（Emma gate 用舞台像素跑分）。
+           4 项气质说明见上方 head .crit 网格 + 下方 diff 对照表 -->
+    </div>
+  </div>
+
+  <!-- ════════ 差距对照表 ════════ -->
+  <div class="diff">
+    <div class="tag">参考图 vs 新版 · 逐项对照（同 2549×1209 直对）</div>
+    <table>
+      <tr><th style="width:16%">维度</th><th style="width:42%">当前版（futao 打回）</th><th style="width:42%">新版 v4 方向</th></tr>
+      <tr>
+        <td class="hl">空旷静谧</td>
+        <td class="old">亮元素横跨 68% 宽度、底部仅 47px 留白、装饰/涟漪/文字挤在一起 → 又满又密</td>
+        <td class="new">深海夜底(p50≈26)全铺、聊天窗收窄至 53% 且为唯一焦点、底部 252px 空水留白 → 静谧呼吸</td>
+      </tr>
+      <tr>
+        <td class="hl">大水波大而疏</td>
+        <td class="old">实心椭圆水面 + 4 条密集涟漪环(间距 44-80px) + 3 条荡漾环叠在一起 → 堆成一片、无呼吸感</td>
+        <td class="new">去掉实心波体；3-4 条细环、间隔 160-220px、alpha 0.06-0.16、14s 缓慢呼吸 → 大而疏</td>
+      </tr>
+      <tr>
+        <td class="hl">背景文案</td>
+        <td class="old">字标 34px/alpha 高、kicker 0.75、文案居中较实 → 抢焦点</td>
+        <td class="new">字标 26px/alpha 0.12、kicker 0.20、文案散落底部留白 alpha 0.18-0.22 → 弱对比退后（参考图左上仅 5.4）</td>
+      </tr>
+      <tr>
+        <td class="hl">3D 纵深</td>
+        <td class="old">平面感重：聊天窗与水波并排平铺、无前后叠压证据</td>
+        <td class="new">聊天窗投下水面阴影 + 底部浸水 + 水波藏窗后只露水纹 + 入水线细光 → 叶子落水的纵深</td>
+      </tr>
+      <tr>
+        <td class="hl">焦点亮度</td>
+        <td class="old">聊天窗 avg 41 / max 206，比背景只亮 +20 → 压在中间亮度，焦点感弱</td>
+        <td class="new">聊天窗 avg 68 / max 237（参考图 avg 63 / max 227）——窗成画面唯一光源，「一束光打在水面」</td>
+      </tr>
+      <tr>
+        <td class="hl">底部水面</td>
+        <td class="old">底部有微光（max 52）→ 处处有光，不静</td>
+        <td class="new">水纹收敛到窗下入水点周围，底部水面全静（max 24，参考图 19）</td>
+      </tr>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>

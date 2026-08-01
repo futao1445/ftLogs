@@ -384,31 +384,51 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
             className="flex-none rounded-xl overflow-hidden flex flex-col"
             style={{ maxHeight: '40%', background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}
           >
-          {/* Knowledge base entry — 玻璃雾水光 */}
+          {/* Knowledge base entry — 黑猫守夜（v5 落地：抽象几何剪影 + 独月眼 + 尾尖落水涟漪） */}
           <motion.button
             onClick={() => setShowKnowledge(true)}
-            className="flex items-center justify-center gap-1.5 py-2 mx-2 mt-2 rounded-2xl text-xs cursor-pointer relative overflow-visible"
+            className="kb-cat-wrap flex items-center gap-2.5 px-2.5 py-2 mx-2 mt-2 rounded-2xl cursor-pointer relative overflow-hidden"
             style={{
-              background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.25) 0%, rgba(111,180,255,0.08) 60%, rgba(111,180,255,0.02) 100%)',
-              color: '#6fb4ff',
-              border: '1px solid rgba(111,180,255,0.18)',
-              boxShadow: '0 0 4px rgba(111,180,255,0.08)',
+              background: 'rgba(12,22,38,0.5)',
+              border: '1px solid rgba(45,74,117,0.35)',
+              color: '#8fa6c4',
             }}
             whileHover={{
-              background: 'radial-gradient(circle at 50% 50%, rgba(111,180,255,0.40) 0%, rgba(111,180,255,0.15) 50%, rgba(111,180,255,0.05) 100%)',
-              color: '#a8d0ff',
-              boxShadow: '0 0 20px rgba(111,180,255,0.25), 0 0 40px rgba(111,180,255,0.10)',
+              background: 'rgba(17,29,49,0.7)',
+              borderColor: 'rgba(111,180,255,0.35)',
+              boxShadow: '0 0 22px rgba(111,180,255,0.10), inset 0 0 18px rgba(111,180,255,0.05)',
             }}
-            whileTap={{
-              scale: 0.95,
-              background: 'radial-gradient(circle at 50% 50%, rgba(255,217,160,0.35) 0%, rgba(111,180,255,0.20) 50%, rgba(111,180,255,0.08) 100%)',
-              color: '#ffd9a0',
-              borderColor: 'rgba(255,217,160,0.3)',
-              boxShadow: '0 0 40px rgba(255,217,160,0.25), 0 0 80px rgba(111,180,255,0.15)',
-            }}
-            transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.35, type: 'spring', stiffness: 260, damping: 24 }}
+            title="知识库"
           >
-            📚 知识库
+            <svg className="cat-svg" viewBox="0 0 132 96" width="46" height="34" aria-hidden="true" style={{ flexShrink: 0 }}>
+              <defs>
+                <filter id="cat-blur" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.4" /></filter>
+              </defs>
+              {/* 水面线 */}
+              <line x1="10" y1="84" x2="124" y2="84" stroke="rgba(168,208,255,0.12)" strokeWidth="1" />
+              {/* 猫身剪影：圆拱 + 双耳（禁手绘生物 → 抽象几何） */}
+              <path d="M40 82 C 32 66, 36 48, 46 38 L 50 26 L 58 36 C 62 32, 78 32, 82 36 L 90 26 L 94 38 C 104 48, 108 66, 100 82 Z"
+                    fill="#0d1b30" stroke="rgba(74,106,148,0.55)" strokeWidth="1" />
+              {/* 尾：向右下卷出，触水 */}
+              <path d="M100 66 C 112 64, 118 74, 112 82" fill="none" stroke="#0d1b30" strokeWidth="5" strokeLinecap="round" />
+              {/* 尾尖落水涟漪 */}
+              <circle className="tail-ring" cx="112" cy="84" r="5" fill="none" stroke="rgba(255,217,160,0.5)" strokeWidth="1.2" />
+              <circle className="tail-ring" cx="112" cy="84" r="10" fill="none" stroke="rgba(255,217,160,0.25)" strokeWidth="0.9" style={{ animationDelay: '.4s' }} />
+              {/* 月眼（唯一亮色） */}
+              <circle className="cat-eye" cx="70" cy="48" r="3" fill="#ffd9a0" opacity="0.95" />
+              <circle cx="70" cy="48" r="7" fill="rgba(255,217,160,0.14)" />
+              {/* 水中倒影（向下镜像，淡 + 模糊） */}
+              <g filter="url(#cat-blur)" opacity="0.3">
+                <path d="M40 82 C 32 66, 36 48, 46 38 L 50 26 L 58 36 C 62 32, 78 32, 82 36 L 90 26 L 94 38 C 104 48, 108 66, 100 82 Z"
+                      fill="rgba(74,106,148,0.5)" transform="scale(1,-1) translate(0,-168)" />
+              </g>
+            </svg>
+            <div className="text-left">
+              <div className="text-xs tracking-[2px]" style={{ color: '#8fa6c4' }}>知识库</div>
+              <div className="text-[9px] tracking-[1px]" style={{ color: '#8fa6c4', opacity: 0.5, marginTop: 2 }}>MEMORY · 水面记下的</div>
+            </div>
           </motion.button>
 
           <div className="p-2 border-b mt-2" style={{ borderColor: 'var(--border-default)' }}>
@@ -648,20 +668,27 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
             className="relative z-10 rounded-xl overflow-hidden flex flex-col"
             style={{
               /* 叶子(聊天窗)落在水上：纵向完整（futao ③）+ 底部留水层让涟漪泛开（futao ①叶子落水）
-                 mx-auto 居中，两侧留白放装饰（futao ⑦ 背景文字不侵入聊天窗） */
-              height: 'calc(100% - 150px)',
+                 mx-auto 居中，两侧留白放装饰（futao ⑦ 背景文字不侵入聊天窗）
+                 v5 落地：聊天窗往下再拓展一点（futao 08:46）→ height calc(100%-150px)→calc(100%-118px) */
+              height: 'calc(100% - 118px)',
               width: 'min(100%, 680px)',
               marginLeft: 'auto',
               marginRight: 'auto',
               background:
-                'linear-gradient(155deg, rgba(74,106,148,0.34) 0%, rgba(33,57,92,0.50) 62%, rgba(23,42,69,0.58) 100%)',
-              border: '1px solid rgba(168,208,255,0.22)',
-              backdropFilter: 'blur(24px) saturate(150%)',
-              WebkitBackdropFilter: 'blur(24px) saturate(150%)',
+                'linear-gradient(160deg, rgba(111,180,255,0.34) 0%, rgba(74,106,148,0.44) 52%, rgba(45,74,117,0.52) 100%)',
+              border: '1px solid rgba(168,208,255,0.32)',
+              backdropFilter: 'blur(20px) saturate(150%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(150%)',
               boxShadow:
-                'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -20px 40px rgba(12,22,38,0.25), 0 32px 70px rgba(2,8,20,0.55), 0 6px 24px rgba(12,22,38,0.4)',
+                'inset 0 1px 0 rgba(255,255,255,0.20), inset 0 -24px 44px rgba(12,22,38,0.18), 0 26px 54px rgba(2,8,20,0.5), 0 60px 120px rgba(2,8,20,0.3), 0 0 60px rgba(111,180,255,0.10), 0 0 160px rgba(168,208,255,0.06)',
             }}
           >
+          {/* v5 顶部：静夜涟漪（名字）+ 副语 —— 不侵入聊天窗外 */}
+          <div className="flex items-center gap-2.5 px-5 pt-4 pb-1 flex-shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#ffd9a0', opacity: 0.9, boxShadow: '0 0 8px rgba(255,217,160,0.7)' }} />
+            <span className="text-sm tracking-[2px] font-light" style={{ color: '#e2ecfa' }}>静夜涟漪</span>
+            <span className="text-[11px] tracking-[1px]" style={{ color: '#a8d0ff', opacity: 0.7 }}>把话轻轻放进水里</span>
+          </div>
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 pond-scroll">
             <AnimatePresence mode="popLayout">
@@ -840,23 +867,19 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
         </div>
       </div>
 
-      {/* L4 装饰元素（散落四周留白，参考图气质：稀疏、退后不抢戏）
-          futao ⑦：背景文字不延伸进聊天框 —— 装饰全部待在聊天窗外：
-          字标=左上留白（聊天窗左缘右侧之外）、文案=底部水面层（聊天窗下方，非侧边）、
-          同心圆/月光=聊天窗后层（z<聊天窗，玻璃盖住） */}
-      <div className="pond-elem" style={{ left: 70, top: 74, zIndex: 20 }}>
-        <div className="pond-kicker">NIGHT POND · TALK TO THE WATER</div>
-        <div className="pond-wordmark">涟<span className="pond-wordmark-dot">.</span>漪</div>
+      {/* L4 装饰元素（散落四周留白，v5 气质：稀疏、退后不抢戏）
+          v5 落地：字标=左上（在左栏区域内，聊天窗左缘之外，不侵入聊天窗）；
+          三行诗去掉（v5 用右侧竖排一句）；右侧竖排=留白处 */}
+      <div className="pond-elem" style={{ left: 36, top: 40, zIndex: 20 }}>
+        <div className="pond-kicker" style={{ color: '#ffd9a0', opacity: 0.20, marginBottom: 10 }}>涟漪 · 静夜</div>
+        <div className="pond-wordmark" style={{ fontSize: 24, letterSpacing: 11, opacity: 0.12 }}>涟<span className="pond-wordmark-dot">.</span>漪</div>
       </div>
-      {/* 三行文案：放在底部水面层（聊天窗下方），落在水上，不与聊天窗并排重叠（futao ⑦） */}
-      <div className="pond-elem" style={{ left: '50%', transform: 'translateX(-50%)', bottom: 40, textAlign: 'center', zIndex: 20 }}>
-        <div className="pond-poem">
-          把心里的话，<b>投进水里</b>。<br />
-          水面泛起一圈圈光，有人在水下，<b>静静听</b>。
-        </div>
+      {/* 右侧竖排一句（留白处，低存在感） */}
+      <div className="pond-elem" style={{ right: 66, bottom: 150, zIndex: 20, fontSize: 10, lineHeight: 2.1, color: '#8fa6c4', opacity: 0.18, letterSpacing: 3, textAlign: 'right', whiteSpace: 'nowrap' }}>
+        有人在水下，<b style={{ color: '#a8d0ff', fontWeight: 300, opacity: 0.7 }}>静静听</b>。
       </div>
       <div className="pond-rings" />
-      <div className="pond-moon" style={{ left: 120, bottom: 110 }} />
+      <div className="pond-moon" style={{ right: 90, top: 96 }} />
 
       {/* Toast */}
       <AnimatePresence>
