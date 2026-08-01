@@ -693,10 +693,10 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
                  v5 落地：聊天窗往下再拓展一点（futao 08:46）→ 底部留白收到 ~70px（14px flex 内 + 56px 容器 pb），
                  水线/波心随之下移（bottom 150→70px，波心 250px=320-70），叶子更占满水面 */
               height: 'calc(100% - 14px)',
-              /* v5 落地：聊天窗加宽（680→730）+ 左移贴近左侧知识库栏（futao ②）
-                 宽度响应式：窄屏收窄避免溢出 + 给右侧诗句/moon 留白 */
+              /* v5 落地：聊天窗加宽（680→730）+ 贴近左侧知识库栏（futao ②）
+                 宽度响应式：窄屏收窄避免溢出 + 给右侧诗句/moon 留白
+                 marginLeft 0：从 wrapper 左缘起，与水池/细弧同左对齐（中心一致） */
               width: 'min(730px, calc(100vw - 600px))',
-              marginLeft: 24,
               background:
                 'linear-gradient(160deg, rgba(111,180,255,0.34) 0%, rgba(74,106,148,0.44) 52%, rgba(45,74,117,0.52) 100%)',
               border: '1px solid rgba(168,208,255,0.32)',
