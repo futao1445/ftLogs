@@ -669,8 +669,9 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
             style={{
               /* 叶子(聊天窗)落在水上：纵向完整（futao ③）+ 底部留水层让涟漪泛开（futao ①叶子落水）
                  mx-auto 居中，两侧留白放装饰（futao ⑦ 背景文字不侵入聊天窗）
-                 v5 落地：聊天窗往下再拓展一点（futao 08:46）→ height calc(100%-150px)→calc(100%-118px) */
-              height: 'calc(100% - 118px)',
+                 v5 落地：聊天窗往下再拓展一点（futao 08:46）→ 底部留白收到 ~70px（14px flex 内 + 56px 容器 pb），
+                 水线/波心随之下移（bottom 150→70px，波心 250px=320-70），叶子更占满水面 */
+              height: 'calc(100% - 14px)',
               width: 'min(100%, 680px)',
               marginLeft: 'auto',
               marginRight: 'auto',
@@ -867,10 +868,9 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
         </div>
       </div>
 
-      {/* L4 装饰元素（散落四周留白，v5 气质：稀疏、退后不抢戏）
-          v5 落地：字标=左上（在左栏区域内，聊天窗左缘之外，不侵入聊天窗）；
-          三行诗去掉（v5 用右侧竖排一句）；右侧竖排=留白处 */}
-      <div className="pond-elem" style={{ left: 36, top: 40, zIndex: 20 }}>
+      {/* L4 装饰元素（v5 落地：字标/右侧竖排，低存在感、不侵入聊天窗）
+          v5 气质：字标=左上（进左栏顶部作品牌水印）、右侧竖排=留白处 */}
+      <div className="pond-elem" style={{ left: 36, top: 74, zIndex: 20 }}>
         <div className="pond-kicker" style={{ color: '#ffd9a0', opacity: 0.20, marginBottom: 10 }}>涟漪 · 静夜</div>
         <div className="pond-wordmark" style={{ fontSize: 24, letterSpacing: 11, opacity: 0.12 }}>涟<span className="pond-wordmark-dot">.</span>漪</div>
       </div>

@@ -363,10 +363,11 @@ html::-webkit-scrollbar-corner { background: transparent; }
 .pond-wave-drift.d2 { animation-delay: 3.3s; background: radial-gradient(ellipse at 50% 0%, transparent 0 312px, rgba(111,180,255,0.26) 318px, rgba(111,180,255,0.08) 332px, transparent 348px); }
 .pond-wave-drift.d3 { animation-delay: 6.6s; background: radial-gradient(ellipse at 50% 0%, transparent 0 470px, rgba(111,180,255,0.20) 476px, rgba(111,180,255,0.06) 494px, transparent 514px); }
 
-/* 水面反光带：叶子(聊天窗)入水线 —— 聊天窗底缘一道细光，标记「落水点」 */
+/* 水面反光带：叶子(聊天窗)入水线 —— 聊天窗底缘一道细光，标记「落水点」
+   v5 落地：聊天窗往下拓展 → 水线随之下移 bottom 150→70px，与聊天窗底缘对齐 */
 .pond-waterline {
   position: absolute;
-  left: 4%; right: 4%; bottom: 150px; height: 1px;
+  left: 4%; right: 4%; bottom: 70px; height: 1px;
   background: linear-gradient(90deg, transparent, rgba(168,208,255,0.40), transparent);
   opacity: 0.6; pointer-events: none;
   z-index: 1;
