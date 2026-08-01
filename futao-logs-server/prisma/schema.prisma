@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// 日记条目
+model diaries {
+  id        Int      @id @default(autoincrement())
+  content   String   @default("")
+  date      DateTime @default(now())
+  mood      String?  @default("")
+  weather   String?  @default("")
+  isTop     Boolean  @default(false)
+  isArchived Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments attachments[]
+  tags        diaries_tags[]
+  embedding   diary_embeddings?
+  bookId      Int?
+  book        noteBooks? @relation(fields: [bookId], references: [id])
+
+  @@index([date])
+  @@index([createdAt])
+}
+
+/// 日记本
+model noteBooks {
+  id          Int      @id @default(autoincrement())
+  name        String   @default("")
+  icon        String   @default("")
+  description String   @default("")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  diaries diaries[]
+}
+
+/// 标签
+model tags {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @default("")
+  color     String   @default("") // hex color: #ff6b6b
+  icon      String   @default("")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  diaries diaries_tags[]
+}
+
+/// 日记-标签 关联
+model diaries_tags {
+  diaryId Int
+  tagId   Int
+
+  diary diaries @relation(fields: [diaryId], references: [id], onDelete: Cascade)
+  tag   tags    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([diaryId, tagId])
+}
+
+/// 附件
+model attachments {
+  id        Int      @id @default(autoincrement())
+  name      String   @default("")
+  path      String   @default("")
+  size      Int      @default(0)
+  type      String   @default("")
+  diaryId   Int?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  diary diaries? @relation(fields: [diaryId], references: [id], onDelete: Cascade)
+
+  @@index([diaryId])
+}
+
+/// 导出记录
+model exports {
+  id         Int      @id @default(autoincrement())
+  format     String   @default("markdown")
+  status     String   @default("pending") // pending / done / failed
+  filePath   String?
+  diaryCount Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+/// 日记向量嵌入（语义搜索用）
+model diary_embeddings {
+  id        Int      @id @default(autoincrement())
+  diaryId   Int      @unique
+  vector    String   @default("[]") // Float32 数组 JSON
+  model     String   @default("")   // 生成此 embedding 的模型名
+  updatedAt DateTime @updatedAt
+
+  diary diaries @relation(fields: [diaryId], references: [id], onDelete: Cascade)
+
+  @@index([diaryId])
+  @@map("diary_embeddings")
+}
+
+/// 语义搜索日志
+model search_logs {
+  id        Int      @id @default(autoincrement())
+  query     String   @default("")
+  results   Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("search_logs")
+}
+
+/// 知识图谱实体
+model graph_entities {
+  id        Int      @id @default(autoincrement())
+  type      String   @default("")  // person | event | place | emotion | topic
+  name      String   @default("")
+  diaryIds  String   @default("[]") // JSON array of diary IDs
+  entryIds  String   @default("[]") // JSON array of knowledge_entries IDs
+  createdAt DateTime @default(now())
+
+  sources   graph_relations[] @relation("source_entity")
+  targets   graph_relations[] @relation("target_entity")
+
+  @@unique([type, name])
+  @@map("graph_entities")
+}
+
+/// 实体关系
+model graph_relations {
+  id        Int      @id @default(autoincrement())
+  sourceId  Int
+  targetId  Int
+  relation  String   @default("") // mentioned_together | related_to | causes
+  weight    Float    @default(1.0)
+  createdAt DateTime @default(now())
+
+  source    graph_entities @relation("source_entity", fields: [sourceId], references: [id], onDelete: Cascade)
+  target    graph_entities @relation("target_entity", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@index([sourceId])
+  @@index([targetId])
+  @@map("graph_relations")
+}
+
+/// AI 树洞对话
+model treehole_sessions {
+  id        Int      @id @default(autoincrement())
+  title     String   @default("")       // 自动生成的标题，如 "2026-07-30 对话"
+  messages  String   @default("[]")     // JSON: [{role, content, createdAt}]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("treehole_sessions")
+}
+
+/// 应用配置
+model config {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique @default("")
+  value     String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// AI 总结（分层结构：day/week/month/year）
+model summaries {
+  id        Int      @id @default(autoincrement())
+  type      String   @default("day")     // day | week | month | year
+  periodKey String   @default("")         // day: "2026-07-29", week: "2026-W30", month: "2026-07", year: "2026"
+  content   String   @default("")         // AI 生成的总结正文（markdown）
+  analysis  String   @default("")         // JSON: { body, mind, psychology, growth }
+  advice    String   @default("")         // AI 给用户的建议
+  keywords  String   @default("")         // JSON array: ["key1", "key2"]
+  sourceIds String   @default("")         // JSON array of source summary IDs 或 diary IDs
+  feedback  String   @default("")         // 用户最后一次反馈修改意见
+  version   Int      @default(1)          // 重新生成时递增
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([type, periodKey])
+  @@index([type, periodKey])
+}

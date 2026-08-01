@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>池塘涟漪 · 第 ④ 条 布局重构方向稿</title>
+<style>
+  :root {
+    --deep: #0c1626;      /* 深海夜 */
+    --mid: #172a45;       /* 中层水 */
+    --near: #21395c;      /* 近水面 */
+    --line: #2d4a75;      /* 水界线 */
+    --glass: #4a6a94;     /* 玻璃雾 */
+    --ripple: #6fb4ff;    /* 水光蓝 */
+    --shine: #a8d0ff;     /* 波光 */
+    --foam: #e2ecfa;      /* 浪花白 */
+    --mist: #8fa6c4;      /* 晨雾 */
+    --gold: #ffd9a0;      /* 月金 */
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--deep);
+    color: var(--foam);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1240px; margin: 0 auto; padding: 0 48px; }
+
+  /* ─── Top bar ─── */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 28px 0;
+    border-bottom: 1px solid rgba(45,74,117,0.35);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; letter-spacing: 2px; font-size: 13px; color: var(--foam); }
+  .mark {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--shine) 0%, var(--ripple) 45%, var(--glass) 100%);
+    box-shadow: 0 0 12px rgba(111,180,255,0.5);
+  }
+  .meta { font-size: 12px; color: var(--mist); }
+
+  /* ─── Hero ─── */
+  .hero { padding: 96px 0 120px; }
+  .eyebrow { font-size: 11px; letter-spacing: 4px; color: var(--ripple); text-transform: uppercase; margin-bottom: 18px; }
+  h1 { font-size: 44px; font-weight: 300; letter-spacing: 2px; line-height: 1.2; margin-bottom: 16px; }
+  h1 .em { color: var(--shine); font-weight: 400; }
+  .sub { font-size: 15px; color: var(--mist); max-width: 52ch; margin-bottom: 12px; }
+  .tagline { font-size: 12px; color: var(--mist); opacity: 0.8; }
+
+  /* ─── Cards (three directions) ─── */
+  .direction {
+    margin-bottom: 48px;
+    border-radius: 24px;
+    padding: 40px 44px;
+    background: linear-gradient(180deg, rgba(23,42,69,0.55), rgba(12,22,38,0.35));
+    border: 1px solid rgba(45,74,117,0.5);
+    backdrop-filter: blur(28px) saturate(160%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 24px 48px rgba(0,0,0,0.25);
+  }
+  .dir-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; letter-spacing: 3px; color: var(--gold);
+    background: rgba(255,217,160,0.08);
+    border: 1px solid rgba(255,217,160,0.2);
+    padding: 4px 12px; border-radius: 999px;
+    margin-bottom: 20px;
+  }
+  .dir-title { font-size: 26px; font-weight: 300; letter-spacing: 1px; margin-bottom: 6px; }
+  .dir-scene { font-size: 13px; color: var(--mist); margin-bottom: 24px; max-width: 70ch; }
+
+  /* Layout skeleton mock */
+  .mock {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(45,74,117,0.6);
+    margin-bottom: 20px;
+  }
+  .mock-a { background: var(--deep); }
+  .mock-b { background: var(--deep); }
+  .mock-c { background: var(--deep); }
+  .mock nav {
+    display: flex; gap: 8px; align-items: center;
+    padding: 12px 16px;
+    background: color-mix(in srgb, var(--deep) 75%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(45,74,117,0.4);
+  }
+  .mock nav .pill {
+    font-size: 10px; padding: 3px 10px; border-radius: 999px;
+    background: rgba(74,106,148,0.15); color: var(--mist);
+    border: 1px solid rgba(74,106,148,0.2);
+  }
+  .mock nav .pill.on {
+    background: linear-gradient(135deg, rgba(111,180,255,0.18), rgba(111,180,255,0.06));
+    color: var(--shine);
+    border-color: rgba(111,180,255,0.3);
+    box-shadow: 0 0 12px rgba(111,180,255,0.12);
+  }
+  .mock-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .mock-row { display: flex; gap: 12px; }
+  .mock-card {
+    border-radius: 10px;
+    background: var(--mid);
+    border: 1px solid rgba(45,74,117,0.5);
+  }
+  .mock-card.glass {
+    background: rgba(74,106,148,0.25);
+    backdrop-filter: blur(12px);
+    border-color: rgba(111,180,255,0.2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .mock-card.front { background: var(--near); border-color: rgba(74,106,148,0.6); }
+  .mock-block { border-radius: 10px; background: rgba(23,42,69,0.5); border: 1px dashed rgba(74,106,148,0.35); }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 10px; color: var(--mist); margin-bottom: 20px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  /* Direction details */
+  .dir-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 24px; }
+  .dir-col h4 {
+    font-size: 12px; letter-spacing: 2px; color: var(--shine);
+    margin-bottom: 10px; font-weight: 400;
+  }
+  .dir-col ul { list-style: none; }
+  .dir-col li { font-size: 12px; color: var(--mist); margin-bottom: 8px; padding-left: 14px; position: relative; }
+  .dir-col li::before { content: "·"; position: absolute; left: 0; color: var(--gold); }
+  .dir-hard {
+    margin-top: 22px; padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(255,217,160,0.06);
+    border-left: 2px solid var(--gold);
+    font-size: 12px; color: var(--foam);
+  }
+  .dir-hard b { color: var(--gold); font-weight: 400; }
+
+  /* Comparison table */
+  .compare { margin: 64px 0; }
+  .compare h2 { font-size: 20px; font-weight: 300; letter-spacing: 1px; margin-bottom: 24px; }
+  .compare table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .compare th {
+    text-align: left; padding: 10px 14px;
+    color: var(--shine); letter-spacing: 1px; font-weight: 400;
+    border-bottom: 1px solid rgba(45,74,117,0.6);
+  }
+  .compare td {
+    padding: 12px 14px; color: var(--mist);
+    border-bottom: 1px solid rgba(45,74,117,0.3);
+    vertical-align: top;
+  }
+  .compare td:first-child { color: var(--foam); white-space: nowrap; }
+
+  .next {
+    padding: 48px 0 96px;
+    border-top: 1px solid rgba(45,74,117,0.35);
+  }
+  .next h3 { font-size: 16px; font-weight: 300; color: var(--foam); margin-bottom: 14px; letter-spacing: 1px; }
+  .next p { font-size: 13px; color: var(--mist); max-width: 72ch; margin-bottom: 8px; }
+
+  .chips { display: flex; gap: 10px; margin-top: 20px; }
+  .chip-btn {
+    padding: 10px 22px; border-radius: 999px;
+    font-size: 13px; cursor: pointer;
+    background: linear-gradient(135deg, rgba(111,180,255,0.16), rgba(111,180,255,0.05));
+    color: var(--shine);
+    border: 1px solid rgba(111,180,255,0.25);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+    transition: all 0.2s var(--spring);
+  }
+  .chip-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 12px 28px rgba(111,180,255,0.2);
+  }
+  .chip-btn.gold {
+    background: rgba(255,217,160,0.1);
+    color: var(--gold);
+    border-color: rgba(255,217,160,0.28);
+  }
+  .chip-btn.gold:hover { box-shadow: 0 12px 28px rgba(255,217,160,0.15); }
+
+  @media (max-width: 1000px) {
+    .dir-grid { grid-template-columns: 1fr; }
+    .container { padding: 0 24px; }
+    h1 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ============ 顶栏 ============ -->
+  <header class="topbar">
+    <div class="brand"><span class="mark"></span> NIGHT POND</div>
+    <div class="meta">布局重构 · 方向稿 v1 · 2026.07.31</div>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="eyebrow">Direction Draft · 第 ④ 条</div>
+    <h1>整体布局，用 <span class="em">taste-skill</span> 重构</h1>
+    <p class="sub">
+      池塘涟漪的首屏已经对了——宽留白、层叠卡片、玻璃前景。但往下滚，时间线还是 max-w-2xl 的窄栏，图谱/知识库埋在二级入口里。
+      这一稿解决的是「整面湖」的问题：从首屏到内容区，布局要一体、宽、有呼吸。
+    </p>
+    <p class="tagline">三个方向 · 同一个故事（水面之上轻声对话，水面之下沉底回忆）· 三种讲法</p>
+  </section>
+
+  <!-- ============ 方向 A · 满湖 ============ -->
+  <section class="direction">
+    <span class="dir-label">方向 A</span>
+    <h3 class="dir-title">满湖 · Full Lake</h3>
+    <p class="dir-scene">把整个产品当成一面完整的湖——导航是湖岸线，内容区全部展开成湖面，宽到能呼吸。不再有「首屏宽、内容窄」的断层。</p>
+
+    <div class="mock mock-a">
+      <nav>
+        <span class="pill on">日记</span>
+        <span class="pill">日历</span>
+        <span class="pill">搜索</span>
+        <span class="pill">AI 总结</span>
+        <span class="pill">树洞</span>
+        <span style="margin-left:auto; font-size:10px; color:var(--gold);">✒ 写日记</span>
+      </nav>
+      <div class="mock-body">
+        <!-- 导航下拉满宽 -->
+        <div class="mock-card" style="height:34px; background:var(--mid); border-radius:10px; display:flex; align-items:center; padding:0 14px; gap:8px;">
+          <span style="font-size:10px; color:var(--mist);">首屏 · 左文右卡（现状保留）</span>
+        </div>
+        <!-- 浮岛预览网格 -->
+        <div class="mock-row">
+          <div class="mock-card glass" style="flex:1; height:52px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--shine);">🗓 日历</div>
+          <div class="mock-card glass" style="flex:1; height:52px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--shine);">🔍 搜索</div>
+          <div class="mock-card glass" style="flex:1; height:52px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--shine);">🗺 AI 总结 · 图谱</div>
+          <div class="mock-card glass" style="flex:1; height:52px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--shine);">💬 树洞</div>
+        </div>
+        <!-- 双栏时间线 -->
+        <div class="mock-row">
+          <div class="mock-block" style="width:110px; height:150px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--mist);">日期柱</div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
+            <div class="mock-card front" style="flex:1; height:60px;"></div>
+            <div class="mock-card" style="flex:1; height:50px;"></div>
+            <div class="mock-card" style="flex:1; height:50px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:var(--glass);"></i> 玻璃浮岛（日历/搜索/图谱/树洞提升到首页）</span>
+      <span><i style="background:var(--near);"></i> 日记玻璃卡</span>
+      <span><i style="background:rgba(45,74,117,0.4);"></i> 日期柱</span>
+    </div>
+
+    <div class="dir-grid">
+      <div class="dir-col">
+        <h4>布局轴</h4>
+        <ul>
+          <li>导航玻璃通栏拉满全宽，不再窄条</li>
+          <li>内容区统一 max-w-1400 + padding 96px</li>
+          <li>日记时间线改双栏：左日期柱 + 右玻璃卡</li>
+          <li>图谱/知识库从二级入口提升为首页「浮岛」</li>
+        </ul>
+      </div>
+      <div class="dir-col">
+        <h4>交互叙事</h4>
+        <ul>
+          <li>点浮岛 = 水波泛开，滑向对应 tab</li>
+          <li>点日期柱 = 浮出那天所有日记</li>
+          <li>滚到哪，哪块湖面先亮后静</li>
+        </ul>
+      </div>
+      <div class="dir-col">
+        <h4>性格</h4>
+        <ul>
+          <li>工具感 + 高级感的平衡</li>
+          <li>信息获取效率最高</li>
+          <li>改动可控，风险最低</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="dir-hard">
+      <b>一句话硬规则：</b>全站同一张湖面——导航、首屏、内容区全部 max-w-1400 同宽对齐，区块间距 96-140px，四个模块以玻璃浮岛在首页可见。
+    </div>
+  </section>
+
+  <!-- ============ 方向 B · 浮岛群 ============ -->
+  <section class="direction">
+    <span class="dir-label">方向 B</span>
+    <h3 class="dir-title">浮岛群 · Archipelago</h3>
+    <p class="dir-scene">首页就是一汪湖面，五个功能模块是错落分布的玻璃浮岛。你在湖心环视，伸手点哪座岛，哪座岛就浮起到眼前。</p>
+
+    <div class="mock mock-b">
+      <nav>
+        <span class="pill on">湖心</span>
+        <span class="pill">日记</span>
+        <span class="pill">日历</span>
+        <span class="pill">图谱</span>
+        <span class="pill">树洞</span>
+        <span style="margin-left:auto; font-size:10px; color:var(--gold);">✒ 写日记</span>
+      </nav>
+      <div class="mock-body">
+        <!-- 岛群视图 -->
+        <div style="display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:14px;">
+          <div class="mock-card glass" style="height:120px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; padding:16px; gap:8px;">
+            <span style="font-size:10px; color:var(--gold);">湖心 · 今天</span>
+            <span style="font-size:11px; color:var(--foam);">3 篇 · 连续 5 天</span>
+            <span style="font-size:10px; color:var(--mist);">随手写，让心事浮出水面</span>
+          </div>
+          <div class="mock-card glass" style="height:120px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--shine);">🗓 日历岛</div>
+          <div class="mock-card glass" style="height:120px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--shine);">🔍 搜索岛</div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <div class="mock-card glass" style="height:90px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--shine);">🗺 图谱岛</div>
+          <div class="mock-card glass" style="height:90px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--shine);">💬 树洞岛</div>
+        </div>
+        <!-- 一岛放大（示例：日记岛） -->
+        <div class="mock-card front" style="height:80px; display:flex; align-items:center; padding:0 16px; gap:10px;">
+          <span style="font-size:10px; color:var(--gold);">日记岛</span>
+          <div style="flex:1; height:34px; border-radius:8px; background:var(--mid);"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:var(--glass);"></i> 玻璃浮岛（每岛一个功能，同层可见）</span>
+      <span><i style="background:var(--near);"></i> 当前展开的岛（浮起）</span>
+      <span><i style="background:var(--gold);"></i> 湖心岛（今日概览）</span>
+    </div>
+
+    <div class="dir-grid">
+      <div class="dir-col">
+        <h4>布局轴</h4>
+        <ul>
+          <li>首页 = 岛群视图，五岛错落分布</li>
+          <li>点岛全屏展开该功能，回岛沉回湖面</li>
+          <li>图谱/树洞/知识库同级，没有埋藏</li>
+          <li>信息架构扁平化</li>
+        </ul>
+      </div>
+      <div class="dir-col">
+        <h4>交互叙事</h4>
+        <ul>
+          <li>入岛 = 水波从指尖泛开，玻璃面板浮起</li>
+          <li>离岛 = 面板沉回水面，回到湖心</li>
+          <li>湖心岛常驻今日概览 + 一句树洞问候</li>
+        </ul>
+      </div>
+      <div class="dir-col">
+        <h4>性格</h4>
+        <ul>
+          <li>展示型 · 探索型用户最爱</li>
+          <li>「一屏看全部」的掌控感</li>
+          <li>改动最大，最接近品牌故事</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="dir-hard">
+      <b>一句话硬规则：</b>首页一屏即全部——五个玻璃浮岛错落分布，点岛水波浮起全屏展开，模块无埋藏、同级可见。
+    </div>
+  </section>
+
+  <!-- ============ 方向 C · 水层 ============ -->
+  <section class="direction">
+    <span class="dir-label">方向 C</span>
+    <h3 class="dir-title">水层 · Depth Layers</h3>
+    <p class="dir-scene">把池塘的物理深度变成信息层级——滚动就是下潜。水面之上和 AI 对话，水面写日记，水底翻回忆。每一层的水色都不同。</p>
+
+    <div class="mock mock-c">
+      <nav>
+        <span class="pill on">日记</span>
+        <span class="pill">日历</span>
+        <span class="pill">搜索</span>
+        <span class="pill">AI 总结</span>
+        <span class="pill">树洞</span>
+        <span style="margin-left:auto; font-size:10px; color:var(--gold);">✒ 写日记</span>
+      </nav>
+      <div class="mock-body">
+        <!-- 浅水层 · 树洞（近水面） -->
+        <div class="mock-card glass" style="height:70px; border-radius:10px; display:flex; align-items:center; padding:0 16px; gap:10px; border-color:rgba(111,180,255,0.35);">
+          <span style="font-size:10px; color:var(--gold);">水面之上</span>
+          <span style="font-size:10px; color:var(--mist);">树洞 · 今日问候 + 对话</span>
+        </div>
+        <!-- 水面 · 日记（中层水） -->
+        <div style="display:flex; gap:10px;">
+          <div class="mock-block" style="width:90px; height:90px; display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--mist);">日期柱</div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
+            <div class="mock-card front" style="flex:1; height:44px;"></div>
+            <div class="mock-card" style="flex:1; height:38px;"></div>
+          </div>
+        </div>
+        <!-- 水底 · 图谱/搜索（深海夜） -->
+        <div class="mock-row" style="opacity:0.85;">
+          <div class="mock-card glass" style="flex:1; height:60px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--shine);">🗺 图谱</div>
+          <div class="mock-card glass" style="flex:1; height:60px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--shine);">🔍 搜索</div>
+        </div>
+        <!-- 深度渐变色阶 -->
+        <div style="height:8px; border-radius:4px; background:linear-gradient(180deg, #21395c, #172a45, #0c1626);"></div>
+        <div style="display:flex; justify-content:space-between; font-size:9px; color:var(--mist);">
+          <span>近水面 #21395c</span><span>中层水 #172a45</span><span>深海夜 #0c1626</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:var(--near);"></i> 浅水层（当下思考 · 树洞）</span>
+      <span><i style="background:var(--mid);"></i> 水面层（当下记录 · 日记/日历）</span>
+      <span><i style="background:var(--deep); border:1px solid var(--line);"></i> 水底层（沉底回忆 · 图谱/搜索）</span>
+    </div>
+
+    <div class="dir-grid">
+      <div class="dir-col">
+        <h4>布局轴</h4>
+        <ul>
+          <li>纵向三水层，滚动即下潜</li>
+          <li>每层背景色阶递进（近水面→中层水→深海夜）</li>
+          <li>导航固定在「水面高度」，随滚动微折射</li>
+          <li>区块间距 140px 大呼吸</li>
+        </ul>
+      </div>
+      <div class="dir-col">
+        <h4>交互叙事</h4>
+        <ul>
+          <li>写日记 = 一颗石子入水，涟漪扩散</li>
+          <li>滚到哪层，哪层水色浮起</li>
+          <li>树洞在上（对话）、日记在中（记录）、回忆在下（沉底）</li>
+        </ul>
+      </div>
+      <div class="dir-col">
+        <h4>性格</h4>
+        <ul>
+          <li>最沉浸 · 最「池塘」</li>
+          <li>品牌故事直接变成物理结构</li>
+          <li>情感型用户共鸣最强</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="dir-hard">
+      <b>一句话硬规则：</b>页面纵向分三水层——树洞在浅水面（近水面色）、日记日历在水面（中层水色）、图谱搜索沉水底（深海夜色），滚动下潜，色阶递进。
+    </div>
+  </section>
+
+  <!-- ============ 对比 ============ -->
+  <section class="compare">
+    <h2>三个方向，怎么选</h2>
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>A · 满湖</th>
+          <th>B · 浮岛群</th>
+          <th>C · 水层</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>布局轴</td><td>横向平铺，宽布即高级</td><td>岛群网格，一屏全览</td><td>纵向下潜，深度叙事</td></tr>
+        <tr><td>信息架构</td><td>Tab + 浮岛预览</td><td>扁平岛群，无埋藏</td><td>三层分区，按情感深度</td></tr>
+        <tr><td>模块可见性</td><td>图谱/知识库提升为首页浮岛</td><td>图谱/树洞同级岛，最暴露</td><td>图谱/搜索沉入水底（物理隐喻）</td></tr>
+        <tr><td>品牌契合</td><td>中 · 用宽度表达高级</td><td>高 · 用岛群表达自由</td><td>最高 · 用深度表达故事</td></tr>
+        <tr><td>改动量</td><td>中 · 容器宽度 + 首页浮岛</td><td>大 · 首页即岛群视图</td><td>中 · 容器 + 分层层级</td></tr>
+        <tr><td>适合谁</td><td>效率优先 · 工具心态</td><td>探索型 · 掌控感</td><td>情感型 · 沉浸体验</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============ 下一步 ============ -->
+  <section class="next">
+    <h3>我的建议</h3>
+    <p>
+      如果 futao 要的是「高级、贵、一眼是池塘」——<b>方向 C 水层</b>最贴品牌故事，且改动量中等；
+      如果还要兼顾「像正常工具，好找功能」——<b>方向 A 满湖</b>最稳，模块提升但结构保守。
+      方向 B 最自由但首页重构最重，适合 futao 想彻底换气质时。
+    </p>
+    <p>三个方向共用同一套硬约束：10 色锁定、max-w-1400、区块 96-140px、玻璃前景 blur28px、弹簧曲线、涟漪贯穿主操作、禁手绘生物 SVG。</p>
+    <div class="chips">
+      <span class="chip-btn">A · 满湖</span>
+      <span class="chip-btn">B · 浮岛群</span>
+      <span class="chip-btn gold">C · 水层（我最推荐）</span>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>

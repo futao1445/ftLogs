@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>池塘涟漪 · 非首页单独设计方向稿</title>
+<style>
+  :root {
+    --deep: #0c1626; --mid: #172a45; --near: #21395c; --line: #2d4a75;
+    --glass: #4a6a94; --ripple: #6fb4ff; --shine: #a8d0ff;
+    --foam: #e2ecfa; --mist: #8fa6c4; --gold: #ffd9a0;
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--deep); color: var(--foam);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.7; -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1240px; margin: 0 auto; padding: 0 48px; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 28px 0; border-bottom: 1px solid rgba(45,74,117,0.35);
+  }
+  .brand { display:flex; align-items:center; gap:12px; letter-spacing:2px; font-size:13px; color:var(--foam); }
+  .mark { width:12px; height:12px; border-radius:50%; background: radial-gradient(circle at 35% 30%, var(--shine), var(--ripple) 45%, var(--glass)); box-shadow:0 0 12px rgba(111,180,255,0.5); }
+  .meta { font-size:12px; color:var(--mist); }
+  .hero { padding: 80px 0 64px; }
+  .eyebrow { font-size:11px; letter-spacing:4px; color:var(--ripple); text-transform:uppercase; margin-bottom:18px; }
+  h1 { font-size:40px; font-weight:300; letter-spacing:2px; line-height:1.2; margin-bottom:14px; }
+  h1 .em { color:var(--shine); font-weight:400; }
+  .sub { font-size:15px; color:var(--mist); max-width:56ch; margin-bottom:10px; }
+  .prob {
+    display:flex; gap:14px; flex-wrap:wrap; margin-top:24px;
+    font-size:12px; color:var(--mist);
+  }
+  .prob span {
+    padding:8px 16px; border-radius:999px;
+    background: rgba(255,217,160,0.06); border:1px solid rgba(255,217,160,0.18);
+    color:var(--gold);
+  }
+
+  /* ── 每页设计 ── */
+  .page-card {
+    margin-bottom:56px; border-radius:24px; overflow:hidden;
+    border:1px solid rgba(45,74,117,0.5);
+    background: linear-gradient(180deg, rgba(23,42,69,0.5), rgba(12,22,38,0.3));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 24px 48px rgba(0,0,0,0.22);
+  }
+  .page-head { padding:32px 40px 20px; border-bottom:1px solid rgba(45,74,117,0.35); }
+  .page-idx { font-size:11px; letter-spacing:3px; color:var(--gold); margin-bottom:8px; }
+  .page-title { font-size:24px; font-weight:300; letter-spacing:1px; margin-bottom:6px; }
+  .page-one {
+    font-size:13px; color:var(--mist); max-width:74ch; margin-bottom:14px;
+  }
+  .page-one b { color:var(--shine); font-weight:400; }
+  .page-demo { padding:36px 40px; }
+
+  /* ── 日历页 demo：纵向水草日历 ── */
+  .cal { display:flex; gap:16px; }
+  /* 月份列 = 水草茎（从池底向上生长的茎，选中茎尖泛月金光） */
+  .cal-side {
+    width:120px; flex-shrink:0; display:flex; flex-direction:column; gap:10px;
+    padding:10px 8px; justify-content:flex-end;
+    background: linear-gradient(180deg, transparent, rgba(23,42,69,0.25));
+    border-radius:16px;
+    border:1px solid rgba(45,74,117,0.2);
+    position:relative; overflow:hidden;
+  }
+  .cal-side::before { /* 池底微光 */
+    content:""; position:absolute; left:0; right:0; bottom:0; height:40%;
+    background: radial-gradient(ellipse at 50% 100%, rgba(111,180,255,0.12), transparent 65%);
+    pointer-events:none;
+  }
+  .cal-side .month {
+    position:relative; padding:16px 10px 18px; border-radius:0; font-size:11px;
+    letter-spacing:1px; cursor:pointer; text-align:center;
+    background: linear-gradient(180deg, rgba(74,106,148,0.16), rgba(23,42,69,0.2));
+    color:var(--mist);
+    border:1px solid rgba(74,106,148,0.22);
+    border-radius:10px 10px 4px 4px;
+    transition: all 0.3s var(--spring);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .cal-side .month::after { /* 茎中脉高光 */
+    content:""; position:absolute; left:50%; top:6px; bottom:8px; width:2px;
+    transform:translateX(-50%); border-radius:2px;
+    background: linear-gradient(180deg, rgba(168,208,255,0.5), rgba(111,180,255,0.08));
+  }
+  .cal-side .month.on {
+    background: linear-gradient(180deg, rgba(111,180,255,0.2), rgba(23,42,69,0.3));
+    color:var(--shine); border-color:rgba(111,180,255,0.4);
+    transform: translateX(4px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 0 16px rgba(111,180,255,0.12);
+  }
+  .cal-side .month.on::before { /* 茎尖月金 */
+    content:""; position:absolute; left:50%; top:-3px; width:6px; height:6px;
+    transform:translateX(-50%); border-radius:50%;
+    background:var(--gold); box-shadow:0 0 8px rgba(255,217,160,0.6);
+  }
+  .cal-grid { flex:1; display:grid; grid-template-columns:repeat(7,1fr); gap:10px; }
+  .cal-cell {
+    aspect-ratio:1; border-radius:12px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; font-size:11px;
+    background: rgba(23,42,69,0.55); border:1px solid rgba(45,74,117,0.4);
+    color:var(--mist); transition: all 0.2s var(--spring); cursor:pointer;
+  }
+  .cal-cell:hover { transform: translateY(-3px); border-color:rgba(111,180,255,0.4); }
+  .cal-cell.has {
+    background: radial-gradient(circle at 50% 60%, rgba(111,180,255,0.22) 0%, rgba(23,42,69,0.6) 70%);
+    border-color:rgba(111,180,255,0.3); color:var(--foam);
+  }
+  .cal-cell.has .dot { width:5px; height:5px; border-radius:50%; background:var(--ripple); box-shadow:0 0 6px var(--ripple); margin-top:4px; }
+  .cal-cell.today { border-color:var(--gold); color:var(--gold); box-shadow:0 0 14px rgba(255,217,160,0.18); }
+  .cal-detail {
+    width:170px; flex-shrink:0; border-radius:16px; padding:16px;
+    background: rgba(12,22,38,0.7); backdrop-filter:blur(28px) saturate(160%);
+    border:1px solid rgba(111,180,255,0.2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .cal-detail .d1 { font-size:20px; font-weight:300; color:var(--foam); margin-bottom:4px; }
+  .cal-detail .d2 { font-size:11px; color:var(--gold); margin-bottom:12px; }
+  .cal-detail .item {
+    font-size:11px; padding:8px 10px; border-radius:10px; margin-bottom:8px;
+    background: rgba(74,106,148,0.16); color:var(--mist);
+    border:1px solid rgba(74,106,148,0.18); line-height:1.5;
+  }
+  .cal-detail .item b { color:var(--shine); font-weight:400; }
+
+  /* ── 搜索页 demo：倒映水镜搜索 ── */
+  .search-demo { position:relative; }
+  .search-box {
+    display:flex; align-items:center; gap:12px;
+    padding:18px 24px; border-radius:20px; margin-bottom:28px;
+    background: rgba(23,42,69,0.55); border:1px solid rgba(111,180,255,0.25);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 0 30px rgba(111,180,255,0.06);
+    backdrop-filter: blur(16px);
+  }
+  .search-box .glass { width:14px; height:14px; border-radius:50%; border:2px solid var(--shine); position:relative; flex-shrink:0; }
+  .search-box .glass::after { content:""; position:absolute; width:7px; height:2px; background:var(--shine); transform:rotate(45deg); right:-5px; bottom:-3px; border-radius:2px; }
+  .search-box .ph { flex:1; font-size:13px; color:var(--mist); letter-spacing:0.5px; }
+  .search-box .go {
+    padding:8px 20px; border-radius:999px; font-size:12px;
+    background: linear-gradient(135deg, var(--ripple), var(--shine)); color:var(--deep);
+    box-shadow: 0 4px 16px rgba(111,180,255,0.25);
+  }
+  .search-res { display:flex; gap:14px; }
+  .search-hit {
+    flex:1; border-radius:16px; padding:16px 18px; position:relative; overflow:hidden;
+    background: rgba(23,42,69,0.5); border:1px solid rgba(45,74,117,0.5);
+  }
+  .search-hit::after {
+    content:""; position:absolute; left:0; right:0; bottom:0; height:40%;
+    background: linear-gradient(180deg, transparent, rgba(12,22,38,0.5));
+    transform: scaleY(-1);
+  }
+  .search-hit .swirl {
+    position:absolute; right:-14px; top:-14px; width:60px; height:60px;
+    border:1.5px solid rgba(168,208,255,0.25); border-radius:50%;
+  }
+  .search-hit .swirl.s2 { right:6px; top:4px; width:40px; height:40px; opacity:0.7; }
+  .search-hit .date { font-size:10px; color:var(--gold); margin-bottom:6px; letter-spacing:1px; }
+  .search-hit .txt { font-size:12px; color:var(--foam); line-height:1.7; }
+  .search-hit .txt em { color:var(--shine); font-style:normal; background:rgba(111,180,255,0.14); padding:0 3px; border-radius:4px; }
+  .search-hit .score { position:absolute; right:12px; bottom:10px; font-size:10px; color:var(--mist); }
+  .search-ripple { display:flex; justify-content:center; gap:8px; margin-top:22px; }
+  .search-ripple span {
+    width:6px; height:6px; border-radius:50%; background:var(--glass);
+    animation: pn 2s ease-in-out infinite;
+  }
+  .search-ripple span:nth-child(2){ animation-delay:0.3s; } .search-ripple span:nth-child(3){ animation-delay:0.6s; }
+  @keyframes pn { 0%,100%{ transform:scale(0.7); opacity:0.3 } 50%{ transform:scale(1); opacity:1 } }
+
+  /* ── AI 总结页 demo：水面分层浮标 ── */
+  .sum { display:flex; flex-direction:column; gap:14px; }
+  .sum-ctrl { display:flex; gap:10px; align-items:center; }
+  .sum-pill {
+    padding:8px 20px; border-radius:999px; font-size:12px; cursor:pointer;
+    background: rgba(74,106,148,0.15); color:var(--mist);
+    border:1px solid rgba(74,106,148,0.2); transition: all 0.2s var(--spring);
+  }
+  .sum-pill.on { background: rgba(111,180,255,0.16); color:var(--shine); border-color:rgba(111,180,255,0.35); }
+  .sum-pill.go { margin-left:auto; background: linear-gradient(135deg,var(--ripple),var(--shine)); color:var(--deep); border:none; box-shadow:0 4px 16px rgba(111,180,255,0.2); }
+  .sum-layer { display:flex; gap:12px; align-items:center; padding:12px 18px; border-radius:16px; background:rgba(23,42,69,0.5); border:1px solid rgba(45,74,117,0.4); }
+  .sum-layer .depth {
+    width:26px; height:26px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:10px;
+    color:var(--deep);
+  }
+  .sum-layer.d1 .depth { background: var(--shine); }
+  .sum-layer.d2 .depth { background: var(--ripple); }
+  .sum-layer.d3 .depth { background: var(--glass); }
+  .sum-layer .bar { flex:1; height:6px; border-radius:3px; background: rgba(74,106,148,0.2); overflow:hidden; }
+  .sum-layer .bar i { display:block; height:100%; border-radius:3px; background: linear-gradient(90deg,var(--ripple),var(--shine)); }
+  .sum-layer .stat { font-size:11px; color:var(--mist); min-width:44px; text-align:right; }
+  .sum-layer .tag { font-size:11px; color:var(--gold); min-width:80px; }
+
+  /* ── 知识库页 demo：沉底记忆瓶 ── */
+  .kb { display:flex; gap:32px; align-items:flex-end; }
+  .kb-bed {
+    flex:1; position:relative; padding:28px 32px 20px;
+    border-radius:20px;
+    background:
+      radial-gradient(ellipse at 50% 100%, rgba(74,106,148,0.22) 0%, transparent 60%),
+      linear-gradient(180deg, rgba(23,42,69,0.35), rgba(12,22,38,0.7));
+    border:1px solid rgba(45,74,117,0.45);
+  }
+  .kb-bed::after { /* 池底砂石光点 */
+    content:""; position:absolute; left:0; right:0; bottom:0; height:60px;
+    background:
+      radial-gradient(ellipse at 20% 100%, rgba(111,180,255,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 100%, rgba(168,208,255,0.06) 0%, transparent 50%);
+  }
+  .kb-shelf { display:flex; gap:18px; position:relative; z-index:1; flex-wrap:wrap; }
+  .bottle {
+    width:86px; display:flex; flex-direction:column; align-items:center; gap:0; cursor:pointer;
+    transition: transform 0.3s var(--spring);
+  }
+  .bottle:hover { transform: translateY(-10px); }
+  .bottle .cork {
+    width:24px; height:10px; border-radius:4px 4px 0 0;
+    background: linear-gradient(180deg, rgba(168,208,255,0.45), rgba(143,166,196,0.3));
+    border:1px solid rgba(168,208,255,0.25);
+  }
+  .bottle .glass {
+    width:60px; height:86px; border-radius:12px 12px 8px 8px; position:relative;
+    background: linear-gradient(180deg, rgba(168,208,255,0.14), rgba(74,106,148,0.05) 70%);
+    border:1px solid rgba(168,208,255,0.26);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -8px 16px rgba(74,106,148,0.15);
+    overflow:hidden;
+  }
+  .bottle .glass::before { /* 玻璃高光 */
+    content:""; position:absolute; left:8px; top:8px; bottom:8px; width:7px; border-radius:4px;
+    background: linear-gradient(180deg, rgba(226,236,250,0.35), transparent);
+  }
+  .bottle .spark { /* 瓶内回忆之光 */
+    position:absolute; left:50%; top:50%; width:16px; height:16px; transform:translate(-50%,-50%);
+    border-radius:50%;
+    background: radial-gradient(circle, var(--gold) 0%, rgba(255,217,160,0.4) 45%, transparent 70%);
+    box-shadow: 0 0 16px rgba(255,217,160,0.5);
+    animation: sparkpulse 3s ease-in-out infinite;
+  }
+  .bottle:nth-child(2n) .spark { animation-delay: 0.8s; }
+  .bottle:nth-child(3n) .spark { animation-delay: 1.6s; }
+  @keyframes sparkpulse { 0%,100%{ transform:translate(-50%,-50%) scale(0.8); opacity:0.55 } 50%{ transform:translate(-50%,-50%) scale(1.1); opacity:1 } }
+  .bottle .label { font-size:10px; color:var(--mist); margin-top:8px; letter-spacing:0.5px; white-space:nowrap; }
+  .bottle .label b { color:var(--gold); font-weight:400; }
+  .kb-detail {
+    width:230px; flex-shrink:0; border-radius:16px; padding:18px;
+    background: rgba(12,22,38,0.72); backdrop-filter: blur(28px) saturate(160%);
+    border:1px solid rgba(111,180,255,0.2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 12px 32px rgba(0,0,0,0.3);
+  }
+  .kb-detail .k1 { font-size:14px; color:var(--foam); margin-bottom:6px; }
+  .kb-detail .k2 { font-size:11px; color:var(--mist); line-height:1.7; margin-bottom:12px; }
+  .kb-detail .k3 { font-size:10px; color:var(--gold); letter-spacing:1px; margin-bottom:8px; }
+  .kb-detail .links { display:flex; flex-wrap:wrap; gap:6px; }
+  .kb-detail .lk {
+    font-size:10px; padding:3px 10px; border-radius:999px;
+    background: rgba(74,106,148,0.2); color:var(--foam); border:1px solid rgba(111,180,255,0.22);
+  }
+
+  /* ── 首页下方（时间线）demo：纵贯水线 ── */
+  .tl { display:flex; gap:20px; }
+  .tl-axis { width:44px; flex-shrink:0; position:relative; }
+  .tl-axis .line { position:absolute; left:50%; top:8px; bottom:8px; width:2px; background: linear-gradient(180deg, var(--ripple), var(--glass), transparent); transform:translateX(-50%); }
+  .tl-axis .dot { position:absolute; left:50%; transform:translateX(-50%); width:10px; height:10px; border-radius:50%; background:var(--shine); box-shadow:0 0 10px var(--shine); }
+  .tl-group { flex:1; display:flex; flex-direction:column; gap:12px; }
+  .tl-ghead { font-size:12px; letter-spacing:2px; color:var(--gold); margin-bottom:2px; }
+  .tl-card {
+    border-radius:14px; padding:14px 18px; display:flex; gap:14px; align-items:flex-start;
+    background: rgba(23,42,69,0.55); border:1px solid rgba(45,74,117,0.4);
+    transition: all 0.2s var(--spring);
+  }
+  .tl-card:hover { transform: translateX(6px); border-color:rgba(111,180,255,0.35); }
+  .tl-card .mood { font-size:16px; width:24px; text-align:center; color:var(--gold); flex-shrink:0; }
+  .tl-card .body { flex:1; }
+  .tl-card .t1 { font-size:11px; color:var(--mist); margin-bottom:4px; }
+  .tl-card .t2 { font-size:13px; color:var(--foam); line-height:1.6; }
+
+  .dir-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; margin-top:24px; }
+  .dir-col h4 { font-size:12px; letter-spacing:2px; color:var(--shine); margin-bottom:10px; font-weight:400; }
+  .dir-col ul { list-style:none; }
+  .dir-col li { font-size:12px; color:var(--mist); margin-bottom:8px; padding-left:14px; position:relative; }
+  .dir-col li::before { content:"·"; position:absolute; left:0; color:var(--gold); }
+  .hard {
+    margin:24px 40px 36px; padding:14px 18px; border-radius:12px;
+    background: rgba(255,217,160,0.06); border-left:2px solid var(--gold);
+    font-size:12px; color:var(--foam);
+  }
+  .hard b { color:var(--gold); font-weight:400; }
+  .next { padding:40px 0 96px; border-top:1px solid rgba(45,74,117,0.35); }
+  .next h3 { font-size:16px; font-weight:300; letter-spacing:1px; margin-bottom:14px; }
+  .next p { font-size:13px; color:var(--mist); max-width:72ch; margin-bottom:8px; }
+  @media (max-width: 1000px) {
+    .container { padding:0 24px; }
+    h1 { font-size:30px; }
+    .dir-grid { grid-template-columns:1fr 1fr; }
+    .cal { flex-direction:column; }
+    .search-res { flex-direction:column; }
+    .tl { flex-direction:column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="brand"><span class="mark"></span> NIGHT POND</div>
+    <div class="meta">非首页单独设计 · 方向稿 v1 · 2026.07.31</div>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow">Non-Home Pages · 第 ③ 条</div>
+    <h1>其他页，<span class="em">单独设计</span></h1>
+    <p class="sub">
+      树洞页做得好，不动。但首页 hero 以下 + 日历/搜索/AI总结/知识库，现在还是 max-w-2xl 的平铺标签——同一个"窗口"换个内容。
+      这一稿给每个页面一个专属的池塘叙事，每页有自己的空间性格，而不是套同一个模板。
+    </p>
+    <div class="prob">
+      <span>现状：全部 max-w-2xl 窄栏</span>
+      <span>现状：平铺标签，无空间感</span>
+      <span>目标：每页一种池塘叙事</span>
+      <span>五页五性 · 同一种水</span>
+    </div>
+  </section>
+
+  <!-- ═══════ 日历 · 纵向水草日历 ═══════ -->
+  <section class="page-card">
+    <div class="page-head">
+      <div class="page-idx">页面 01</div>
+      <div class="page-title">日历 · 纵向水草日历</div>
+      <p class="page-one">
+        现在日历是单月表格，窄窄一条。改成<b>纵向水草</b>——左侧是一列月份（水草茎），中间是当日水面格，选中一天右侧浮出一张<b>玻璃回忆卡</b>。
+        翻月像拂过水草，点日像石子落水。
+      </p>
+    </div>
+    <div class="page-demo">
+      <div class="cal">
+        <div class="cal-side">
+          <div class="month on">七月</div>
+          <div class="month">六月</div>
+          <div class="month">五月</div>
+          <div class="month">四月</div>
+        </div>
+        <div class="cal-grid">
+          <div class="cal-cell">1</div><div class="cal-cell">2</div><div class="cal-cell">3</div>
+          <div class="cal-cell has">4<span class="dot"></span></div><div class="cal-cell">5</div>
+          <div class="cal-cell has today">6<span class="dot"></span></div><div class="cal-cell">7</div>
+          <div class="cal-cell has">8<span class="dot"></span></div><div class="cal-cell">9</div><div class="cal-cell">10</div>
+          <div class="cal-cell has">11<span class="dot"></span></div><div class="cal-cell">12</div><div class="cal-cell">13</div>
+          <div class="cal-cell">14</div><div class="cal-cell has">15<span class="dot"></span></div><div class="cal-cell">16</div>
+          <div class="cal-cell">17</div><div class="cal-cell">18</div><div class="cal-cell has">19<span class="dot"></span></div>
+          <div class="cal-cell">20</div><div class="cal-cell">21</div><div class="cal-cell">22</div><div class="cal-cell">23</div>
+          <div class="cal-cell">24</div><div class="cal-cell">25</div><div class="cal-cell has">26<span class="dot"></span></div>
+          <div class="cal-cell">27</div><div class="cal-cell">28</div><div class="cal-cell">29</div><div class="cal-cell">30</div><div class="cal-cell">31</div>
+        </div>
+        <div class="cal-detail">
+          <div class="d1">7月6日</div>
+          <div class="d2">星期一 · 晴</div>
+          <div class="item">把伞借给了陌生人<br><b>雨夜 · 3篇</b></div>
+          <div class="item">第一次加班到凌晨<br><b>心情 🌙</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="dir-grid">
+      <div class="dir-col"><h4>空间叙事</h4><ul><li>左侧月份列 = 水草茎，翻月柔滑</li><li>格子 = 水面，有日记的泛水光点</li><li>点日 = 右侧玻璃回忆卡浮起</li></ul></div>
+      <div class="dir-col"><h4>交互</h4><ul><li>翻月 = 水草随动微摆</li><li>点日 = 涟漪环 + 回忆卡浮起</li><li>今天 = 月金描边（稀缺）</li></ul></div>
+      <div class="dir-col"><h4>性格</h4><ul><li>时间是有纵深的水</li><li>月度导航 + 日详情同屏</li><li>信息密度保持但呼吸感增强</li></ul></div>
+      <div class="dir-col"><h4>改动</h4><ul><li>容器 max-w-2xl → max-w-5xl</li><li>左栏月份列 + 右侧详情卡</li><li>网格换水面色 + 光点</li></ul></div>
+    </div>
+    <div class="hard"><b>一句话硬规则：</b>日历 = 纵向水草——左侧月份茎、中间水面格、右侧玻璃回忆卡，点日泛涟漪，今天月金描边。</div>
+  </section>
+
+  <!-- ═══════ 搜索 · 倒映水镜 ═══════ -->
+  <section class="page-card">
+    <div class="page-head">
+      <div class="page-idx">页面 02</div>
+      <div class="page-title">搜索 · 倒映水镜</div>
+      <p class="page-one">
+        搜索现在是一行输入框 + 平铺结果。改成<b>向水面投石</b>——搜索框是水面上的镜面，输入时水面微颤；
+        结果像<b>水底浮起的回忆</b>，命中词泛光，每条带一个涟漪分数圈。空态是静水面。
+      </p>
+    </div>
+    <div class="page-demo search-demo">
+      <div class="search-box">
+        <div class="glass"></div>
+        <div class="ph">搜索一段回忆… 如「上周开心的事」</div>
+        <div class="go">投入水中</div>
+      </div>
+      <div class="search-res">
+        <div class="search-hit">
+          <div class="swirl"></div><div class="swirl s2"></div>
+          <div class="date">JUL 06</div>
+          <div class="txt">把伞借给了<em>陌生人</em>，她跑得很快……</div>
+          <div class="score">● 0.92</div>
+        </div>
+        <div class="search-hit">
+          <div class="swirl"></div><div class="swirl s2"></div>
+          <div class="date">JUN 21</div>
+          <div class="txt">第一次加班到<em>凌晨</em>，楼下便利店还亮着……</div>
+          <div class="score">● 0.84</div>
+        </div>
+        <div class="search-hit">
+          <div class="swirl"></div><div class="swirl s2"></div>
+          <div class="date">MAY 03</div>
+          <div class="txt"><em>面试被拒</em>那天，沿着江边走了一圈……</div>
+          <div class="score">● 0.77</div>
+        </div>
+      </div>
+      <div class="search-ripple"><span></span><span></span><span></span></div>
+    </div>
+    <div class="dir-grid">
+      <div class="dir-col"><h4>空间叙事</h4><ul><li>输入框 = 水面镜，输入微颤</li><li>结果 = 水底浮起的回忆</li><li>底部涟漪 = 思考中的呼吸</li></ul></div>
+      <div class="dir-col"><h4>交互</h4><ul><li>输入防抖 = 水面渐起微波</li><li><b>真实筛选</b>：非命中不出现</li><li>关联度 = 涟漪分数圈</li></ul></div>
+      <div class="dir-col"><h4>性格</h4><ul><li>搜索是有仪式感的打捞</li><li>语义搜索契合"水底回忆"</li><li>比列表更有叙事温度</li></ul></div>
+      <div class="dir-col"><h4>改动</h4><ul><li>搜索框玻璃化 + 镜面</li><li><b>仅浮现命中回忆</b>（修复"显示全部"）</li><li>命中词波光高亮</li></ul></div>
+    </div>
+    <div class="hard"><b>一句话硬规则：</b>搜索 = 向水面投石——镜面搜索框、结果仅浮现命中回忆（非命中不出现）、命中词波光高亮、关联度涟漪圈。</div>
+  </section>
+
+  <!-- ═══════ AI 总结 · 水面分层浮标 ═══════ -->
+  <section class="page-card">
+    <div class="page-head">
+      <div class="page-idx">页面 03</div>
+      <div class="page-title">AI 总结 · 水面分层浮标</div>
+      <p class="page-one">
+        AI 总结现在是一个窄条 + 胶囊按钮。改成<b>分层水面</b>——每级总结是一层水（浅层=一句话/中层=要点/深层=全文），
+        生成时该层<b>泛起水波进度</b>（不再是转圈），完成后浮起。知识图谱沉在底部一层（承接小鱼图谱）。
+      </p>
+    </div>
+    <div class="page-demo">
+      <div class="sum">
+        <div class="sum-ctrl">
+          <div class="sum-pill on">浅层 · 一句话</div>
+          <div class="sum-pill">中层 · 要点</div>
+          <div class="sum-pill">深层 · 全文</div>
+          <div class="sum-pill go">✨ 生成总结</div>
+        </div>
+        <div class="sum-layer d1">
+          <div class="depth">浅</div>
+          <div class="tag">一句话</div>
+          <div class="bar"><i style="width:100%"></i></div>
+          <div class="stat">完成</div>
+        </div>
+        <div class="sum-layer d2">
+          <div class="depth">中</div>
+          <div class="tag">要点 3 条</div>
+          <div class="bar"><i style="width:64%"></i></div>
+          <div class="stat">生成中…</div>
+        </div>
+        <div class="sum-layer d3">
+          <div class="depth">深</div>
+          <div class="tag">全文</div>
+          <div class="bar"><i style="width:0%"></i></div>
+          <div class="stat">待生成</div>
+        </div>
+      </div>
+    </div>
+    <div class="dir-grid">
+      <div class="dir-col"><h4>空间叙事</h4><ul><li>每级总结 = 一层水，深色下沉</li><li>生成中 = 水波进度条</li><li>图谱 = 水底最后一层</li></ul></div>
+      <div class="dir-col"><h4>交互</h4><ul><li>选级 = 该层浮起</li><li>生成 = 水波从浅层荡到深层</li><li>图谱 = 沉底可展开</li></ul></div>
+      <div class="dir-col"><h4>性格</h4><ul><li>总结 = 越深越沉、越贵</li><li>进度可见，不空白等待</li><li>图谱天然沉底，层级有序</li></ul></div>
+      <div class="dir-col"><h4>改动</h4><ul><li>三级总结纵向分层</li><li>进度水波条替转圈</li><li>图谱沉底一层</li></ul></div>
+    </div>
+    <div class="hard"><b>一句话硬规则：</b>AI 总结 = 水面分层——浅/中/深三层浮标，生成时水波进度，图谱沉底一层。</div>
+  </section>
+
+  <!-- ═══════ 知识库 · 沉底记忆瓶 ═══════ -->
+  <section class="page-card">
+    <div class="page-head">
+      <div class="page-idx">页面 04</div>
+      <div class="page-title">知识库 · 沉底记忆瓶</div>
+      <p class="page-one">
+        知识库现在是「平铺标签 + 词条列表」，只像是普通数据库。改成<b>池底记忆瓶</b>——每条记忆是一支<b>玻璃瓶</b>，安静沉在池底，
+        瓶里浮着一粒<b>月金微光</b>（这条记忆的光）。hover 瓶子浮起，点开底部浮出一张<b>玻璃记忆卡</b>（内容 + 它关联的回忆标签）。
+        记忆是沉底的宝贝，不是平铺的条目。
+      </p>
+    </div>
+    <div class="page-demo">
+      <div class="kb">
+        <div class="kb-bed">
+          <div class="kb-shelf">
+            <div class="bottle"><div class="cork"></div><div class="glass"><span class="spark"></span></div><div class="label">面试被拒<b> · 3</b></div></div>
+            <div class="bottle"><div class="cork"></div><div class="glass"><span class="spark"></span></div><div class="label">新同事到来<b> · 6</b></div></div>
+            <div class="bottle"><div class="cork"></div><div class="glass"><span class="spark"></span></div><div class="label">加班到凌晨<b> · 4</b></div></div>
+            <div class="bottle"><div class="cork"></div><div class="glass"><span class="spark"></span></div><div class="label">楼下便利店<b> · 2</b></div></div>
+            <div class="bottle"><div class="cork"></div><div class="glass"><span class="spark"></span></div><div class="label">老家<b> · 2</b></div></div>
+            <div class="bottle"><div class="cork"></div><div class="glass"><span class="spark"></span></div><div class="label">母亲<b> · 4</b></div></div>
+          </div>
+        </div>
+        <div class="kb-detail">
+          <div class="k1">加班到凌晨</div>
+          <div class="k2">"第一次加班到凌晨，楼下便利店还亮着灯，买了一杯热的…"</div>
+          <div class="k3">关联的回忆</div>
+          <div class="links"><span class="lk">楼下便利店</span><span class="lk">母亲</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="dir-grid">
+      <div class="dir-col"><h4>空间叙事</h4><ul><li>每条记忆 = 一支玻璃瓶沉在池底</li><li>瓶内月金微光 = 这条记忆的光</li><li>池底砂石光点 = 沉底氛围</li></ul></div>
+      <div class="dir-col"><h4>交互</h4><ul><li>hover 瓶子浮起微荡</li><li>点瓶 = 底部玻璃记忆卡浮出</li><li>关联回忆 = 标签 chips 可直接跳图谱</li></ul></div>
+      <div class="dir-col"><h4>性格</h4><ul><li>记忆 = 沉底的宝贝，有重量感</li><li>直接承接知识图谱的小鱼语言</li><li>月金微光是稀缺点缀</li></ul></div>
+      <div class="dir-col"><h4>改动</h4><ul><li>列表 → 玻璃瓶阵列</li><li>点瓶浮出详情卡</li><li>关联 chips 与图谱互跳</li></ul></div>
+    </div>
+    <div class="hard"><b>一句话硬规则：</b>知识库 = 池底记忆瓶——每条记忆一支玻璃瓶沉底、瓶内月金微光，hover 浮起、点开浮出玻璃记忆卡。</div>
+  </section>
+
+  <!-- ═══════ 首页下方 · 纵贯水线 ═══════ -->
+  <section class="page-card">
+    <div class="page-head">
+      <div class="page-idx">页面 05</div>
+      <div class="page-title">首页下方 · 纵贯水线</div>
+      <p class="page-one">
+        首页 hero 之下的时间线现在是窄窄一条竖排。改成<b>纵贯水线</b>——时间线贯穿一条中央水线（涟漪光柱），
+        日期像水面的月影，每组日记是一串<b>浮出水面的玻璃卡</b>。hover 时卡片随水波微漾。
+      </p>
+    </div>
+    <div class="page-demo">
+      <div class="tl">
+        <div class="tl-axis">
+          <div class="line"></div>
+          <div class="dot" style="top:8px"></div>
+          <div class="dot" style="top:120px"></div>
+          <div class="dot" style="top:230px"></div>
+        </div>
+        <div class="tl-group">
+          <div class="tl-ghead">七月 · 6 篇</div>
+          <div class="tl-card"><div class="mood">◐</div><div class="body"><div class="t1">7月6日 · 晴</div><div class="t2">把伞借给了陌生人，她跑得很快，伞在我手里还没撑开……</div></div></div>
+          <div class="tl-card"><div class="mood">◐</div><div class="body"><div class="t1">7月4日</div><div class="t2">加班到凌晨，楼下便利店还亮着灯，买了一杯热的……</div></div></div>
+          <div class="tl-ghead">六月 · 3 篇</div>
+          <div class="tl-card"><div class="mood">●</div><div class="body"><div class="t1">6月21日 · 雨</div><div class="t2">面试被拒那天，沿着江边走了一圈，风把伞吹翻了……</div></div></div>
+          <div class="tl-card"><div class="mood">◐</div><div class="body"><div class="t1">6月15日</div><div class="t2">第一次下厨做红烧肉，咸了，但爸妈都说好吃……</div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="dir-grid">
+      <div class="dir-col"><h4>空间叙事</h4><ul><li>中央水线贯穿 = 时间纵深</li><li>日期 = 水面月影</li><li>日记 = 浮出玻璃卡</li></ul></div>
+      <div class="dir-col"><h4>交互</h4><ul><li>hover = 卡片随波微漾</li><li>点卡 = 月金涟漪 + 编辑</li><li>加载更多 = 水线延续</li></ul></div>
+      <div class="dir-col"><h4>性格</h4><ul><li>往下滚 = 下潜时光</li><li>配合 hero 层叠卡</li><li>宽布局，对齐 max-w1240</li></ul></div>
+      <div class="dir-col"><h4>改动</h4><ul><li>max-w-2xl → max-w-5xl</li><li>中央水线 + 玻璃卡</li><li>hover 微漾动效</li></ul></div>
+    </div>
+    <div class="hard"><b>一句话硬规则：</b>首页下方 = 纵贯水线——中央涟漪光柱、日记浮出玻璃卡、hover 随波微漾、宽布局对齐首屏。</div>
+  </section>
+
+  <!-- ═══════ 下一步 ═══════ -->
+  <section class="next">
+    <h3>四页四性，同一种水</h3>
+    <p>日历是水草、搜索是水镜、总结是水层、时间线是水线——每页有自己的空间叙事，但共用同一套水语言（10 色 / 玻璃 / 涟漪 / 弹簧 / 禁生物 SVG）。</p>
+    <p>方向确认后，我按每页单独落代码 + 每页一份交互参数给前端实现。AI 树洞页保持不动。</p>
+  </section>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,45 @@
+﻿# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+
+# Build outputs
+dist/
+build/
+.next/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Runtime generated
+uploads/
+exports/
+*.db
+*.db-journal
+
+# Build artifacts (deploy script manages these; do not track)
+futao-logs-server/server/public/assets/
+
+# Runtime/tunnel temp files
+cf-*.txt
+*.bak-pm-*
+
+# Dev screenshots (runtime artifacts)
+.pond-shots/
+
+# Runtime logs (futao 14:24: all .log under LOG/, runtime output not tracked)
+LOG/

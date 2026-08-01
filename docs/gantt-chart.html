@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>futao-logs 甘特图 · 完整路线图</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:system-ui,sans-serif; background:#0f1a12; color:#d4e6d8; padding:40px; max-width:1000px; }
+h1 { font-size:20px; margin-bottom:4px; font-weight:500; color:#e8f5e9; }
+.sub { font-size:13px; color:#6a8f77; margin-bottom:32px; }
+.phase { margin-bottom:40px; }
+.phase-header { display:flex; align-items:center; gap:12px; margin-bottom:16px; padding:10px 14px; border-radius:8px; }
+.phase-1 { background:#1a3a22; border-left:4px solid #66bb6a; }
+.phase-2 { background:#1a2a3a; border-left:4px solid #4fc3f7; }
+.phase-3 { background:#2a2a1a; border-left:4px solid #ffd54f; }
+.phase-4 { background:#3a1a3a; border-left:4px solid #ce93d8; }
+.phase-5 { background:#2a1a1a; border-left:4px solid #ef9a9a; }
+.phase-6 { background:#1a2a2a; border-left:4px solid #81d4fa; }
+.phase-title { font-size:17px; font-weight:600; }
+.phase-meta { font-size:12px; opacity:0.7; }
+.phase-desc { font-size:12px; margin-top:2px; opacity:0.6; }
+.phase-milestone { font-size:12px; margin-top:4px; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { text-align:left; padding:8px 12px; color:#6a8f77; font-weight:400; border-bottom:1px solid #1a2e20; font-size:12px; }
+td { padding:8px 12px; border-bottom:1px solid #0d1f14; }
+.tag { display:inline-block; padding:1px 6px; border-radius:3px; font-size:11px; }
+.tag-done { background:#1a3a22; color:#66bb6a; }
+.tag-wip { background:#1a2a3a; color:#4fc3f7; }
+.tag-plan { background:#2a2a2a; color:#6a8f77; }
+.col-check { width:32px; text-align:center; }
+.col-assign { width:130px; }
+.col-date { width:170px; }
+</style>
+</head>
+<body>
+<h1>futao-logs 项目甘特图</h1>
+<p class="sub">基于麻也龙太×力齐早早调研→需求文档V1.1路线图 · 更新 2026-08-01</p>
+
+<!-- Phase 1: ★★★ 基础版（原⭐极简卡片日志本 + 原⭐⭐AI辅助→合并） -->
+<div class="phase">
+<div class="phase-header phase-1">
+<div>
+<div class="phase-title">Phase 1 — 卡片日志 + AI 辅助</div>
+<div class="phase-meta">7/29 17:26~18:47 · 历时约1.5h</div>
+<div class="phase-desc">基于力齐早早调研（Blinko方案复用评分9/10 + 组件组合备选）</div>
+<div class="phase-milestone">【里程碑 ⭐⭐⭐】P0 全部 + P1 四项 + 在线/离线 + AI LLM配置</div>
+</div>
+<span style="margin-left:auto;font-size:14px;color:#66bb6a;font-weight:600;">✅ 已完成</span>
+</div>
+
+<table>
+<tr><th class="col-check"></th><th>任务项（麻也龙太需求文档V1.1 §5）</th><th class="col-assign">负责人</th><th class="col-date">完成</th><th>状态</th></tr>
+<tr><td>✅</td><td>F1 卡片日记·F2 Markdown·F3 图文·F4 日历·F5 时间线·F6 本地存储·F7 搜索</td><td>林正树/lamda</td><td>7/29</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>✅</td><td>F8 标签·F9 日记本·F10 每日回顾·F11 导出·F12 字数统计</td><td>lamda/miky</td><td>7/29</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>✅</td><td>暗色模式·离线提示·统计栏·心情色·6项bug修复</td><td>lamda/miky/Amily/Cindy</td><td>7/29</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>✅</td><td>LLM 4平台配置·设置面板（龙太需求§6 Phase2前置）</td><td>lamda/Cindy/miky</td><td>7/29</td><td><span class="tag tag-done">完成</span></td></tr>
+</table>
+<p style="margin-top:8px;font-size:12px;color:#6a8f77;">→ 等 futao 验收后关闭</p>
+</div>
+
+<!-- Phase 2: ★★★★ -->
+<div class="phase">
+<div class="phase-header phase-2">
+<div>
+<div class="phase-title">Phase 2 — AI 深度集成</div>
+<div class="phase-meta">7/29 19:20~24:00 · 历时约5h</div>
+<div class="phase-desc">麻也龙太需求§6：AI自动总结·每日分析·情绪指数·日记润色·N日回顾</div>
+<div class="phase-milestone">【里程碑 ⭐⭐⭐⭐】AI 每日总结 + 情绪趋势 + 智能搜索</div>
+</div>
+<span style="margin-left:auto;font-size:14px;color:#66bb6a;font-weight:600;">✅ 已完成，待 futao 验收</span>
+</div>
+
+<table>
+<tr><th class="col-check"></th><th>任务项（麻也龙太需求文档§6 Phase2描述）</th><th class="col-assign">负责人</th><th class="col-date">预计</th><th>状态</th></tr>
+<tr><td>✅</td><td>AI 分级总结体系：日/周/月/年四级+保存+编辑+重写</td><td>lamda + Cindy</td><td>7/29 19:54</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>✅</td><td>AI 润色提示：写日记时可选 AI 辅助润色（保留）</td><td>lamda</td><td>7/29 19:30</td><td><span class="tag tag-done">完成</span></td></tr>
+</table>
+<p style="margin-top:8px;font-size:12px;color:#4fc3f7;">⚠️ 因 futao 需求变化：AI 总结改为手动触发分级体系 + 独立 Tab，之前自动总结栏 P0 已废弃重构中</p>
+</div>
+
+<!-- Phase 3: ★★★★★ -->
+<div class="phase">
+<div class="phase-header phase-3">
+<div>
+<div class="phase-title">Phase 3 — 知识库（RAG）</div>
+<div class="phase-meta">龙太×早早调研已完成：Blinko已内置RAG引擎 · 力齐早早推荐方案B</div>
+<div class="phase-desc">麻也龙太需求§6：向量化存储·语义搜索·关系发现·知识图谱</div>
+<div class="phase-milestone">【里程碑 ⭐⭐⭐⭐⭐】语义搜索 + 知识图谱</div>
+</div>
+<span style="margin-left:auto;font-size:14px;color:#66bb6a;font-weight:600;">✅ 已完成，待 futao 验收</span>
+</div>
+
+<table>
+<tr><th class="col-check"></th><th>任务项</th><th class="col-assign">负责人</th><th class="col-date">预计</th><th>状态</th></tr>
+<tr><td>✅</td><td>调研完成：Blinko 方案复用评分 9/10，内置 RAG</td><td>力齐早早</td><td>7/29</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>✅</td><td>后端 RAG 基础：sqlite-vec + embeddings + 语义搜索路由</td><td>Cindy/林正树</td><td>7/29 20:47</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>✅</td><td>前端语义搜索 UI</td><td>lamda</td><td>7/30 凌晨</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>✅</td><td>实体提取 + 知识图谱后端</td><td>Cindy/林正树</td><td>7/29 20:47</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>✅</td><td>前端知识图谱可视化</td><td>lamda</td><td>7/30 凌晨</td><td><span class="tag tag-done">完成</span></td></tr>
+</table>
+</div>
+
+<!-- AI 树洞：新需求 7/30 -->
+<div class="phase">
+<div class="phase-header" style="background:#2a1a3a;border-left:4px solid #c084fc;">
+<div>
+<div class="phase-title">AI 树洞 — 聊天式知识问答</div>
+<div class="phase-meta">7/30 13:42~ 启动 · 预计 2h</div>
+<div class="phase-desc">futao 需求：双向对话+日记+知识库+知识图谱+用户建模</div>
+</div>
+<span style="margin-left:auto;font-size:14px;color:#66bb6a;font-weight:600;">✅ 已完成，待 futao 验收</span>
+</div>
+
+<table>
+<tr><th class="col-check"></th><th>任务项</th><th class="col-assign">负责人</th><th class="col-date">预计</th><th>状态</th></tr>
+<tr><td>✅</td><td>设计稿（miky）</td><td>miky</td><td>13:44</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>✅</td><td>前端 Tab + 聊天组件 + 移除润色（lamda）</td><td>lamda</td><td>13:48</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>✅</td><td>后端 Treehole DB + 5 API（林正树）</td><td>林正树</td><td>14:03</td><td><span class="tag tag-done">完成</span></td></tr>
+<tr><td>✅</td><td>联调 + 前端部署（lamda）</td><td>lamda</td><td>14:04</td><td><span class="tag tag-done">完成</span></td></tr>
+</table>
+</div>
+
+<!-- 涟漪页重构：新需求 7/31 -->
+<div class="phase">
+<div class="phase-header" style="background:#0f1a12;border-left:4px solid #a8d0ff;">
+<div>
+<div class="phase-title">涟漪页重构 — NIGHT POND 池塘涟漪主题（#32）</div>
+<div class="phase-meta">7/31 16:08~ 启动 · 8/1 v5 认可落地 · 11:58 futao 验收通过</div>
+<div class="phase-desc">futao 需求：设计稿大标签元素融入涟漪窗口 + 空旷静谧气质 + 大水波大而疏 + 聊天窗纵向占满</div>
+</div>
+<span style="margin-left:auto;font-size:14px;color:#6ecb8c;font-weight:600;">✅ futao 验收通过（11:58）</span>
+</div>
+
+<table>
+<tr><th class="col-check"></th><th>任务项</th><th class="col-assign">负责人</th><th class="col-date">状态</th><th>状态</th></tr>
+<tr><td>✅</td><td>v3 方向稿（4 纵深水层，futao 17:13 确认）</td><td>miky</td><td>7/31 17:13</td><td><span class="tag tag-done">已确认</span></td></tr>
+<tr><td>❌</td><td>第 3 次打回 8 点（水波窗下/气泡回窗/纵向完整/滚动条主题化/删除按钮/批量删除/文字不侵入/删除反馈）</td><td>miky+林正树</td><td>7/31 19:5x</td><td><span class="tag tag-done">功能完成</span></td></tr>
+<tr><td>❌</td><td>第 4 次打回「还是很丑」（20:14）→ 量化 gate 建立 → v4 方向稿（20:32）→ v4 调后通过（20:47）</td><td>miky+Emma</td><td>7/31 20:47</td><td><span class="tag tag-done">量化通过</span></td></tr>
+<tr><td>✅</td><td>v5 完整稿（静夜涟漪/文字不侵入/知识库控件/黑猫入口）→ futao 08:46 认可 + 要求聊天窗往下拓展 → 08:51「按这个设计执行落地」</td><td>miky</td><td>8/1 08:51</td><td><span class="tag tag-done">已认可</span></td></tr>
+<tr><td>✅</td><td>v5 落地生产代码（聊天窗往下拓展 + 静夜涟漪 + 黑猫知识库 + 知识库控件）→ deploy ad099d0（10:41），PM 复验聊天窗底部留白 69px 达标</td><td>miky</td><td>8/1 10:41</td><td><span class="tag tag-done">已落地</span></td></tr>
+<tr><td>🔁</td><td>落地版打回 2 点（10:53）：水波矩形区块突兀 + 右下圆环突兀 → 按设计稿改自然 → 11:0x 修复复核通过</td><td>miky</td><td>8/1 11:0x</td><td><span class="tag tag-done">已修复</span></td></tr>
+<tr><td>🔁</td><td>落地版打回第 3 轮（11:07）：侧栏布局按设计稿 + 聊天窗加宽贴近知识库 → miky 4 点贴齐，PM 复验通过（聊天窗 730px 空隙 36px）→ 小恒核验通过</td><td>miky</td><td>8/1 11:3x</td><td><span class="tag tag-done">已修复</span></td></tr>
+<tr><td>🔁</td><td>落地版打回第 4 轮（11:35）：涟漪标题/文字排布按 v5 放知识库入口窗口上方（根因=fixed 装饰被导航栏遮挡）→ miky 移入侧栏顶部 static，PM+QA 复验通过（wordmark y69/kicker y99/黑猫 y159）→ 待报 futao 验收</td><td>miky</td><td>8/1 11:4x</td><td><span class="tag tag-done">已修复</span></td></tr>
+<tr><td>✅</td><td>futao 反馈（11:46）：文字太暗影响阅读 + 涟漪标题再大一点 → 小恒基线（标题组 opacity~0.3、wordmark 28-30px、守 v5 气质）→ miky 落地，PM 复验通过（wordmark 30px/0.3、kicker 11px/0.4、THREADS 0.75、知识库 #a8d0ff）→ 小恒核验通过 → **futao 11:58 验收通过**</td><td>miky</td><td>8/1 11:58</td><td><span class="tag tag-done">已验收</span></td></tr>
+</table>
+<p style="margin-top:8px;font-size:12px;color:#6a8f77;">→ 8/1 参考图 futao-ripple-ref.png 已作废（futao 08:46）；v5 已认可。侧栏/聊天窗/标题归位/文字亮度全部修复闭环，**futao 11:58 验收通过**（bundle index-CBlipsow.js）。唯一待补验：会话列表存量会话文字色（当前空态）</p>
+</div>
+
+<!-- 萤火虫之森：7/31 -->
+<div class="phase">
+<div class="phase-header" style="background:#1a2a1a;border-left:4px solid #ffd9a0;">
+<div>
+<div class="phase-title">萤火虫之森 — 交互设计落地（#22）</div>
+<div class="phase-meta">7/31 启动 · 进行中</div>
+<div class="phase-desc">miky 出交互设计稿 → lamda 实现</div>
+</div>
+<span style="margin-left:auto;font-size:14px;color:#4fc3f7;font-weight:600;">🔧 进行中</span>
+</div>
+</div>
+
+<!-- Phase 4-6 预览 -->
+<div class="phase">
+<div class="phase-header phase-4">
+<div>
+<div class="phase-title">Phase 4 — 长期记忆</div>
+<div class="phase-meta">待定</div>
+<div class="phase-desc">麻也龙太需求§6：AI识别长期模式·自动提炼重要事件·周期性回顾推送</div>
+</div>
+<span style="margin-left:auto;font-size:14px;color:#ce93d8;font-weight:600;">⏳ 待排期</span>
+</div>
+</div>
+
+<div class="phase">
+<div class="phase-header phase-5">
+<div>
+<div class="phase-title">Phase 5 — 基础桌宠</div>
+<div class="phase-meta">待定</div>
+<div class="phase-desc">麻也龙太需求§6：陪伴型桌面宠物·放桌面·与日志联动</div>
+</div>
+<span style="margin-left:auto;font-size:14px;color:#ef9a9a;font-weight:600;">⏳ 待排期</span>
+</div>
+</div>
+
+<div class="phase">
+<div class="phase-header phase-6">
+<div>
+<div class="phase-title">Phase 6 — AI 增强桌宠</div>
+<div class="phase-meta">待定</div>
+<div class="phase-desc">麻也龙太需求§6：AI增强→了解生活·能聊天互动·三者联动（日记+AI+桌宠）</div>
+</div>
+<span style="margin-left:auto;font-size:14px;color:#81d4fa;font-weight:600;">⏳ 待排期</span>
+</div>
+</div>
+
+<hr style="border-color:#1a2e20;margin:32px 0;">
+<p style="font-size:12px;color:#6a8f77;">
+路线图来源：麻也龙太（需求分析）· 力齐早早（数据调研）— 需求文档V1.1 + 三份调研报告<br>
+🏠 futao-homepage — 独立项目，P0 修复完成未commit，P1/P2 待验收后启动
+</p>
+</body>
+</html>

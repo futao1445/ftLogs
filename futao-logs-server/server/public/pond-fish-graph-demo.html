@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>池塘图谱 · 小鱼游荡概念演示</title>
+<style>
+  :root {
+    --deep: #0c1626; --mid: #172a45; --near: #21395c; --line: #2d4a75;
+    --glass: #4a6a94; --ripple: #6fb4ff; --shine: #a8d0ff;
+    --foam: #e2ecfa; --mist: #8fa6c4; --gold: #ffd9a0;
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: radial-gradient(ellipse at 50% 0%, #14233c 0%, var(--deep) 55%, #0a1220 100%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: var(--foam); min-height: 100vh; display: flex; flex-direction: column;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 32px 48px 80px; width: 100%; flex:1; }
+  header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 24px; }
+  .brand { display:flex; align-items:center; gap:10px; font-size:13px; letter-spacing:2px; }
+  .mark { width:11px; height:11px; border-radius:50%; background: radial-gradient(circle at 35% 30%, var(--shine), var(--ripple) 45%, var(--glass)); box-shadow: 0 0 10px rgba(111,180,255,0.5); }
+  .hint { font-size:12px; color: var(--mist); }
+  h1 { font-size:22px; font-weight:300; letter-spacing:1px; margin-bottom:6px; }
+  .sub { font-size:13px; color:var(--mist); margin-bottom: 20px; }
+  .sub b { color: var(--gold); font-weight:400; }
+
+  /* ── 池塘画布 ── */
+  .pond {
+    position: relative; height: 560px; border-radius: 24px; overflow: hidden;
+    background:
+      radial-gradient(ellipse at 18% 82%, rgba(111,180,255,0.07) 0%, transparent 42%),
+      radial-gradient(ellipse at 84% 18%, rgba(168,208,255,0.06) 0%, transparent 40%),
+      linear-gradient(180deg, var(--near) 0%, var(--mid) 38%, var(--deep) 100%);
+    border: 1px solid rgba(45,74,117,0.6);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 24px 60px rgba(0,0,0,0.35);
+  }
+  /* 水面微光（顶沿） */
+  .pond::before {
+    content:""; position:absolute; left:0; right:0; top:0; height:1px;
+    background: linear-gradient(90deg, transparent, rgba(168,208,255,0.5), transparent);
+  }
+  /* 水底浮动光斑 */
+  .pond::after {
+    content:""; position:absolute; left:0; right:0; bottom:0; height:120px;
+    background: radial-gradient(ellipse at 30% 100%, rgba(74,106,148,0.18) 0%, transparent 55%),
+                radial-gradient(ellipse at 75% 100%, rgba(23,42,69,0.5) 0%, transparent 60%);
+  }
+  /* 关联连线层 */
+  #links { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2; }
+  #links path { fill:none; stroke-width:1.6; opacity:0; transition: opacity 0.5s ease; }
+  #links path.on { opacity:1; }
+
+  /* ── 鱼容器 ── */
+  .fish {
+    position:absolute; z-index:5; cursor:pointer;
+    will-change: transform; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
+    transition: filter 0.3s ease;
+  }
+  .fish .tail { transform-origin: 82% 50%; animation: tailswim 1.6s ease-in-out infinite; }
+  .fish.swim-fast .tail { animation-duration: 0.8s; }
+  .fish svg { display:block; overflow:visible; }
+  .fish .glow {
+    position:absolute; inset:-14px; border-radius:50%;
+    background: radial-gradient(circle, currentColor 0%, transparent 65%);
+    opacity:0; transition: opacity 0.3s ease; pointer-events:none;
+  }
+  .fish.hovered .glow { opacity:0.25; }
+  .fish.selected .glow { opacity:0.45; }
+  /* 鱼名：小、淡、柔——不抢鱼本身 */
+  .fish .fname {
+    position:absolute; top:calc(100% + 4px); left:50%; transform:translateX(-50%);
+    font-size:9px; white-space:nowrap; letter-spacing:0.3px;
+    color:var(--mist); opacity:0.5;
+    text-shadow:0 1px 3px rgba(0,0,0,0.4);
+    transition: opacity 0.25s ease, color 0.25s ease; pointer-events:none;
+  }
+  .fish:hover .fname, .fish.hovered .fname { opacity:0.85; color:var(--foam); }
+  .fish.selected .fname { opacity:1; color:var(--gold); }
+  @keyframes tailswim {
+    0%,100% { transform: rotate(14deg); }
+    50% { transform: rotate(-14deg); }
+  }
+  /* 涟漪环（在鱼下方） */
+  .ring {
+    position:absolute; z-index:1; pointer-events:none;
+    width:16px; height:16px; margin-left:-8px; margin-top:-8px; border-radius:50%;
+    border:1.5px solid rgba(168,208,255,0.55);
+    animation: ripple 1.3s ease-out forwards;
+  }
+  @keyframes ripple {
+    0% { transform: scale(0.35); opacity: 0.85; }
+    100% { transform: scale(2.6); opacity: 0; }
+  }
+  /* 选中时中心泛开的大水纹 */
+  .wake {
+    position:absolute; z-index:3; pointer-events:none;
+    width:120px; height:120px; margin-left:-60px; margin-top:-60px; border-radius:50%;
+    border:2px solid rgba(255,217,160,0.8);
+    box-shadow: 0 0 24px rgba(255,217,160,0.4), inset 0 0 24px rgba(255,217,160,0.2);
+    animation: wake 1.1s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
+  @keyframes wake {
+    0% { transform: scale(0.15); opacity: 0.95; }
+    100% { transform: scale(2.1); opacity: 0; }
+  }
+
+  /* ── 图例 ── */
+  .legend {
+    position:absolute; left:16px; top:14px; z-index:6;
+    display:flex; gap:14px; padding:8px 14px; border-radius:999px;
+    background: rgba(12,22,38,0.55); backdrop-filter: blur(12px);
+    border: 1px solid rgba(45,74,117,0.5); font-size:11px; color: var(--mist);
+  }
+  .legend span { display:inline-flex; align-items:center; gap:6px; }
+  .legend i { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .legend .off { display: none; }
+
+  /* ── 详情面板 ── */
+  .detail {
+    position:absolute; left:16px; right:16px; bottom:16px; z-index:8;
+    padding: 18px 22px; border-radius: 18px;
+    background: rgba(12,22,38,0.72); backdrop-filter: blur(28px) saturate(160%);
+    border: 1px solid rgba(111,180,255,0.18);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 12px 32px rgba(0,0,0,0.3);
+    transform: translateY(8px); opacity: 0; pointer-events:none;
+    transition: transform 0.35s var(--spring), opacity 0.25s ease;
+  }
+  .detail.show { transform: translateY(0); opacity:1; pointer-events:auto; }
+  .detail .row1 { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .detail .name { font-size:18px; font-weight:400; letter-spacing:1px; color: var(--foam); }
+  .detail .tag {
+    font-size:10px; padding:3px 10px; border-radius:999px; letter-spacing:1px;
+    background: rgba(255,217,160,0.1); color: var(--gold); border:1px solid rgba(255,217,160,0.25);
+  }
+  .detail .meta { font-size:12px; color: var(--mist); margin-bottom:10px; }
+  .detail .meta b { color: var(--shine); font-weight:400; }
+  .detail .rel { font-size:11px; color: var(--mist); margin-bottom:4px; }
+  .detail .chips { display:flex; gap:8px; flex-wrap:wrap; }
+  .detail .chip {
+    font-size:11px; padding:4px 12px; border-radius:999px;
+    background: rgba(74,106,148,0.2); color: var(--foam);
+    border:1px solid rgba(111,180,255,0.22);
+  }
+  .detail .chip i { width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:6px; }
+  .detail .close { position:absolute; right:14px; top:12px; color: var(--mist); cursor:pointer; font-size:16px; }
+
+  /* ── 提示 ── */
+  .tip { margin-top: 18px; font-size: 12px; color: var(--mist); text-align:center; letter-spacing:1px; }
+  .tip b { color: var(--gold); font-weight:400; }
+  .note { margin-top: 40px; padding: 16px 20px; border-radius: 14px; background: rgba(23,42,69,0.4); border:1px solid rgba(45,74,117,0.5); font-size:12px; color: var(--mist); line-height:1.8; }
+  .note b { color: var(--shine); font-weight:400; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><span class="mark"></span> NIGHT POND · 图谱概念演示</div>
+    <div class="hint">概念稿 v1 · 2026.07.31</div>
+  </header>
+  <h1>知识图谱 · 小鱼游荡</h1>
+  <p class="sub">每条鱼是一段回忆（实体）。它们在水里慢慢游，游过处泛起水纹。<b>点中一条</b>——它变作月金色的鱼，与它相连的回忆如涟漪般浮现。</p>
+
+  <div class="pond" id="pond">
+    <div class="legend" id="legend"></div>
+    <svg id="links"></svg>
+    <div class="detail" id="detail">
+      <span class="close" id="close">✕</span>
+      <div class="row1"><span class="name" id="dName"></span><span class="tag" id="dTag"></span></div>
+      <div class="meta" id="dMeta"></div>
+      <div class="rel">与它相连的回忆</div>
+      <div class="chips" id="dChips"></div>
+    </div>
+  </div>
+  <p class="tip">点一条鱼看看 → 变 <b>月金</b> · 涟漪泛开 · 关联浮现 · 相关鱼微微聚拢</p>
+
+  <div class="note">
+    <b>设计说明</b>：几何玻璃小鱼（非手绘生物，延续「禁手绘生物SVG」纪律）——身体是玻璃感的椭圆光斑，尾巴摆动呼吸；颜色 = 实体类型（人物水光蓝 / 事件波光 / 地点浪花白 / 情绪晨雾 / 话题玻璃雾），大小 = 关联日记数。<br>
+    <b>月金纪律</b>：选中瞬间才出现月金，泛一圈水纹后鱼保持月金色（常驻的只有这一条被选中的鱼），其余鱼仍走类型色。<br>
+    <b>全中文</b>：鱼名、类型标签、详情全部中文，无英文 UI。
+  </div>
+</div>
+
+<script>
+/* ─── 实体数据（模拟现网 rag.graph，中文）─── */
+const ENTITY_TYPES = {
+  person:  { label: '人物', color: '#6fb4ff' },
+  event:   { label: '事件', color: '#a8d0ff' },
+  place:   { label: '地点', color: '#e2ecfa' },
+  emotion: { label: '情绪', color: '#8fa6c4' },
+  topic:   { label: '话题', color: '#4a6a94' },
+};
+
+const entities = [
+  { id: 1, name: '新同事到来',   type: 'event',   count: 6 },
+  { id: 2, name: '工位搬迁',     type: 'event',   count: 5 },
+  { id: 3, name: '焊接板子',     type: 'topic',   count: 4 },
+  { id: 4, name: '面试被拒',     type: 'emotion', count: 3 },
+  { id: 5, name: '加班到凌晨',   type: 'event',   count: 4 },
+  { id: 6, name: '楼下便利店',   type: 'place',   count: 2 },
+  { id: 7, name: '她',           type: 'person',  count: 6 },
+  { id: 8, name: '雨夜',         type: 'event',   count: 3 },
+  { id: 9, name: '老家',         type: 'place',   count: 2 },
+  { id: 10, name: '母亲',        type: 'person',  count: 4 },
+];
+const links = [
+  [1,2], [2,3], [1,3], [4,5], [5,6], [5,10],
+  [7,8], [8,6], [9,10], [7,1], [10,1],
+];
+
+/* ─── 画布 ─── */
+const pond = document.getElementById('pond');
+const linksSvg = document.getElementById('links');
+const detail = document.getElementById('detail');
+const P = pond.getBoundingClientRect();
+const W = P.width, H = P.height;
+
+/* ─── 布局：类型分层（人物/事件偏上，地点/话题/情绪下沉）─── */
+const layerOrder = { person: 0, event: 0.25, topic: 0.5, emotion: 0.65, place: 0.85 };
+const fishEls = [];
+entities.forEach((en, i) => {
+  const size = Math.min(1.15, 0.75 + en.count * 0.07); // 鱼大小 ∝ 关联数
+  const color = ENTITY_TYPES[en.type].color;
+  const el = document.createElement('div');
+  el.className = 'fish';
+  el.dataset.id = en.id;
+  el.style.color = color;
+  el.style.width = 'inherit';
+  el.style.transformOrigin = '50% 50%';
+  // 几何玻璃鱼 SVG
+  el.innerHTML = `
+    <svg width="${44*size}" height="${30*size}" viewBox="0 0 44 30" fill="none">
+      <path class="tail" d="M6 15 L-4 7 L-4 23 Z" fill="currentColor" opacity="0.55" stroke="rgba(168,208,255,0.35)" stroke-width="0.8"/>
+      <ellipse cx="26" cy="15" rx="17" ry="9.5" fill="currentColor" opacity="0.16"/>
+      <ellipse cx="26" cy="15" rx="17" ry="9.5" stroke="currentColor" stroke-width="1.1" opacity="0.85"/>
+      <path d="M12 15 Q 24 7 38 13" stroke="rgba(255,255,255,0.5)" stroke-width="0.7" fill="none"/>
+      <path d="M14 18 Q 26 12 37 17" stroke="rgba(255,255,255,0.25)" stroke-width="0.6" fill="none"/>
+      <circle cx="38" cy="12" r="1.7" fill="rgba(226,236,250,0.95)"/>
+      <circle cx="38" cy="12" r="4" fill="rgba(255,255,255,0.12)"/>
+      <circle cx="38" cy="12" r="1" fill="rgba(226,236,250,0.9)"/>
+    </svg>
+    <span class="glow"></span>
+  `;
+  const label = document.createElement('div');
+  label.className = 'fname';
+  label.textContent = en.name;
+  el.appendChild(label);
+  el.onclick = () => select(en.id);
+  pond.appendChild(el);
+
+  const x = W * (0.12 + 0.76 * ((i * 37) % 100) / 100);
+  const y = H * (0.16 + 0.7 * layerOrder[en.type] + (i % 3) * 0.05);
+  fishEls.push({
+    el, en,
+    x, y,
+    heading: Math.random() * Math.PI * 2,
+    vx: 0, vy: 0,
+    speed: 0.28 + Math.random() * 0.2,
+    turn: (Math.random() - 0.5) * 0.02,
+    size, color,
+    selected: false,
+  });
+});
+
+/* ─── 图例 ─── */
+const legend = document.getElementById('legend');
+Object.entries(ENTITY_TYPES).forEach(([k, v]) => {
+  const s = document.createElement('span');
+  s.innerHTML = `<i style="background:${v.color}; box-shadow:0 0 6px ${v.color}66"></i>${v.label}`;
+  legend.appendChild(s);
+});
+
+/* ─── 涟漪生成 ─── */
+function ringAt(x, y, color, size) {
+  const r = document.createElement('div');
+  r.className = 'ring';
+  r.style.left = x + 'px'; r.style.top = y + 'px';
+  r.style.borderColor = color || 'rgba(168,208,255,0.55)';
+  if (size) r.style.width = size+'px', r.style.height = size+'px', r.style.marginLeft = (-size/2)+'px', r.style.marginTop = (-size/2)+'px';
+  pond.appendChild(r);
+  setTimeout(() => r.remove(), 1400);
+}
+function wakeAt(x, y) {
+  const w = document.createElement('div');
+  w.className = 'wake';
+  w.style.left = x+'px'; w.style.top = y+'px';
+  pond.appendChild(w);
+  setTimeout(() => w.remove(), 1200);
+}
+
+/* ─── 关联连线 ─── */
+let curLinks = [];
+function renderLinks(id) {
+  curLinks.forEach(l => l.remove());
+  curLinks = [];
+  const sel = fishEls.find(f => f.en.id === id);
+  if (!sel) return;
+  const adj = links.filter(([a,b]) => a === id || b === id);
+  adj.forEach(([a,b]) => {
+    const other = fishEls.find(f => f.en.id === (a === id ? b : a));
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const mx = (sel.x + other.x)/2, my = (sel.y + other.y)/2;
+    const d = `M ${sel.x} ${sel.y} Q ${mx} ${my - 18} ${other.x} ${other.y}`;
+    path.setAttribute('d', d);
+    path.setAttribute('stroke', 'rgba(255,217,160,0.65)');
+    path.setAttribute('stroke-width', '1.6');
+    path.setAttribute('stroke-dasharray', '5 7');
+    path.style.filter = 'drop-shadow(0 0 5px rgba(255,217,160,0.5))';
+    linksSvg.appendChild(path);
+    requestAnimationFrame(() => path.classList.add('on'));
+    curLinks.push(path);
+  });
+}
+
+/* ─── 选中 ─── */
+function select(id) {
+  fishEls.forEach(f => {
+    f.selected = f.en.id === id;
+    f.el.classList.toggle('selected', f.selected);
+    f.el.style.color = f.selected ? '#ffd9a0' : f.color;
+  });
+  const sel = fishEls.find(f => f.en.id === id);
+  wakeAt(sel.x, sel.y);
+  // 相关鱼微微聚拢
+  const adjIds = new Set(links.filter(([a,b]) => a===id||b===id).flat());
+  fishEls.forEach(f => {
+    if (adjIds.has(f.en.id) && f.en.id !== id) f.pull = { tx: sel.x + (f.x - sel.x)*0.92, ty: sel.y + (f.y - sel.y)*0.92, t: Date.now() + 400 };
+  });
+  renderLinks(id);
+  showDetail(sel);
+}
+function showDetail(f) {
+  const t = ENTITY_TYPES[f.en.type];
+  document.getElementById('dName').textContent = f.en.name;
+  document.getElementById('dTag').textContent = t.label;
+  document.getElementById('dMeta').innerHTML = `出现在 <b>${f.en.count}</b> 篇日记 · 关联 <b>${links.filter(([a,b])=>a===f.en.id||b===f.en.id).length}</b> 条回忆`;
+  const chips = document.getElementById('dChips');
+  chips.innerHTML = '';
+  links.filter(([a,b]) => a===f.en.id || b===f.en.id).forEach(([a,b]) => {
+    const o = entities.find(e => e.id === (a === f.en.id ? b : a));
+    const c = document.createElement('span');
+    c.className = 'chip';
+    c.innerHTML = `<i style="background:${ENTITY_TYPES[o.type].color}"></i>${o.name}`;
+    chips.appendChild(c);
+  });
+  detail.classList.add('show');
+}
+document.getElementById('close').onclick = () => {
+  detail.classList.remove('show');
+  fishEls.forEach(f => { f.selected = false; f.el.classList.remove('selected'); f.el.style.color = f.color; });
+  curLinks.forEach(l => l.classList.remove('on'));
+  setTimeout(() => curLinks.forEach(l => l.remove()), 500);
+  curLinks = [];
+};
+
+/* ─── 动画循环：游荡 ─── */
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  const Ww = pond.clientWidth, Hh = pond.clientHeight;
+  const cx = Ww/2, cy = Hh/2;
+  fishEls.forEach(f => {
+    f.turn += (Math.random() - 0.5) * 0.01;
+    f.turn = Math.max(-0.018, Math.min(0.018, f.turn));
+    // 微引力：缓慢向中心漂移，避免全部贴边
+    const dx = cx - f.x, dy = cy - f.y;
+    const dist = Math.hypot(dx, dy) || 1;
+    const towardCenter = dist > Math.min(Ww,Hh) * 0.42 ? 0.02 : 0.006;
+    const target = Math.atan2(dy, dx) + Math.PI;
+    f.heading += f.turn + (towardCenter ? ((target - f.heading + Math.PI) % (Math.PI*2) - Math.PI) * towardCenter * 0.08 : 0);
+    f.vx = Math.cos(f.heading) * f.speed;
+    f.vy = Math.sin(f.heading) * f.speed;
+    // 聚拢（选中时相关鱼向选中鱼靠）
+    if (f.pull && now < f.pull.t) {
+      const px = f.pull.tx - f.x, py = f.pull.ty - f.y;
+      f.x += px * 0.06; f.y += py * 0.06;
+    } else if (f.pull && now >= f.pull.t) {
+      f.pull = null;
+    }
+    // 边界软反弹
+    if (f.x < 24) f.heading = Math.PI - f.heading, f.x = 24;
+    if (f.x > Ww - 24) f.heading = Math.PI - f.heading, f.x = Ww - 24;
+    if (f.y < 30) f.heading = -f.heading, f.y = 30;
+    if (f.y > Hh - 30) f.heading = -f.heading, f.y = Hh - 30;
+    // 游荡
+    if (!f.selected && !f.pull) { f.x += f.vx * 60 * dt; f.y += f.vy * 60 * dt; }
+    // 偶尔泛起水纹（游动时）
+    if (Math.random() < 0.008 && !f.selected) ringAt(f.x + Math.cos(f.heading)*16, f.y + Math.sin(f.heading)*16, null, 12);
+    // 渲染
+    const flip = Math.cos(f.heading) < 0 ? 'scale(-1,1) ' : '';
+    f.el.style.transform = `translate(${f.x}px, ${f.y}px) ${flip} rotate(${f.heading * 180/Math.PI}deg)`;
+    f.el.style.zIndex = Math.round(f.y);
+  });
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* 初始：隔几秒自动演示选中一条 */
+let demoIdx = 0;
+setInterval(() => {
+  if (detail.classList.contains('show')) return;
+  const f = fishEls[demoIdx % fishEls.length];
+  select(f.en.id);
+  demoIdx++;
+}, 4500);
+</script>
+</body>
+</html>

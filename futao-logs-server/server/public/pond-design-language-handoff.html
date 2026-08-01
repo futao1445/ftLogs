@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>池塘涟漪 · 设计语言交接文档</title>
+<style>
+  :root {
+    --deep: #0c1626; --mid: #172a45; --near: #21395c;
+    --line: #2d4a75; --mist: #4a6a94; --glow: #6fb4ff;
+    --wave: #a8d0ff; --foam: #e2ecfa; --fog: #8fa6c4; --gold: #ffd9a0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--deep);
+    color: var(--foam);
+    line-height: 1.7;
+    padding: 48px 0 80px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 32px; }
+
+  .doc-head {
+    border-bottom: 1px solid rgba(45,74,117,0.35);
+    padding-bottom: 28px;
+    margin-bottom: 48px;
+  }
+  .doc-head .kicker { font-size: 11px; letter-spacing: 4px; color: var(--glow); margin-bottom: 16px; }
+  .doc-head h1 { font-size: 30px; font-weight: 300; letter-spacing: 1px; color: var(--foam); }
+  .doc-head .sub { font-size: 13px; color: var(--fog); margin-top: 10px; }
+  .doc-head .link { margin-top: 14px; font-size: 12px; color: var(--wave); }
+
+  .section { margin-bottom: 48px; }
+  .section .num {
+    font-size: 11px; letter-spacing: 2px; color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .section h2 { font-size: 21px; font-weight: 400; color: var(--foam); margin-bottom: 16px; }
+  .section p { font-size: 14px; color: var(--fog); margin-bottom: 14px; max-width: 72ch; }
+  .section p strong { color: var(--wave); font-weight: 500; }
+  .section code {
+    color: var(--gold); font-size: 12px;
+    background: rgba(255,217,160,0.06);
+    padding: 1px 7px; border-radius: 4px;
+  }
+
+  .callout {
+    padding: 20px 24px;
+    border-radius: 14px;
+    background: rgba(111,180,255,0.04);
+    border-left: 3px solid var(--glow);
+    margin: 20px 0;
+  }
+  .callout p { margin-bottom: 0; color: var(--fog); }
+  .callout strong { color: var(--wave); }
+
+  .gold-callout {
+    padding: 20px 24px;
+    border-radius: 14px;
+    background: rgba(255,217,160,0.04);
+    border-left: 3px solid var(--gold);
+    margin: 20px 0;
+  }
+  .gold-callout p { margin-bottom: 0; color: var(--fog); }
+  .gold-callout strong { color: var(--gold); }
+
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  th {
+    text-align: left; padding: 10px 14px;
+    font-size: 11px; letter-spacing: 1px; font-weight: 400;
+    color: var(--glow);
+    border-bottom: 1px solid rgba(45,74,117,0.6);
+  }
+  td {
+    padding: 10px 14px;
+    color: var(--fog);
+    border-bottom: 1px solid rgba(45,74,117,0.25);
+  }
+  td:first-child { color: var(--foam); white-space: nowrap; }
+  td code { color: var(--wave); font-size: 12px; }
+
+  .rule-row {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin: 16px 0;
+  }
+  .rule-box {
+    padding: 18px 22px; border-radius: 12px;
+    background: rgba(23,42,69,0.4);
+    border: 1px solid rgba(45,74,117,0.3);
+  }
+  .rule-box .r-tag { font-size: 10px; letter-spacing: 2px; margin-bottom: 10px; }
+  .rule-box.hard .r-tag { color: var(--gold); }
+  .rule-box.flex .r-tag { color: var(--glow); }
+  .rule-box li { font-size: 12.5px; color: var(--fog); line-height: 1.8; margin-left: 18px; }
+
+  .flow-steps { list-style: none; }
+  .flow-steps li {
+    padding: 14px 18px;
+    border-radius: 10px;
+    background: rgba(23,42,69,0.35);
+    border: 1px solid rgba(45,74,117,0.25);
+    margin-bottom: 10px;
+    font-size: 13.5px;
+    color: var(--fog);
+  }
+  .flow-steps li strong { color: var(--foam); font-weight: 500; }
+  .flow-steps li .arrow { color: var(--gold); margin: 0 8px; }
+
+  .foot-note {
+    margin-top: 56px; padding-top: 20px;
+    border-top: 1px solid rgba(45,74,117,0.3);
+    font-size: 12px; color: rgba(143,166,196,0.5);
+  }
+  .foot-note strong { color: var(--wave); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="doc-head">
+    <div class="kicker">Design Language Handoff</div>
+    <h1>池塘涟漪 · 设计语言交接文档</h1>
+    <div class="sub">给 lamda 的编码交接 · miky 2026-07-31</div>
+    <div class="link">🎨 设计稿：<a href="https://accessibility-inflation-sand-chest.trycloudflare.com/pond-premium.html" style="color:var(--wave);">https://accessibility-inflation-sand-chest.trycloudflare.com/pond-premium.html</a></div>
+  </div>
+
+  <div class="section">
+    <div class="num">01</div>
+    <h2>先读这段：为什么不是照抄</h2>
+    <p><strong>futao 明确要求：你不能照抄我的设计，而是合理运用里面的元素。</strong></p>
+    <p>意思是：这个页面是"设计语言的演示"，不是"最终 UI 的像素级模板"。你要做的不是把 HTML 原样复制进项目，而是<strong>理解这套设计语言的规则，然后把它应用到 AI 树洞的真实界面</strong>。</p>
+    <p>下面这套语言规则，是你要带走的"内功"。</p>
+  </div>
+
+  <div class="section">
+    <div class="num">02</div>
+    <h2>这套设计在讲一个故事</h2>
+    <p><strong>池塘涟漪 = 深夜的池塘。</strong>所有视觉元素都在服务这个场景：</p>
+    <ul style="list-style:none;margin:16px 0;">
+      <li style="font-size:14px;color:var(--fog);margin-bottom:10px;"><strong style="color:var(--wave);">深水区</strong>（页面底层）→ 沉底的回忆，安静、暗、有分量</li>
+      <li style="font-size:14px;color:var(--fog);margin-bottom:10px;"><strong style="color:var(--wave);">水面</strong>（中层卡片）→ 被记起的片段，一层层浮上来</li>
+      <li style="font-size:14px;color:var(--fog);margin-bottom:10px;"><strong style="color:var(--wave);">波光</strong>（前景/交互）→ 正在发生的事，最亮、最鲜活</li>
+      <li style="font-size:14px;color:var(--fog);"><strong style="color:var(--gold);">月光</strong>（月金点缀）→ 情绪触动的霎那，稀缺、珍贵</li>
+    </ul>
+    <div class="callout">
+      <p><strong>铁律：</strong>暗在下，亮在上；沉的东西暗，活的东西亮。</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="num">03</div>
+    <h2>设计语言的 4 层</h2>
+
+    <h2 style="font-size:16px;margin-top:28px;color:var(--glow);">第 1 层 · 配色系统 = 角色分工</h2>
+    <p>十色锁定，<strong>任何元素不得引入第 11 种颜色</strong>（硬规则）。</p>
+    <table>
+      <tr><th>角色</th><th>值</th><th>用途</th><th>面积</th></tr>
+      <tr><td>深海夜</td><td><code>#0c1626</code></td><td>页面底色</td><td>60%</td></tr>
+      <tr><td>中层水</td><td><code>#172a45</code></td><td>卡片底层</td><td>12%</td></tr>
+      <tr><td>近水面</td><td><code>#21395c</code></td><td>卡片中层</td><td>10%</td></tr>
+      <tr><td>水界线</td><td><code>#2d4a75</code></td><td>边框/分隔</td><td>4%</td></tr>
+      <tr><td>玻璃雾</td><td><code>#4a6a94</code></td><td>前景玻璃</td><td>5%</td></tr>
+      <tr><td>水光蓝</td><td><code>#6fb4ff</code></td><td>主交互</td><td>3%</td></tr>
+      <tr><td>波光</td><td><code>#a8d0ff</code></td><td>高光 / AI</td><td>2%</td></tr>
+      <tr><td>浪花白</td><td><code>#e2ecfa</code></td><td>正文</td><td>2%</td></tr>
+      <tr><td>晨雾</td><td><code>#8fa6c4</code></td><td>次级文字</td><td>1.5%</td></tr>
+      <tr><td>月金</td><td><code>#ffd9a0</code></td><td>触发瞬间</td><td>0.5%</td></tr>
+    </table>
+    <p>你要理解的不是色值，是逻辑：</p>
+    <ul style="list-style:none;margin:12px 0;">
+      <li style="font-size:13.5px;color:var(--fog);margin-bottom:8px;">· 蓝阶（深海夜 → 波光）= 水的纵深，越浅越接近用户、越亮</li>
+      <li style="font-size:13.5px;color:var(--fog);margin-bottom:8px;">· 文字只有两种：浪花白（正文）+ 晨雾（辅助），对比度全过 AA</li>
+      <li style="font-size:13.5px;color:var(--fog);">· <strong style="color:var(--gold);">月金是硬规则</strong>：只在"触发的霎那"出现（点击闪光、完成回弹），平时不占画面。它的稀缺就是它的价值</li>
+    </ul>
+
+    <h2 style="font-size:16px;margin-top:32px;color:var(--glow);">第 2 层 · 宽空白 = 在哪呼吸</h2>
+    <p><strong>硬规则：区块间距 96-140px，卡片之间留足呼吸。</strong>拥挤是廉价感的第一来源。</p>
+    <ul style="list-style:none;margin:12px 0;">
+      <li style="font-size:13.5px;color:var(--fog);margin-bottom:8px;">· Hero 区：大留白（padding 96px 起），只放一个完整场景</li>
+      <li style="font-size:13.5px;color:var(--fog);margin-bottom:8px;">· 分节之间：120px 上下留白</li>
+      <li style="font-size:13.5px;color:var(--fog);margin-bottom:8px;">· 卡片内部：26-30px 内边距，文字不贴边</li>
+      <li style="font-size:13.5px;color:var(--fog);">· <strong style="color:var(--wave);">可发挥</strong>：具体留白可微调，但"宁可多留，不可拥挤"是红线</li>
+    </ul>
+
+    <h2 style="font-size:16px;margin-top:32px;color:var(--glow);">第 3 层 · 层叠卡片 = 水面纵深</h2>
+    <p><strong>这是 futao 点名喜欢的，务必用好。</strong></p>
+    <p>层级逻辑（硬规则）：<strong>后暗前亮</strong>。</p>
+    <ul style="list-style:none;margin:12px 0;">
+      <li style="font-size:13.5px;color:var(--fog);margin-bottom:8px;">· 最深的卡：<code>#172a45</code>，几乎贴背景，是"沉底记忆"</li>
+      <li style="font-size:13.5px;color:var(--fog);margin-bottom:8px;">· 中层卡：<code>#21395c</code> + 玻璃雾，微微浮起</li>
+      <li style="font-size:13.5px;color:var(--fog);margin-bottom:8px;">· 前景卡：玻璃质感（<code>backdrop-filter: blur(28px) saturate(160%)</code>），最亮，是"正在发生"</li>
+      <li style="font-size:13.5px;color:var(--fog);">· 每张卡微微旋转（±3°）错开，避免对齐的死板。hover 浮起（-8px）+ 旋转回正</li>
+    </ul>
+    <p><strong style="color:var(--wave);">可发挥</strong>：卡片数量、内容、旋转角度按真实数据调整，但"层叠 + 后暗前亮 + 玻璃前景"的结构不能丢。</p>
+
+    <h2 style="font-size:16px;margin-top:32px;color:var(--glow);">第 4 层 · 弹簧动画 = 水的性格</h2>
+    <p><strong>硬规则：所有动效走弹簧曲线 <code>cubic-bezier(0.34, 1.56, 0.64, 1)</code>，不用线性渐变。</strong></p>
+    <ul style="list-style:none;margin:12px 0;">
+      <li style="font-size:13.5px;color:var(--fog);margin-bottom:8px;">· 按压：<code>scale(0.96)</code> 瞬间压缩，松手回弹过冲 4%</li>
+      <li style="font-size:13.5px;color:var(--fog);margin-bottom:8px;">· 卡片进入：从水下浮起（<code>translateY(60px)</code> → 0），像水波把它推上来</li>
+      <li style="font-size:13.5px;color:var(--fog);">· 涟漪：点击处一圈圈扩散（<code>scale 0.35 → 1.6</code>，透明消失）</li>
+    </ul>
+    <p><strong style="color:var(--wave);">可发挥</strong>：动画时长可微调（0.4-0.7s 都合理），但"弹簧回弹 + 过冲"的感觉不能丢，绝不能退回线性 ease。</p>
+
+    <h2 style="font-size:16px;margin-top:32px;color:var(--glow);">第 5 层 · 结构落地（本轮验收硬指标）</h2>
+    <p><strong style="color:var(--gold);">这是 2026-07-31 futao 验收点名不合格后补的硬规则。</strong>只换配色和动效 ≠ 用设计稿。结构语言必须真实进界面：</p>
+    <ul style="list-style:none;margin:12px 0;">
+      <li style="font-size:13.5px;color:var(--fog);margin-bottom:10px;"><strong style="color:var(--gold);">① 首页首屏 = 层叠卡片场景（必须）</strong><br>3 张真实日记卡错落浮起（后暗前亮 + ±3° + 前景玻璃 + hover 浮起回正 + 进入从水下浮起）。<strong>不是窄栏时间线平铺列表</strong>。首屏大留白 padding 96px 起，宽布局（max-w 1240 级）。时间线/标签/统计移到首屏场景之下</li>
+      <li style="font-size:13.5px;color:var(--fog);margin-bottom:10px;"><strong style="color:var(--gold);">② 对话类界面 = 玻璃前景场景（必须）</strong><br>树洞聊天窗用 pond-premium 前景玻璃卡语言（blur 28px + 内高光 + 波光描边），不是全宽平铺窗口</li>
+      <li style="font-size:13.5px;color:var(--fog);margin-bottom:10px;"><strong style="color:var(--gold);">③ 水波涟漪 = 通用交互（必须）</strong><br>写日记 / 发送 / 保存 / tab 切换，所有主操作统一涟漪反馈，不是只做一处</li>
+      <li style="font-size:13.5px;color:var(--fog);"><strong style="color:var(--gold);">④ 宽空白节奏真实出现（必须）</strong><br>区块间距 96-140px 要能看得见，拒绝贴边拥挤</li>
+    </ul>
+    <div class="callout">
+      <p><strong>审查基准：</strong>每一 commit 第一位核对"这页的设计意图 vs 设计稿意图是否一致"（结构/留白/层级），细节（色值/动效参数）第二。</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="num">04</div>
+    <h2>硬规则 vs 可发挥</h2>
+    <div class="rule-row">
+      <div class="rule-box hard">
+        <div class="r-tag">⛔ 硬规则（不能破）</div>
+        <ul>
+          <li>只用 10 色，不引入第 11 种</li>
+          <li>月金只做触发瞬间</li>
+          <li>区块间距 96-140px 大留白</li>
+          <li>卡片后暗前亮 + 层叠 + 玻璃前景</li>
+          <li>弹簧曲线 + 回弹过冲</li>
+          <li>文字对比度全过 WCAG AA</li>
+          <li><strong style="color:var(--gold);">首页首屏 = 层叠卡片场景（非列表）</strong></li>
+          <li><strong style="color:var(--gold);">对话界面 = 玻璃前景场景</strong></li>
+          <li><strong style="color:var(--gold);">涟漪贯穿所有主操作</strong></li>
+        </ul>
+      </div>
+      <div class="rule-box flex">
+        <div class="r-tag">🛠 可发挥（按真实情况调）</div>
+        <ul>
+          <li>具体卡片用哪档蓝</li>
+          <li>触发动画的具体形态</li>
+          <li>具体某区块的留白大小</li>
+          <li>卡片数量 / 内容 / 旋转角度</li>
+          <li>动画具体时长 0.4-0.7s</li>
+          <li>字号 / 字重组合</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="num">05</div>
+    <h2>协作流程</h2>
+    <ol class="flow-steps">
+      <li>有疑问 <strong>先问我（miky）</strong>，我会补充设计意图</li>
+      <li>我答不了 <span class="arrow">→</span> 问 <strong>小恒</strong>（方向纠偏）</li>
+      <li>小恒也不确定 <span class="arrow">→</span> 问 <strong>futao</strong>（需求方）</li>
+    </ol>
+    <div class="gold-callout">
+      <p><strong>不要把不确定的问题带进代码里闷头做。</strong>问清楚再做，一次到位，比返工快。</p>
+    </div>
+  </div>
+
+  <div class="foot-note">
+    <strong>这个文档 + pond-premium.html 一起看。</strong>图是"画面"，这份是"为什么"。两个都要理解，才算拿到这套设计语言。
+  </div>
+
+</div>
+</body>
+</html>

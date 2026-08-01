@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>池塘涟漪 · 第三轮方向稿 — 搜索水镜 / 树洞新名</title>
+<style>
+  :root {
+    --deep: #0c1626; --mid: #172a45; --near: #21395c; --line: #2d4a75;
+    --glass: #4a6a94; --ripple: #6fb4ff; --shine: #a8d0ff;
+    --foam: #e2ecfa; --mist: #8fa6c4; --gold: #ffd9a0;
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--deep); color: var(--foam);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.7; -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1240px; margin: 0 auto; padding: 0 48px; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 28px 0; border-bottom: 1px solid rgba(45,74,117,0.35);
+  }
+  .brand { display:flex; align-items:center; gap:12px; letter-spacing:2px; font-size:13px; color:var(--foam); }
+  .mark { width:12px; height:12px; border-radius:50%; background: radial-gradient(circle at 35% 30%, var(--shine), var(--ripple) 45%, var(--glass)); box-shadow:0 0 12px rgba(111,180,255,0.5); }
+  .meta { font-size:12px; color:var(--mist); }
+  .hero { padding: 64px 0 48px; }
+  .eyebrow { font-size:11px; letter-spacing:4px; color:var(--ripple); text-transform:uppercase; margin-bottom:18px; }
+  h1 { font-size:36px; font-weight:300; letter-spacing:2px; line-height:1.2; margin-bottom:14px; }
+  h1 .em { color:var(--shine); font-weight:400; }
+  .sub { font-size:15px; color:var(--mist); max-width:60ch; margin-bottom:10px; }
+  .prob { display:flex; gap:14px; flex-wrap:wrap; margin-top:24px; font-size:12px; color:var(--mist); }
+  .prob span { padding:8px 16px; border-radius:999px; background: rgba(255,217,160,0.06); border:1px solid rgba(255,217,160,0.18); color:var(--gold); }
+
+  .page-card {
+    margin-bottom:56px; border-radius:24px; overflow:hidden;
+    border:1px solid rgba(45,74,117,0.5);
+    background: linear-gradient(180deg, rgba(23,42,69,0.5), rgba(12,22,38,0.3));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 24px 48px rgba(0,0,0,0.22);
+  }
+  .page-head { padding:32px 40px 20px; border-bottom:1px solid rgba(45,74,117,0.35); }
+  .page-idx { font-size:11px; letter-spacing:3px; color:var(--gold); margin-bottom:8px; }
+  .page-title { font-size:24px; font-weight:300; letter-spacing:1px; margin-bottom:6px; }
+  .page-one { font-size:13px; color:var(--mist); max-width:80ch; margin-bottom:14px; }
+  .page-one b { color:var(--shine); font-weight:400; }
+  .page-demo { padding:36px 40px; }
+  .hard {
+    margin:0 40px 28px; padding:16px 20px; border-radius:14px;
+    background: rgba(255,217,160,0.05); border:1px solid rgba(255,217,160,0.16);
+    font-size:13px; color:var(--gold);
+  }
+  .hard b { color:var(--foam); font-weight:500; }
+
+  /* ── 搜索页 demo ── */
+  .search-demo { display:flex; flex-direction:column; gap:22px; }
+
+  /* 大标题 + 页眉 */
+  .search-head { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:4px; }
+  .search-title { font-size:32px; font-weight:300; letter-spacing:3px; color:var(--foam); }
+  .search-title em { font-style:normal; color:var(--shine); font-weight:400; }
+  .search-sub { font-size:12px; letter-spacing:4px; color:var(--mist); text-transform:uppercase; }
+
+  /* tab 切换 — 弃用压缩小气泡 → 大号水面浮标（两瓣水面）*/
+  .mode-sheet {
+    display:flex; gap:12px; padding:6px 8px;
+    border-radius:16px; width:max-content;
+    background: rgba(12,22,38,0.45); border:1px solid rgba(45,74,117,0.5);
+    backdrop-filter: blur(12px);
+  }
+  .mode-tab {
+    position:relative; padding:12px 26px 14px; cursor:pointer;
+    font-size:15px; font-weight:400; letter-spacing:2px; color:var(--mist);
+    border-radius:12px; transition: all 0.3s var(--spring);
+    user-select:none; display:flex; align-items:center; gap:10px;
+  }
+  .mode-tab .ico {
+    width:22px; height:22px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center;
+    border:1.5px solid rgba(143,166,196,0.5); color:var(--mist);
+    transition: all 0.3s var(--spring);
+  }
+  .mode-tab .ico svg { width:12px; height:12px; }
+  .mode-tab.on { color:var(--foam); }
+  .mode-tab.on .ico { border-color:var(--shine); color:var(--shine); box-shadow:0 0 10px rgba(168,208,255,0.3); }
+  /* 激活水面（流动的水面片） */
+  .mode-tab.on::before {
+    content:""; position:absolute; inset:0; border-radius:12px;
+    background: linear-gradient(180deg, rgba(111,180,255,0.20), rgba(23,42,69,0.25));
+    border:1px solid rgba(111,180,255,0.3);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 0 20px rgba(111,180,255,0.10);
+    pointer-events:none;
+  }
+
+  /* 镜面搜索框 */
+  .search-box {
+    display:flex; align-items:center; gap:12px; padding:0 20px; height:56px;
+    border-radius:18px;
+    background: rgba(23,42,69,0.55);
+    border:1px solid rgba(111,180,255,0.25);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 0 30px rgba(111,180,255,0.06);
+    backdrop-filter: blur(16px);
+  }
+  .sb-glass { width:18px; height:18px; border-radius:50%; border:2px solid var(--shine); position:relative; flex-shrink:0; }
+  .sb-glass::after { content:""; position:absolute; width:8px; height:2px; background:var(--shine); transform:rotate(45deg); right:-5px; bottom:-3px; border-radius:2px; }
+  .sb-ph { flex:1; font-size:14px; color:var(--mist); }
+  .sb-go { padding:8px 18px; border-radius:999px; font-size:12px; letter-spacing:1px; color:#0a1626; background:linear-gradient(135deg,#6fb4ff,#a8d0ff); box-shadow:0 4px 16px rgba(111,180,255,0.25); }
+
+  /* 结果 — 所有内容标签统一为金色日期标签（JUL 06）*/
+  .search-res { display:flex; flex-direction:column; gap:14px; }
+  .search-hit {
+    position:relative; padding:16px 20px; border-radius:16px; overflow:hidden;
+    background: rgba(23,42,69,0.5); border:1px solid rgba(45,74,117,0.5);
+    transition: all 0.2s var(--spring); cursor:pointer;
+  }
+  .search-hit:hover { transform:translateY(-3px); border-color:rgba(111,180,255,0.4); box-shadow:0 8px 24px rgba(2,8,20,0.45); }
+  .search-hit .swirl { position:absolute; right:-14px; top:-14px; width:60px; height:60px; border-radius:50%; border:1.5px solid rgba(168,208,255,0.25); pointer-events:none; }
+  .search-hit .swirl.s2 { right:6px; top:4px; width:40px; height:40px; opacity:0.7; }
+  .search-hit .date { font-size:10px; color:var(--gold); margin-bottom:6px; letter-spacing:1px; }
+  .search-hit .txt { font-size:12px; color:var(--foam); line-height:1.7; }
+  .search-hit .txt em { font-style:normal; background:rgba(111,180,255,0.14); color:var(--shine); padding:0 3px; border-radius:4px; }
+  .search-hit .score { font-size:10px; color:var(--mist); margin-top:6px; }
+  .search-hit::after { content:""; position:absolute; left:0; right:0; bottom:0; height:40%; background:linear-gradient(180deg,transparent,rgba(12,22,38,0.5)); pointer-events:none; }
+  .search-ripple { display:flex; gap:6px; justify-content:center; padding-top:6px; }
+  .search-ripple span { width:5px; height:5px; border-radius:50%; background:var(--glass); animation:rp 2s ease-in-out infinite; }
+  .search-ripple span:nth-child(2){ animation-delay:0.3s; } .search-ripple span:nth-child(3){ animation-delay:0.6s; }
+  @keyframes rp { 0%,60%,100%{transform:translateY(0);opacity:0.35;} 30%{transform:translateY(-4px);opacity:1;} }
+
+  /* ── 树洞新名 · 涟漪 ── */
+  .name-section { display:grid; grid-template-columns: 1.3fr 1fr; gap:24px; align-items:stretch; }
+  .name-panel {
+    position:relative; overflow:hidden;
+    padding:40px; border-radius:24px;
+    background: linear-gradient(180deg, rgba(33,57,92,0.7), rgba(23,42,69,0.9) 55%, rgba(12,22,38,0.95));
+    border:1px solid rgba(45,74,117,0.55);
+  }
+  /* 涟漪同心圆 + 月光 */
+  .name-panel::before {
+    content:""; position:absolute; left:50%; top:44%; width:520px; height:520px; transform:translate(-50%,-50%);
+    background:
+      radial-gradient(circle, transparent 0 24px, rgba(168,208,255,0.10) 25px, transparent 26px),
+      radial-gradient(circle, transparent 0 60px, rgba(168,208,255,0.08) 61px, transparent 62px),
+      radial-gradient(circle, transparent 0 100px, rgba(111,180,255,0.06) 101px, transparent 102px),
+      radial-gradient(circle, transparent 0 145px, rgba(111,180,255,0.05) 146px, transparent 147px);
+    pointer-events:none;
+  }
+  .name-panel::after {
+    content:""; position:absolute; right:14%; top:12%; width:60px; height:60px; border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, var(--gold), var(--gold) 40%, transparent 70%);
+    box-shadow:0 0 40px rgba(255,217,160,0.45); opacity:0.7; pointer-events:none;
+  }
+  .name-kicker { position:relative; font-size:11px; letter-spacing:4px; color:var(--gold); margin-bottom:14px; }
+  .name-big { position:relative; font-size:64px; font-weight:200; letter-spacing:10px; color:var(--foam); line-height:1.1; }
+  .name-big .dot { color:var(--shine); }
+  .name-line { position:relative; margin-top:18px; font-size:15px; color:var(--mist); max-width:34ch; line-height:2; }
+  .name-line b { color:var(--shine); font-weight:400; }
+
+  /* 候选卡片 */
+  .name-cands { display:flex; flex-direction:column; gap:14px; }
+  .name-cand {
+    padding:20px 24px; border-radius:16px; cursor:pointer;
+    background: rgba(23,42,69,0.5); border:1px solid rgba(45,74,117,0.45);
+    transition: all 0.25s var(--spring);
+  }
+  .name-cand:hover { transform:translateY(-3px); border-color:rgba(111,180,255,0.4); }
+  .name-cand.sel { border-color:rgba(255,217,160,0.5); box-shadow:0 0 20px rgba(255,217,160,0.12); }
+  .name-cand .nc { font-size:22px; font-weight:300; letter-spacing:4px; color:var(--foam); }
+  .name-cand .nd { font-size:11px; color:var(--mist); margin-top:6px; line-height:1.7; }
+  .name-cand.sel .nc { color:var(--gold); }
+
+  .label-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .tag {
+    font-size:10px; letter-spacing:1px; padding:4px 10px; border-radius:999px;
+    color:var(--gold); background:rgba(255,217,160,0.07); border:1px solid rgba(255,217,160,0.18);
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand"><span class="mark"></span> NIGHT POND · 池塘涟漪</div>
+      <div class="meta">第三轮方向稿 · 2026-07-31</div>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">ROUND 4 · DIRECTION</div>
+      <h1>搜索水镜 · <span class="em">树洞新名</span></h1>
+      <p class="sub">futao 第三轮反馈后按小恒完整版基线出的方向稿——搜索页大标题 + 弃用压缩小气泡改水面浮标切换 + 所有内容标签统一金色日期标签；树洞改名"涟漪"。视觉方向，供 Emma 过目。</p>
+      <div class="prob">
+        <span>③ 搜索 · 大标题</span>
+        <span>③ tab 弃用小气泡</span>
+        <span>③ 标签统一</span>
+        <span>④ 树洞改名「涟漪」</span>
+        <span>④ 外围融入浅水面 #21395c</span>
+      </div>
+    </section>
+
+    <!-- ═══════ 搜索 · 倒映水镜 ═══════ -->
+    <section class="page-card">
+      <div class="page-head">
+        <div class="page-idx">页面 01 · 搜索</div>
+        <div class="page-title">倒映水镜 · 搜索页</div>
+        <p class="page-one">
+          futao 三点：<b>① 加大标题</b>（现在没有页头，直接输入框）；<b>② tab 弃用压缩小气泡</b>（现实现是两个 emoji 小胶囊，弃掉）；
+          <b>③ 所有内容标签统一</b>为设计稿金色日期标签。视觉方案：页头大标题 + <b>水面浮标切换</b>（两个大号水面片，激活片泛波光，替代小气泡）+ 全标签统一金色日期。
+        </p>
+      </div>
+      <div class="page-demo search-demo">
+        <!-- 页头大标题 -->
+        <div class="search-head">
+          <div class="search-title">打捞<span class="dot" style="color:var(--shine)">·</span><em>水面之下</em></div>
+          <div class="search-sub">NIGHT POND SEARCH</div>
+        </div>
+
+        <!-- tab 切换：水面浮标（弃用小气泡） -->
+        <div class="mode-sheet">
+          <div class="mode-tab on">
+            <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+            关键词搜索
+          </div>
+          <div class="mode-tab">
+            <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg></span>
+            语义搜索
+          </div>
+        </div>
+
+        <!-- 镜面搜索框 -->
+        <div class="search-box">
+          <span class="sb-glass"></span>
+          <span class="sb-ph">向水面投一颗石子… 如「同事」</span>
+          <span class="sb-go">投入水中</span>
+        </div>
+
+        <!-- 结果：所有标签统一金色日期 -->
+        <div class="search-res">
+          <div class="search-hit">
+            <div class="swirl"></div><div class="swirl s2"></div>
+            <div class="date">JUL 06</div>
+            <div class="txt">把伞借给了<em>陌生人</em>，她跑得很快……</div>
+            <div class="score">命中 2 处 · 波光高亮</div>
+          </div>
+          <div class="search-hit">
+            <div class="swirl"></div><div class="swirl s2"></div>
+            <div class="date">JUN 21</div>
+            <div class="txt">第一次加班到<em>凌晨</em>，楼下便利店还亮着……</div>
+            <div class="score">命中 1 处 · 波光高亮</div>
+          </div>
+          <div class="search-hit">
+            <div class="swirl"></div><div class="swirl s2"></div>
+            <div class="date">MAY 03</div>
+            <div class="txt"><em>面试被拒</em>那天，沿着江边走了一圈……</div>
+            <div class="score">命中 2 处 · 波光高亮</div>
+          </div>
+        </div>
+        <div class="search-ripple"><span></span><span></span><span></span></div>
+      </div>
+      <div class="hard"><b>一句话硬规则：</b>搜索页 = 有仪式感的打捞——大标题页头、tab 是两片水面浮标（不是小胶囊）、所有结果卡统一金色日期标签（JUL 06）+ 命中波光 + 涟漪分数。</div>
+    </section>
+
+    <!-- ═══════ 树洞新名 · 涟漪 ═══════ -->
+    <section class="page-card">
+      <div class="page-head">
+        <div class="page-idx">页面 02 · 树洞改名</div>
+        <div class="page-title">树洞 · 涟漪</div>
+        <p class="page-one">
+          futao 两点：<b>① 树洞外围背景色与前几页不统一</b> → 融入 C 水层色阶（浅水面 #21395c）；
+          <b>② 树洞改名</b>，结合当前页面设计风格重新想贴合名字。视觉方案：改名<b>「涟漪」</b>——每次倾诉都是一颗石子投入水面，心声一圈圈荡开；名字本身就是池塘里最自然的现象，不另造词汇。
+        </p>
+      </div>
+      <div class="page-demo">
+        <div class="name-section">
+          <div class="name-panel">
+            <div class="name-kicker">NIGHT POND · TALK TO THE WATER</div>
+            <div class="name-big">涟<span class="dot">.</span>漪</div>
+            <div class="name-line">把心里的话，<b>投进水里</b>。<br/>水面泛起一圈圈光，<br/>有人在水下，<b>静静听</b>。</div>
+            <div class="label-row" style="position:relative; margin-top:26px;">
+              <span class="tag">名字即场景</span>
+              <span class="tag">每次倾诉=投石</span>
+              <span class="tag">回应=涟漪</span>
+            </div>
+          </div>
+          <div class="name-cands">
+            <div class="name-cand sel">
+              <div class="nc">涟漪</div>
+              <div class="nd">miky 推荐 · 倾诉=投石入水，心声一圈圈荡开，回应是涟漪。最贴合池塘，不另造词。</div>
+            </div>
+            <div class="name-cand">
+              <div class="nc">回声</div>
+              <div class="nd">向水面倾诉，微波回应。偏"回响"，弱一点场景感。</div>
+            </div>
+            <div class="name-cand">
+              <div class="nc">心湖</div>
+              <div class="nd">小恒候选 · 心事沉入湖底，静谧。偏静态，少一点"投出"的动作。</div>
+            </div>
+            <div class="name-cand">
+              <div class="nc">听澜</div>
+              <div class="nd">小恒候选 · 静听波澜。文雅，但更偏"听"的一方，弱化倾诉。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hard"><b>一句话硬规则：</b>树洞改名「涟漪」——每次倾诉=向水面投一颗石子，心声一圈圈荡开，AI 的回应是泛起的涟漪；外围背景融入浅水面 #21395c，与前几页同谱。</div>
+    </section>
+  </div>
+</body>
+</html>

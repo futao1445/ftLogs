@@ -1,0 +1,111 @@
+/* ═══════════════════════════════════════════
+   卡片日记 — 设计 Token & 视觉规范
+   基于方案 B「池塘涟漪」· NIGHT POND
+   2026-07-31 | miky + lamda 落地
+   硬规则：只用 10 色、月金仅触发瞬间、弹簧曲线
+   ═══════════════════════════════════════════ */
+
+:root {
+  /* ─── 背景色（池塘蓝阶）─── */
+  --bg-primary: #0c1626;        /* 1 深海夜 · 页面底色 60% */
+  --bg-secondary: #172a45;      /* 2 中层水 · 卡片底层 12% */
+  --bg-tertiary: #21395c;       /* 3 近水面 · 卡片中层 10% */
+  --bg-elevated: #21395c;       /* 近水面 · 浮起层 */
+
+  /* ─── 文字（两档，对比度过 AA）─── */
+  --text-primary: #e2ecfa;      /* 8 浪花白 · 正文 */
+  --text-secondary: #8fa6c4;    /* 9 晨雾 · 次级文字 */
+  --text-tertiary: rgba(143, 166, 196, 0.55);
+  --text-placeholder: rgba(143, 166, 196, 0.35);
+
+  /* ─── 主色（水光蓝）─── */
+  --accent: #6fb4ff;            /* 6 水光蓝 · 主交互 3% */
+  --accent-hover: #a8d0ff;      /* 7 波光 · 高光/AI */
+  --accent-soft: rgba(111, 180, 255, 0.10);
+  --accent-border: rgba(111, 180, 255, 0.18);
+  --accent-text: #0a1626;
+
+  /* ─── 强调色（月金 · 仅触发瞬间）─── */
+  --gold: #ffd9a0;              /* 10 月金 · 触发霎那 0.5% */
+  --gold-soft: rgba(255, 217, 160, 0.14);
+
+  /* ─── 边框（水界线）─── */
+  --border-default: rgba(45, 74, 117, 0.45);   /* 4 水界线 4% */
+  --border-hover: rgba(74, 106, 148, 0.55);    /* 5 玻璃雾 */
+  --border-active: rgba(111, 180, 255, 0.35);
+
+  /* ─── 玻璃雾 · 前景玻璃基色 ─── */
+  --glass-mist: #4a6a94;        /* 5 玻璃雾 · 前景玻璃 5% */
+
+  /* ─── 阴影（深水层）─── */
+  --shadow-card: 0 1px 3px rgba(2, 8, 20, 0.4);
+  --shadow-card-hover: 0 4px 12px rgba(2, 8, 20, 0.5);
+  --shadow-modal: 0 8px 32px rgba(2, 8, 20, 0.6);
+
+  /* ─── 圆角 ─── */
+  --radius-card: 12px;
+  --radius-sm: 8px;
+  --radius-full: 9999px;
+
+  /* ─── 间距（宽空白，拥挤是廉价感的第一来源）─── */
+  --space-card-padding: 16px;
+  --space-card-gap: 12px;
+  --space-section: 24px;
+  --space-element: 8px;
+
+  /* ─── 字体 ─── */
+  --font-sans: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'DM Mono', monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+
+  /* ─── 弹簧动画（水的性格）─── */
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --spring-soft: cubic-bezier(0.22, 1.28, 0.42, 1);
+}
+
+/* ═══════════════════════════════════════════
+   亮色模式（池塘涟漪 · 晨光水面）
+   合理调色而非简单反转：暗=深海夜 → 亮=晨雾水面
+   —— 底色是清晨微光的浅水面蓝灰，文字深墨水蓝（非低透明灰），
+      阴影水色更淡，保留水的通透感（futao 修改⑤-5）
+   ═══════════════════════════════════════════ */
+[data-theme="light"] {
+  /* ─── 背景色（晨光水面：蓝灰阶，非纯白非反转）─── */
+  --bg-primary: #e9f0f8;        /* 1 晨雾水面 · 页面底色（淡蓝灰，带水感） */
+  --bg-secondary: #f4f8fc;      /* 2 波光浮起 · 卡片底层（近白带蓝） */
+  --bg-tertiary: #dce7f3;       /* 3 浅水影 · 卡片中层（比底色略深的蓝灰） */
+  --bg-elevated: #ffffff;       /* 浮起层 · 纯白玻璃 */
+
+  /* ─── 文字（深墨水蓝，不靠低透明度）─── */
+  --text-primary: #1c2f4a;      /* 深墨水蓝 · 正文（对比度 AA） */
+  --text-secondary: #58708f;    /* 中层水蓝 · 次级文字 */
+  --text-tertiary: #7c91ad;     /* 浅水灰蓝 · 辅助 */
+  --text-placeholder: #9db0c8;  /* 占位符 */
+
+  /* ─── 主色（水光蓝 · 晨光版）─── */
+  --accent: #3f8bd4;            /* 水光蓝 · 主交互（亮底上清晰可读） */
+  --accent-hover: #2f78c0;      /* 波光 · 高光/AI（hover 加深） */
+  --accent-soft: rgba(63, 139, 212, 0.12);
+  --accent-border: rgba(63, 139, 212, 0.24);
+  --accent-text: #ffffff;
+
+  /* ─── 强调色（晨光金 · 触发瞬间）─── */
+  --gold: #b9852f;              /* 晨光金 · 亮底可读（比暗色版暗，非土黄反转） */
+  --gold-soft: rgba(185, 133, 47, 0.14);
+
+  /* ─── 边框（水界线 · 浅水版）─── */
+  --border-default: rgba(88, 112, 143, 0.25);
+  --border-hover: rgba(88, 112, 143, 0.42);
+  --border-active: rgba(63, 139, 212, 0.5);
+  --glass-mist: #ffffff;
+
+  /* ─── 阴影（浅水影 · 带蓝不浓黑）─── */
+  --shadow-card: 0 1px 3px rgba(63, 91, 124, 0.12);
+  --shadow-card-hover: 0 4px 12px rgba(63, 91, 124, 0.16);
+  --shadow-modal: 0 8px 32px rgba(63, 91, 124, 0.2);
+}
+
