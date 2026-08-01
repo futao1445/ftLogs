@@ -379,10 +379,11 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
       <div className="flex h-full gap-3 pt-3 pb-14 relative z-10">
         {/* ─── Left: 会话列表 ─── */}
         <div className="w-56 sm:w-60 lg:w-72 flex-shrink-0 flex flex-col gap-3">
-          {/* v5 涟漪标题组：wordmark「涟.漪」上 + kicker「涟漪·静夜」下，放知识库入口窗口上方（futao 第4轮打回 11:35，对照设计稿 top 40/76） */}
+          {/* v5 涟漪标题组：wordmark「涟.漪」上 + kicker「涟漪·静夜」下，放知识库入口窗口上方（futao 第4轮打回 11:35，对照设计稿 top 40/76）
+              futao 第5轮打回 11:46：文字太暗影响阅读 + 涟漪标题再大一点 → wordmark 24→30px opacity 0.12→0.3（小恒基线：可读不抢戏），kicker 9→11px opacity 0.2→0.4 */}
           <div className="flex-none pl-1">
-            <div className="pond-wordmark" style={{ fontSize: 24, letterSpacing: 11, opacity: 0.12 }}>涟<span className="pond-wordmark-dot">.</span>漪</div>
-            <div className="pond-kicker" style={{ marginTop: 6, marginBottom: 0, opacity: 0.20 }}>涟漪 · 静夜</div>
+            <div className="pond-wordmark" style={{ fontSize: 30, letterSpacing: 11, opacity: 0.3 }}>涟<span className="pond-wordmark-dot">.</span>漪</div>
+            <div className="pond-kicker" style={{ marginTop: 6, marginBottom: 0, opacity: 0.4, fontSize: 11 }}>涟漪 · 静夜</div>
           </div>
           {/* 会话列表（上） */}
           <div
@@ -397,8 +398,8 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
               boxShadow: 'inset 0 1px 0 rgba(168,208,255,0.06), 0 20px 44px rgba(2,8,20,0.4)',
             }}
           >
-          {/* THREADS · 静夜对话（v5 侧栏标题，s-title 低存在感） */}
-          <div className="px-3 pt-3 text-[9px] tracking-[3px]" style={{ color: '#8fa6c4', opacity: 0.55 }}>THREADS · 静夜对话</div>
+          {/* THREADS · 静夜对话（v5 侧栏标题，s-title 低存在感 → futao 第5轮打回提亮：opacity 0.55→0.75） */}
+          <div className="px-3 pt-3 text-[9px] tracking-[3px]" style={{ color: '#8fa6c4', opacity: 0.75 }}>THREADS · 静夜对话</div>
           {/* Knowledge base entry — 黑猫守夜（v5 落地：抽象几何剪影 + 独月眼 + 尾尖落水涟漪） */}
           <motion.button
             onClick={() => setShowKnowledge(true)}
@@ -441,8 +442,8 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
               </g>
             </svg>
             <div className="text-left">
-              <div className="text-[11px] tracking-[2px]" style={{ color: '#8fa6c4' }}>知识库</div>
-              <div className="text-[9px] tracking-[1px]" style={{ color: '#8fa6c4', opacity: 0.5, marginTop: 2 }}>MEMORY · 水面记下的</div>
+              <div className="text-[11px] tracking-[2px]" style={{ color: '#a8d0ff' }}>知识库</div>
+              <div className="text-[9px] tracking-[1px]" style={{ color: '#a8d0ff', opacity: 0.7, marginTop: 2 }}>MEMORY · 水面记下的</div>
             </div>
           </motion.button>
 
@@ -538,8 +539,8 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
                         ? (selectedIds.has(s.id) ? 'rgba(255,217,160,0.10)' : 'transparent')
                         : (activeSessionId === s.id ? 'var(--accent-soft)' : 'transparent'),
                       color: selectMode
-                        ? (selectedIds.has(s.id) ? '#ffd9a0' : 'var(--text-secondary)')
-                        : (activeSessionId === s.id ? 'var(--accent)' : 'var(--text-secondary)'),
+                        ? (selectedIds.has(s.id) ? '#ffd9a0' : '#b9cbe6')
+                        : (activeSessionId === s.id ? 'var(--accent)' : '#c7d7ee'),
                       border: selectedIds.has(s.id) ? '1px solid rgba(255,217,160,0.3)' : '1px solid transparent',
                     }}
                     onMouseEnter={e => { if (!selectMode && activeSessionId !== s.id) e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
@@ -560,8 +561,8 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
                         </span>
                       )}
                       <div className="min-w-0">
-                        <div className="truncate font-medium">{s.title}</div>
-                        <div style={{ color: 'var(--text-tertiary)', fontSize: 10 }}>{sessionTime(s.updatedAt)}</div>
+                        <div className="truncate font-medium" style={{ color: activeSessionId === s.id ? undefined : '#c7d7ee' }}>{s.title}</div>
+                        <div style={{ color: 'rgba(168,208,255,0.65)', fontSize: 10 }}>{sessionTime(s.updatedAt)}</div>
                       </div>
                     </div>
                   </button>
