@@ -379,6 +379,11 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
       <div className="flex h-full gap-3 pt-3 pb-14 relative z-10">
         {/* ─── Left: 会话列表 ─── */}
         <div className="w-56 sm:w-60 lg:w-72 flex-shrink-0 flex flex-col gap-3">
+          {/* v5 涟漪标题组：wordmark「涟.漪」上 + kicker「涟漪·静夜」下，放知识库入口窗口上方（futao 第4轮打回 11:35，对照设计稿 top 40/76） */}
+          <div className="flex-none pl-1">
+            <div className="pond-wordmark" style={{ fontSize: 24, letterSpacing: 11, opacity: 0.12 }}>涟<span className="pond-wordmark-dot">.</span>漪</div>
+            <div className="pond-kicker" style={{ marginTop: 6, marginBottom: 0, opacity: 0.20 }}>涟漪 · 静夜</div>
+          </div>
           {/* 会话列表（上） */}
           <div
             className="flex-none rounded-xl overflow-hidden flex flex-col"
@@ -891,12 +896,8 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
         </div>
       </div>
 
-      {/* L4 装饰元素（v5 落地：字标/右侧竖排，低存在感、不侵入聊天窗）
-          v5 气质：字标=左上（进左栏顶部作品牌水印，wordmark 上 kicker 下，对照设计稿 top 40/76） */}
-      <div className="pond-elem" style={{ left: 36, top: 40, zIndex: 20 }}>
-        <div className="pond-wordmark" style={{ fontSize: 24, letterSpacing: 11, opacity: 0.12 }}>涟<span className="pond-wordmark-dot">.</span>漪</div>
-        <div className="pond-kicker" style={{ color: '#ffd9a0', opacity: 0.20, marginBottom: 0, marginTop: 12 }}>涟漪 · 静夜</div>
-      </div>
+      {/* L4 装饰元素（v5 落地：右侧竖排，低存在感、不侵入聊天窗）
+          涟漪标题组已移入左侧栏列顶部（wordmark 上 kicker 下，对照设计稿 top 40/76） */}
       {/* 右侧竖排一句（留白处，低存在感） */}
       <div className="pond-elem" style={{ right: 66, bottom: 150, zIndex: 20, fontSize: 10, lineHeight: 2.1, color: '#8fa6c4', opacity: 0.18, letterSpacing: 3, textAlign: 'right', whiteSpace: 'nowrap' }}>
         有人在水下，<b style={{ color: '#a8d0ff', fontWeight: 300, opacity: 0.7 }}>静静听</b>。
