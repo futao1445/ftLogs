@@ -667,9 +667,10 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
         {/* ─── Right: Chat area（L3 聊天窗：浮在水面光池+大水波上，唯一焦点）─── */}
         <div className="relative flex-1 min-w-0 flex flex-col">
           <div
-            className="relative flex flex-col"
+            className="relative flex-1 flex flex-col"
             style={{
-              /* 水池/细弧/入水线对齐聊天窗（同宽同 left，水波相对聊天窗居中） */
+              /* 水池/细弧/入水线对齐聊天窗（同宽同 left，水波相对聊天窗居中）
+                 flex-1：占满右侧区剩余高度，chat 的 calc(100%-14px) 才有正确参照 */
               width: 'min(730px, calc(100vw - 600px))',
               marginLeft: 24,
             }}
