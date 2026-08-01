@@ -310,67 +310,53 @@ html::-webkit-scrollbar-corner { background: transparent; }
     linear-gradient(180deg, transparent 0%, rgba(12,22,38,0.6) 85%);
 }
 
-/* L2 大水波：叶子(聊天窗)落在水上，涟漪从入水点向四周泛开（futao ①精确语义 19:30「聊天窗口就像是一片叶子，落在水上，泛起涟漪」）
-   聊天窗底缘=入水点（涟漪中心，被聊天窗盖住一部分），水面是实心椭圆（明显亮于深底），涟漪环加宽向两侧泛开 */
-.pond-big-wave {
+/* L2 水面光池 + 大水波 · 大而疏（对照设计稿 v5：柔光池渐隐无硬边 + 4 条细弧，贴窗两侧泛开，底部全静）
+   叶子(聊天窗)底缘=入水点，水池中心=水线 bottom 70px；无硬矩形区块、无右下同心圆（futao 打回 10:54/10:55 修）*/
+.pond-water-wrap {
   position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%);
-  width: min(1400px, 200%);
-  height: 320px;
+  inset: 0;
+  overflow: hidden;
   pointer-events: none;
   z-index: 0;
-  background:
-    /* 实心水面：椭圆水面圆心=水线（叶子入水点），中心不透明（真正亮于深底），向下渐入深水
-       v5 落地：聊天窗往下拓展 → 水线下移 bottom 150→70px，波心随之下移（250px = 320-70，中心仍=入水点） */
-    radial-gradient(ellipse at 50% 250px, #36567f 0%, #36567f 18%, rgba(51,85,128,0.92) 38%, rgba(33,57,92,0.78) 58%, rgba(23,42,69,0.52) 78%, rgba(12,22,38,0) 100%),
-    /* 水光：入水点光晕（叶子与水面接触处一抹亮光） */
-    radial-gradient(ellipse at 50% 250px, rgba(168,208,255,0.38) 0%, rgba(168,208,255,0.16) 42%, transparent 64%),
-    /* 涟漪环：从入水点向外清晰泛开（粗亮 band） */
-    radial-gradient(ellipse at 50% 250px, transparent 0 74px, rgba(168,208,255,0.50) 80px, rgba(168,208,255,0.26) 92px, transparent 108px),
-    radial-gradient(ellipse at 50% 250px, transparent 0 156px, rgba(111,180,255,0.42) 162px, rgba(111,180,255,0.20) 178px, transparent 200px),
-    radial-gradient(ellipse at 50% 250px, transparent 0 248px, rgba(111,180,255,0.34) 254px, rgba(111,180,255,0.15) 274px, transparent 304px),
-    radial-gradient(ellipse at 50% 250px, transparent 0 360px, rgba(74,106,148,0.26) 366px, rgba(74,106,148,0.11) 390px, transparent 428px);
-  animation: pond-big-sway 8s ease-in-out infinite;
 }
-/* 主体缓慢荡漾：轻缩放 + 微光呼吸（节奏静）*/
-@keyframes pond-big-sway {
-  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.9; }
-  50% { transform: translateX(-50%) scale(1.02); opacity: 1; }
-}
-
-/* 荡漾环：涟漪从入水点持续向外泛开再淡出（futao「大水波要动态荡漾」）*/
-@keyframes pond-wave-drift {
-  0%   { transform: translateX(-50%) scale(0.5); opacity: 0; }
-  25%  { opacity: 0.7; }
-  75%  { opacity: 0.2; }
-  100% { transform: translateX(-50%) scale(1.3); opacity: 0; }
-}
-.pond-wave-drift {
+/* L1 水面光池（聊天窗底缘入水处一抹柔光，72% 渐隐无硬边） */
+.pond-pool {
   position: absolute;
   left: 50%;
-  bottom: 0;
+  bottom: 70px;
   transform: translateX(-50%);
-  width: min(1500px, 200%);
+  z-index: 1;
+  width: 760px;
   height: 250px;
-  transform-origin: 50% 0%;
   pointer-events: none;
-  z-index: 0;
-  animation: pond-wave-drift 10s cubic-bezier(0.42, 0, 0.2, 1) infinite;
+  background: radial-gradient(ellipse at 50% 8%, rgba(74,106,148,0.28) 0%, rgba(33,57,92,0.14) 42%, transparent 72%);
 }
-.pond-wave-drift.d1 { background: radial-gradient(ellipse at 50% 0%, transparent 0 168px, rgba(168,208,255,0.32) 174px, rgba(168,208,255,0.10) 184px, transparent 196px); }
-.pond-wave-drift.d2 { animation-delay: 3.3s; background: radial-gradient(ellipse at 50% 0%, transparent 0 312px, rgba(111,180,255,0.26) 318px, rgba(111,180,255,0.08) 332px, transparent 348px); }
-.pond-wave-drift.d3 { animation-delay: 6.6s; background: radial-gradient(ellipse at 50% 0%, transparent 0 470px, rgba(111,180,255,0.20) 476px, rgba(111,180,255,0.06) 494px, transparent 514px); }
+/* L2 大水波 · 大而疏：4 条细弧，1px 边框 alpha 0.06-0.12，clip 只露上半弧，14s 缓慢呼吸（贴窗两侧泛开） */
+.pond-ring {
+  position: absolute;
+  left: 50%;
+  z-index: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: pond-ring-breathe 14s ease-in-out infinite;
+}
+.pond-ring.r1 { border: 1px solid rgba(168,208,255,0.12); width: 860px; height: 300px; bottom: -80px; clip-path: inset(0 0 42% 0); }
+.pond-ring.r2 { border: 1px solid rgba(111,180,255,0.09); width: 620px; height: 240px; bottom: -50px; clip-path: inset(0 0 42% 0); animation-delay: -3.5s; }
+.pond-ring.r3 { border: 1px solid rgba(111,180,255,0.065); width: 420px; height: 180px; bottom: -20px; clip-path: inset(0 0 42% 0); animation-delay: -7s; }
+.pond-ring.r4 { border: 1px solid rgba(74,106,148,0.06); width: 260px; height: 140px; bottom: 0px; clip-path: inset(0 0 42% 0); animation-delay: -10.5s; }
+@keyframes pond-ring-breathe {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; }
+  50% { transform: translateX(-50%) scale(1.015); opacity: 0.78; }
+}
 
-/* 水面反光带：叶子(聊天窗)入水线 —— 聊天窗底缘一道细光，标记「落水点」
-   v5 落地：聊天窗往下拓展 → 水线随之下移 bottom 150→70px，与聊天窗底缘对齐 */
+/* 入水线：叶子(聊天窗)底缘一道细光，标记「落水点」（对照设计稿 v5：left/right 24%，opacity 0.55，z 5） */
 .pond-waterline {
   position: absolute;
-  left: 4%; right: 4%; bottom: 70px; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(168,208,255,0.40), transparent);
-  opacity: 0.6; pointer-events: none;
-  z-index: 1;
+  left: 24%; right: 24%; bottom: 70px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(168,208,255,0.34), transparent);
+  opacity: 0.55; pointer-events: none;
+  z-index: 5;
 }
 
 /* L4 装饰元素（散落四周留白，alpha 低退后不抢，参考图气质）
@@ -416,19 +402,10 @@ html::-webkit-scrollbar-corner { background: transparent; }
   35% { opacity: 0.5; }
   100% { opacity: 0; transform: scale(1.6); }
 }
-.pond-rings {
-  position: fixed; right: -30px; bottom: -40px; width: 330px; height: 330px; z-index: 2; pointer-events: none;
-  background:
-    radial-gradient(circle, transparent 0 42px, rgba(168,208,255,0.16) 44px, transparent 48px),
-    radial-gradient(circle, transparent 0 98px, rgba(168,208,255,0.13) 100px, transparent 105px),
-    radial-gradient(circle, transparent 0 160px, rgba(111,180,255,0.10) 162px, transparent 169px),
-    radial-gradient(circle, transparent 0 228px, rgba(111,180,255,0.07) 230px, transparent 240px);
-  animation: pond-rings-breathe 10s ease-in-out infinite;
-}
 .pond-moon {
-  position: fixed; width: 56px; height: 56px; z-index: 2; pointer-events: none;
+  position: fixed; width: 44px; height: 44px; z-index: 20; pointer-events: none;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #ffd9a0, #ffd9a0 38%, transparent 68%);
-  box-shadow: 0 0 46px rgba(255,217,160,0.4);
-  opacity: 0.5;
+  background: radial-gradient(circle at 36% 32%, #ffd9a0, #ffd9a0 40%, transparent 68%);
+  box-shadow: 0 0 34px rgba(255,217,160,0.28);
+  opacity: 0.24;
 }

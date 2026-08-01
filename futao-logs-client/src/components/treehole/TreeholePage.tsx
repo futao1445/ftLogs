@@ -654,16 +654,18 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
 
         </div>
 
-        {/* ─── Right: Chat area（L3 聊天窗：浮在 L2 大水波上，唯一焦点）─── */}
+        {/* ─── Right: Chat area（L3 聊天窗：浮在水面光池+大水波上，唯一焦点）─── */}
         <div className="relative flex-1 min-w-0 flex flex-col">
-          {/* 水面反光带：聊天窗底缘与下层水波交界处的细光 */}
-          <div className="pond-waterline" />
-          {/* L2 大水波（聊天窗「下层」水面层）：实体水面 + 波纹环 + 动态荡漾环
-              futao ①大水波在聊天窗下完整可见（不再是只有波纹）+「大水波要动态荡漾」*/}
-          <div className="pond-big-wave" />
-          <div className="pond-wave-drift d1" />
-          <div className="pond-wave-drift d2" />
-          <div className="pond-wave-drift d3" />
+          {/* L1 水面光池 + L2 大水波（对照设计稿 v5：柔光池渐隐无硬边 + 4 条细弧，底部全静，无右下同心圆） */}
+          <div className="pond-water-wrap">
+            <div className="pond-pool" />
+            <div className="pond-ring r4" />
+            <div className="pond-ring r3" />
+            <div className="pond-ring r2" />
+            <div className="pond-ring r1" />
+            {/* 入水线：聊天窗底缘一道细光（bottom 70px） */}
+            <div className="pond-waterline" />
+          </div>
           <div
             className="relative z-10 rounded-xl overflow-hidden flex flex-col"
             style={{
@@ -878,7 +880,6 @@ export default function TreeholePage({ autoOpenKnowledge = false }: { autoOpenKn
       <div className="pond-elem" style={{ right: 66, bottom: 150, zIndex: 20, fontSize: 10, lineHeight: 2.1, color: '#8fa6c4', opacity: 0.18, letterSpacing: 3, textAlign: 'right', whiteSpace: 'nowrap' }}>
         有人在水下，<b style={{ color: '#a8d0ff', fontWeight: 300, opacity: 0.7 }}>静静听</b>。
       </div>
-      <div className="pond-rings" />
       <div className="pond-moon" style={{ right: 90, top: 96 }} />
 
       {/* Toast */}
