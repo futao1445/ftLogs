@@ -9,7 +9,9 @@
 URL="${1:-https://passport-dubai-science-earning.trycloudflare.com}"
 INTERVAL="${2:-5}"        # 探测间隔秒
 DURATION="${3:-1800}"     # 持续探测秒数（默认 30 分钟）
-LOGFILE="tunnel-check-$(date +%Y%m%d-%H%M%S).log"
+DIR="$(cd "$(dirname "$0")" && pwd)"
+# 日志统一写到仓库根 LOG/（futao 14:24 指令：所有 .log 用 LOG 文件夹存起来）
+LOGFILE="$DIR/../LOG/tunnel-check-$(date +%Y%m%d-%H%M%S).log"
 
 echo "[check] 目标: $URL"
 echo "[check] 间隔: ${INTERVAL}s, 持续: ${DURATION}s, 日志: $LOGFILE"

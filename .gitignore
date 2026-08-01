@@ -40,3 +40,6 @@ cf-*.txt
 
 # Dev screenshots (runtime artifacts)
 .pond-shots/
+
+# Runtime logs (futao 14:24: all .log under LOG/, runtime output not tracked)
+LOG/

@@ -10,7 +10,8 @@ URL="${1:-https://passport-dubai-science-earning.trycloudflare.com}"
 INTERVAL="${2:-10}"        # 探测间隔秒
 FAIL_THRESHOLD="${3:-3}"   # 连续失败多少次触发重启
 DIR="$(cd "$(dirname "$0")" && pwd)"
-LOGFILE="$DIR/tunnel-guard.log"
+# 日志统一写到仓库根 LOG/（futao 14:24 指令：所有 .log 用 LOG 文件夹存起来）
+LOGFILE="$DIR/../LOG/tunnel-guard.log"
 
 echo "[guard] 监控: $URL"
 echo "[guard] 间隔: ${INTERVAL}s, 连续失败阈值: ${FAIL_THRESHOLD}, 日志: $LOGFILE"

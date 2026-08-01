@@ -12,7 +12,8 @@ setlocal
 REM ── 可配置区 ──
 set CLOUDFLARED_EXE=cloudflared
 set ORIGIN_URL=http://127.0.0.1:1111
-set LOG_FILE=%~dp0tunnel-hb.log
+REM 日志统一写到仓库根 LOG/（futao 14:24 指令：所有 .log 用 LOG 文件夹存起来）
+set LOG_FILE=%~dp0..\LOG\tunnel-hb.log
 
 REM ── 心跳参数（核心：防 60s 静默掉线，来自 lamda 实战验证）──
 set HEARTBEAT=--heartbeat-interval 1s
